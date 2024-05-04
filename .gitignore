@@ -64,6 +64,7 @@ htmldocs/
 !.vscode/tasks.json
 !.vscode/launch.json
 !.vscode/extensions.json
+!.vscode/extensions.json.license
 !.vscode/*.code-snippets
 
 # Local History for Visual Studio Code
