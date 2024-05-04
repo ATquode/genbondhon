@@ -5,6 +5,12 @@
 # Created by https://www.toptal.com/developers/gitignore/api/nim,visualstudiocode,windows,linux,macos
 # Edit at https://www.toptal.com/developers/gitignore?templates=nim,visualstudiocode,windows,linux,macos
 
+### Project ###
+check
+.check
+check.exe
+.check.exe
+
 ### Linux ###
 *~
 
