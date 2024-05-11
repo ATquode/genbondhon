@@ -6,10 +6,13 @@
 # Edit at https://www.toptal.com/developers/gitignore?templates=nim,visualstudiocode,windows,linux,macos
 
 ### Project ###
-packages
+packages/
 _deps/*
 !_deps/nim-compiler
 
+genbondhon/genbondhon
+genbondhon/genbondhon.exe
+dist/
 check
 .check
 check.exe
