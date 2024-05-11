@@ -6,6 +6,10 @@
 # Edit at https://www.toptal.com/developers/gitignore?templates=nim,visualstudiocode,windows,linux,macos
 
 ### Project ###
+packages
+_deps/*
+!_deps/nim-compiler
+
 check
 .check
 check.exe
