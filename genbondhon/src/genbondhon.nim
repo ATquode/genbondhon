@@ -2,8 +2,24 @@
 #
 # SPDX-License-Identifier: MIT
 
-# This is just an example to get you started. A typical binary package
-# uses this file as the main entry point of the application.
+const helpTxt =
+  """
+Generate bindings for Nim libraries to platform native technologies.
+
+Usage:
+  genbondhon -h | --help
+
+Options:
+  -h --help     Show help message.
+  --version     Show version
+"""
+
+import std/[parsecfg, streams]
+import docopt
+
+const version = "../genbondhon.nimble".staticRead.newStringStream.loadConfig.getSectionValue(
+  "", "version"
+)
 
 when isMainModule:
-  echo("Hello, World!")
+  discard docopt(helpTxt, version = version)
