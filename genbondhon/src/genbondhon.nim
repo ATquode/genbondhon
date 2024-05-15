@@ -7,6 +7,8 @@ const helpTxt =
 Generate bindings for Nim libraries to platform native technologies.
 
 Usage:
+  genbondhon <file>
+  genbondhon --version
   genbondhon -h | --help
 
 Options:
@@ -16,10 +18,15 @@ Options:
 
 import std/[parsecfg, streams]
 import docopt
+import docopt/dispatch
 
 const version = "../genbondhon.nimble".staticRead.newStringStream.loadConfig.getSectionValue(
   "", "version"
 )
 
+proc generateBindings(file: string) =
+  echo file
+
 when isMainModule:
-  discard docopt(helpTxt, version = version)
+  let args = docopt(helpTxt, version = version)
+  discard args.dispatchProc(generateBindings, "<file>")
