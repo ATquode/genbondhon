@@ -7,25 +7,29 @@ const helpTxt =
 Generate bindings for Nim libraries to platform native technologies.
 
 Usage:
-  genbondhon <file>
+  genbondhon [--verbose] <file>
   genbondhon --version
   genbondhon -h | --help
 
 Options:
+  --verbose     Show verbose output.
   -h --help     Show help message.
   --version     Show version
 """
 
-import std/[parsecfg, streams]
+import std/[parsecfg, paths, streams]
 import docopt
 import docopt/dispatch
+import genbondhon/[currentconfig, parseutil]
 
 const version = "../genbondhon.nimble".staticRead.newStringStream.loadConfig.getSectionValue(
   "", "version"
 )
 
-proc generateBindings(file: string) =
-  echo file
+proc generateBindings(verbose: bool, file: string) =
+  ## generates bindings for public APIs of the given nim file.
+  showVerboseOutput = verbose
+  discard parsePublicAPIs(file.Path)
 
 when isMainModule:
   let args = docopt(helpTxt, version = version)

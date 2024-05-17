@@ -14,7 +14,8 @@ if pathPart notin cwd:
 task dev, "build and run in debug mode":
   var passParam = ""
   if paramCount() > 1:
-    passParam = " " & paramStr(2)
+    for i in 2 .. paramCount():
+      passParam.add(" " & paramStr(i))
   exec "nim c -r --outdir:" & cwd & " " & cwd & "/src/genbondhon.nim" & passParam
 
 task build, "build in release mode and put into dist folder":
