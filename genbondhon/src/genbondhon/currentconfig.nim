@@ -2,4 +2,7 @@
 #
 # SPDX-License-Identifier: MIT
 
+import compiler/options
+
 var showVerboseOutput* = false
+let configRef* = newConfigRef()

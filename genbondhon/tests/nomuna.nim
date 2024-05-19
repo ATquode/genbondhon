@@ -10,6 +10,9 @@ proc noop*() =
 func makeSquareVal(x: int): int =
   x * x
 
+proc extraNoOp*() =
+  echo "extra: No Op."
+
 proc modifyStr(str: string): string =
   let mstr = "$#!!" % [str]
   echo mstr

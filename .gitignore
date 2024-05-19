@@ -70,6 +70,13 @@ Temporary Items
 nimcache/
 nimblecache/
 htmldocs/
+# Testament #
+testresults/
+outputExpected.txt
+outputGotten.txt
+megatest
+megatest.exe
+megatest.nim
 
 ### VisualStudioCode ###
 .vscode/*
