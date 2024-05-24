@@ -20,7 +20,7 @@ Options:
 import std/[parsecfg, paths, streams]
 import docopt
 import docopt/dispatch
-import genbondhon/[currentconfig, parseutil]
+import genbondhon/[currentconfig, parseutil, wrapperTranslator]
 
 const version = "../genbondhon.nimble".staticRead.newStringStream.loadConfig.getSectionValue(
   "", "version"
@@ -29,7 +29,9 @@ const version = "../genbondhon.nimble".staticRead.newStringStream.loadConfig.get
 proc generateBindings(verbose: bool, file: string) =
   ## generates bindings for public APIs of the given nim file.
   showVerboseOutput = verbose
-  discard parsePublicAPIs(file.Path)
+  moduleName = file.Path.lastPathPart.splitFile.name.string
+  let publicAST = parsePublicAPIs(file.Path)
+  discard translateToCompatibleWrapperApi(publicAST)
 
 when isMainModule:
   let args = docopt(helpTxt, version = version)

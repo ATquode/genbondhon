@@ -5,4 +5,5 @@
 import compiler/options
 
 var showVerboseOutput* = false
+var moduleName* = ""
 let configRef* = newConfigRef()
