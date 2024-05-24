@@ -17,3 +17,6 @@ proc modifyStr(str: string): string =
   let mstr = "$#!!" % [str]
   echo mstr
   return mstr
+
+func constRet*(): int =
+  return 2

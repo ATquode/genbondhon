@@ -2,16 +2,42 @@
 #
 # SPDX-License-Identifier: MIT
 
-import std/[strformat, strutils, terminal]
+import std/[options, strformat, strutils, tables, terminal]
 import compiler/ast
-import currentconfig, util
+import convertutil, currentconfig, util
+
+func replaceType(nimType: string): string =
+  nimToCompatTypeTbl[nimType]
+
+func convertRetType(code: string, nimType: string): string =
+  convertNimToCompatType(nimType, code)
 
 proc translateProc(node: PNode): string =
   let procName = procName(node)
+  let paramNode = procParamNode(node)
+  if paramNode.isNone:
+    styledEcho fgRed, "Error!!! FormalParamNode missing!"
+  let formalParamNode = paramNode.get()
+  let retType =
+    if formalParamNode[0].kind != nkEmpty:
+      formalParamNode[0].ident.s
+    else:
+      ""
+  let retTypePart =
+    if retType == "":
+      ""
+    else:
+      &""": {retType.replaceType}"""
+  let procCall = &"{moduleName}.{procName}()"
+  let retBody =
+    if retType == "":
+      procCall
+    else:
+      &"return {procCall.convertRetType(retType)}"
   result =
     &"""
-proc {procName}*() {{.raises:[], exportc, cdecl, dynlib.}} =
-  {moduleName}.{procName}()
+proc {procName}*(){retTypePart} {{.raises:[], exportc, cdecl, dynlib.}} =
+  {retBody}
 """
 
 proc wrapApi(api: PNode): string =
