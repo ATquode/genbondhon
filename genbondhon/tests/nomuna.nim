@@ -20,3 +20,6 @@ proc modifyStr(str: string): string =
 
 func constRet*(): int =
   return 2
+
+func constRetBool*(): bool =
+  return true
