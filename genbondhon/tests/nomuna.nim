@@ -23,3 +23,6 @@ func constRet*(): int =
 
 func constRetBool*(): bool =
   return true
+
+func constRetFloat*(): float =
+  return 2.3
