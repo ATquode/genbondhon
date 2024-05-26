@@ -4,8 +4,13 @@
 
 import std/[strformat, tables]
 
-const nimToCompatTypeTbl* =
-  {"bool": "cint", "int": "cint", "float": "cdouble", "char": "cchar"}.toTable
+const nimToCompatTypeTbl* = {
+  "bool": "cint",
+  "int": "cint",
+  "float": "cdouble",
+  "char": "cchar",
+  "string": "cstring",
+}.toTable
 
 func convertNimToCompatType*(nimType: string, code: string): string =
   case nimType
@@ -15,5 +20,7 @@ func convertNimToCompatType*(nimType: string, code: string): string =
     &"{code}.cdouble"
   of "char":
     &"{code}.cchar"
+  of "string":
+    &"{code}.cstring"
   else:
     ""

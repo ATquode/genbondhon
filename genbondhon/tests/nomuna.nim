@@ -29,3 +29,6 @@ func constRetFloat*(): float =
 
 func constRetChar*(): char =
   return 'a'
+
+func constRetStr*(): string =
+  return "what"
