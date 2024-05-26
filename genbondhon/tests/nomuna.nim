@@ -26,3 +26,6 @@ func constRetBool*(): bool =
 
 func constRetFloat*(): float =
   return 2.3
+
+func constRetChar*(): char =
+  return 'a'
