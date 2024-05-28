@@ -7,7 +7,7 @@ import compiler/ast
 import convertutil, currentconfig, util
 
 func replaceType(nimType: string): string =
-  nimToCompatTypeTbl[nimType]
+  nimAndCompatTypeTbl[nimType]
 
 func convertType(code: string, origType: string): string =
   convertNimAndCompatType(origType, code)
