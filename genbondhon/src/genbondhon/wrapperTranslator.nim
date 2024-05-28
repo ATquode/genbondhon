@@ -9,8 +9,8 @@ import convertutil, currentconfig, util
 func replaceType(nimType: string): string =
   nimToCompatTypeTbl[nimType]
 
-func convertRetType(code: string, nimType: string): string =
-  convertNimToCompatType(nimType, code)
+func convertType(code: string, origType: string): string =
+  convertNimAndCompatType(origType, code)
 
 proc translateProc(node: PNode): string =
   let procName = procName(node)
@@ -18,6 +18,14 @@ proc translateProc(node: PNode): string =
   if paramNode.isNone:
     styledEcho fgRed, "Error!!! FormalParamNode missing!"
   let formalParamNode = paramNode.get()
+  var trParamList, callableParamList = newSeq[string]()
+  for i in 1 ..< formalParamNode.safeLen:
+    let paramName = formalParamNode[i][0].ident.s
+    let paramType = formalParamNode[i][1].ident.s
+    let trParam = &"{paramName}: {paramType.replaceType}"
+    trParamList.add(trParam)
+    let callableParam = &"{paramName.convertType(paramType.replaceType)}"
+    callableParamList.add(callableParam)
   let retType =
     if formalParamNode[0].kind != nkEmpty:
       formalParamNode[0].ident.s
@@ -28,15 +36,15 @@ proc translateProc(node: PNode): string =
       ""
     else:
       &""": {retType.replaceType}"""
-  let procCall = &"{moduleName}.{procName}()"
+  let procCall = &"""{moduleName}.{procName}({callableParamList.join(", ")})"""
   let retBody =
     if retType == "":
       procCall
     else:
-      &"return {procCall.convertRetType(retType)}"
+      &"return {procCall.convertType(retType)}"
   result =
     &"""
-proc {procName}*(){retTypePart} {{.raises:[], exportc, cdecl, dynlib.}} =
+proc {procName}*({trParamList.join(", ")}){retTypePart} {{.raises:[], exportc, cdecl, dynlib.}} =
   {retBody}
 """
 

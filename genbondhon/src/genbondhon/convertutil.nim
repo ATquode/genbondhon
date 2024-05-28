@@ -12,8 +12,8 @@ const nimToCompatTypeTbl* = {
   "string": "cstring",
 }.toTable
 
-func convertNimToCompatType*(nimType: string, code: string): string =
-  case nimType
+func convertNimAndCompatType*(origType: string, code: string): string =
+  case origType
   of "bool", "int":
     &"{code}.cint"
   of "float":
@@ -22,5 +22,7 @@ func convertNimToCompatType*(nimType: string, code: string): string =
     &"{code}.cchar"
   of "string":
     &"{code}.cstring"
+  of "cint":
+    &"{code}.int"
   else:
     ""

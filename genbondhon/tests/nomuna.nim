@@ -32,3 +32,6 @@ func constRetChar*(): char =
 
 func constRetStr*(): string =
   return "what"
+
+func add*(a: int, b: int): int =
+  return a + b
