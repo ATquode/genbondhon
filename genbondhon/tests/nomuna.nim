@@ -35,3 +35,9 @@ func constRetStr*(): string =
 
 func add*(a: int, b: int): int =
   return a + b
+
+proc printCond*(a: bool) =
+  if a:
+    echo "success"
+  else:
+    echo "failure"
