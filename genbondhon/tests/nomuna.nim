@@ -44,3 +44,6 @@ proc printCond*(a: bool) =
 
 func add*(a: float, b: float): float =
   return a + b
+
+func add*(a: float32, b: float32): float64 =
+  return a + b
