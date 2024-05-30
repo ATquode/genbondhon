@@ -14,11 +14,14 @@ const nimAndCompatTypeTbl* = {
   "cint": "int",
   "cfloat": "float32",
   "cdouble": "float",
+  "cchar": "char",
+  "cstring": "string",
 }.toTable
 
 func convertNimAndCompatType*(origType: string, code: string): string =
   case origType
-  of "int", "float", "float32", "float64", "char", "string", "cint", "cfloat", "cdouble":
+  of "int", "float", "float32", "float64", "char", "string", "cint", "cfloat",
+      "cdouble", "cchar", "cstring":
     &"{code}.{nimAndCompatTypeTbl[origType]}"
   else:
     code

@@ -47,3 +47,9 @@ func add*(a: float, b: float): float =
 
 func add*(a: float32, b: float32): float64 =
   return a + b
+
+proc takeChar*(a: char) =
+  echo a
+
+proc printStr*(a: string) =
+  echo a
