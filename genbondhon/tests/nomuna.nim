@@ -41,3 +41,6 @@ proc printCond*(a: bool) =
     echo "success"
   else:
     echo "failure"
+
+func add*(a: float, b: float): float =
+  return a + b
