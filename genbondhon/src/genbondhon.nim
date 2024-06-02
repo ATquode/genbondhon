@@ -31,7 +31,8 @@ proc generateBindings(verbose: bool, file: string) =
   showVerboseOutput = verbose
   moduleName = file.Path.lastPathPart.splitFile.name.string
   let publicAST = parsePublicAPIs(file.Path)
-  discard translateToCompatibleWrapperApi(publicAST)
+  let wrappedApis = translateToCompatibleWrapperApi(publicAST)
+  wrappedApis.generateWrapperFile("bindings".Path, "binding_api", file.Path)
 
 when isMainModule:
   let args = docopt(helpTxt, version = version)

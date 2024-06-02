@@ -8,9 +8,10 @@ import ../../src/genbondhon/util
 
 let filePath = "tests/nomuna.nim".Path # Testament starts from parent of `tests` dir
 let publicApis = filePath.parsePublicAPIs()
-assert publicApis.len == 2
+assert publicApis.len == 13,
+  "The number of public Apis ($#) don't match".format(publicApis.len)
 
 const expectedPublicProcs = ["noop", "extraNoOp"]
-for i, api in publicApis:
-  assert api.procName == expectedPublicProcs[i],
-    "$# doesn't match $#".format(api.procName, expectedPublicProcs[i])
+for i in 0 ..< expectedPublicProcs.len:
+  assert publicApis[i].procName == expectedPublicProcs[i],
+    "$# doesn't match $#".format(publicApis[i].procName, expectedPublicProcs[i])

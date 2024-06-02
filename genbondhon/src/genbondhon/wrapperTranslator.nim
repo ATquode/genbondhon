@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MIT
 
-import std/[options, strformat, strutils, tables, terminal]
+import std/[dirs, options, paths, strformat, strutils, tables, terminal]
 import compiler/ast
 import convertutil, currentconfig, util
 
@@ -45,8 +45,7 @@ proc translateProc(node: PNode): string =
   result =
     &"""
 proc {procName}*({trParamList.join(", ")}){retTypePart} {{.raises:[], exportc, cdecl, dynlib.}} =
-  {retBody}
-"""
+  {retBody}"""
 
 proc wrapApi(api: PNode): string =
   case api.kind
@@ -55,7 +54,7 @@ proc wrapApi(api: PNode): string =
   else:
     result = "Cannot wrap api"
 
-proc generateWrapperContent(publicAST: seq[PNode]): string =
+proc generateWrapperApi(publicAST: seq[PNode]): string =
   var trApis = newSeq[string]()
   for api in publicAST:
     let wrappedApi = wrapApi(api)
@@ -65,9 +64,43 @@ proc generateWrapperContent(publicAST: seq[PNode]): string =
 {trApis.join("\n\n")}
 """
 
+proc relativeModulePath(bindingDir: Path, srcFile: Path): string =
+  let relModPath = srcFile.relativePath(bindingDir, '/')
+  let (relModDir, relModName, _) = relModPath.splitFile
+  result = string relModDir / relModName
+
+proc generateWrapperFileContent(
+    bindingDir: Path, srcFile: Path, wrappedApis: string
+): string =
+  let modulePath = bindingDir.relativeModulePath(srcFile)
+  result =
+    &"""
+import {modulePath}
+
+{wrappedApis}"""
+
 proc translateToCompatibleWrapperApi*(publicAST: seq[PNode]): string =
-  let apiContent = generateWrapperContent(publicAST)
+  let apiContent = generateWrapperApi(publicAST)
   if showVerboseOutput:
     styledEcho fgYellow, "Wrapped Apis:"
     echo apiContent
   return apiContent
+
+proc generateWrapperFile*(
+    wrappedApis: string, bindingDir: Path, wrapperName: string, srcFile: Path
+) =
+  let fileName = wrapperName.Path.addFileExt("nim")
+  if not bindingDir.dirExists:
+    try:
+      bindingDir.createDir()
+    except:
+      let exceptionMsg = getCurrentExceptionMsg()
+      styledEcho fgRed,
+        "Error: Failed to create binding directory. Reason: ", exceptionMsg
+      return
+  let filePath = bindingDir / fileName
+  let fileContent = bindingDir.generateWrapperFileContent(srcFile, wrappedApis)
+  if showVerboseOutput:
+    styledEcho fgYellow, "Wrapper File Content:"
+    echo fileContent
+  filePath.string.writeFile(fileContent)
