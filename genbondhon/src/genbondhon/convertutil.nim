@@ -21,7 +21,9 @@ const nimAndCompatTypeTbl* = {
 func convertNimAndCompatType*(origType: string, code: string): string =
   case origType
   of "int", "float", "float32", "float64", "char", "string", "cint", "cfloat",
-      "cdouble", "cchar", "cstring":
+      "cdouble", "cchar":
     &"{code}.{nimAndCompatTypeTbl[origType]}"
+  of "cstring":
+    &"${code}"
   else:
     code
