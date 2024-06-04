@@ -104,3 +104,13 @@ proc generateWrapperFile*(
     styledEcho fgYellow, "Wrapper File Content:"
     echo fileContent
   filePath.string.writeFile(fileContent)
+
+proc generateBindableModule*(bindingDir: Path, wrapperName: string) =
+  let moduleFileName = moduleName.Path.addFileExt("nim")
+  let moduleFilePath = bindingDir / moduleFileName
+    # assume the directory already exists, because wrapper file has been created.
+  let content =
+    &"""
+include {wrapperName}
+"""
+  moduleFilePath.string.writeFile(content)

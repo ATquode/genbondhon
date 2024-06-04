@@ -38,6 +38,7 @@ proc generateBindings(
   let publicAST = parsePublicAPIs(file.Path)
   let wrappedApis = translateToCompatibleWrapperApi(publicAST)
   wrappedApis.generateWrapperFile(bindingDir.Path, wrapperName, file.Path)
+  generateBindableModule(bindingDir.Path, wrapperName)
 
 when isMainModule:
   let args = docopt(helpTxt, version = version)
