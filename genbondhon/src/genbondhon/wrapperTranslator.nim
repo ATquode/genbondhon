@@ -65,9 +65,9 @@ proc generateWrapperApi(publicAST: seq[PNode]): string =
 """
 
 proc relativeModulePath(bindingDir: Path, srcFile: Path): string =
-  let relModPath = srcFile.relativePath(bindingDir, '/')
-  let (relModDir, relModName, _) = relModPath.splitFile
-  result = string relModDir / relModName
+  let relModFilePath = srcFile.relativePath(bindingDir, '/')
+  let relModPath = relModFilePath.changeFileExt("")
+  result = relModPath.string
 
 proc generateWrapperFileContent(
     bindingDir: Path, srcFile: Path, wrappedApis: string
