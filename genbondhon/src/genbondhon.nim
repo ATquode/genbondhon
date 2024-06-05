@@ -23,7 +23,7 @@ Options:
 import std/[parsecfg, paths, streams]
 import docopt
 import docopt/dispatch
-import genbondhon/[currentconfig, parseutil, wrapperTranslator]
+import genbondhon/[currentconfig, parseutil, wrapperGenerator, wrapperTranslator]
 
 const version = "../genbondhon.nimble".staticRead.newStringStream.loadConfig.getSectionValue(
   "", "version"
