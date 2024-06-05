@@ -88,7 +88,9 @@ proc translateToCompatibleWrapperApi*(publicAST: seq[PNode]): string =
 
 proc generateWrapperFile*(
     wrappedApis: string, bindingDir: Path, wrapperName: string, srcFile: Path
-) =
+): Path =
+  ## Generates wrapper file in `bindingDir` with `wrapperName`.
+  ## Returns wrapper file path.
   let fileName = wrapperName.Path.addFileExt("nim")
   if not bindingDir.dirExists:
     try:
@@ -104,6 +106,7 @@ proc generateWrapperFile*(
     styledEcho fgYellow, "Wrapper File Content:"
     echo fileContent
   filePath.string.writeFile(fileContent)
+  return filePath
 
 proc generateBindableModule*(bindingDir: Path, wrapperName: string) =
   let moduleFileName = moduleName.Path.addFileExt("nim")

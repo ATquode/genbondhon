@@ -37,7 +37,7 @@ proc generateBindings(
   moduleName = file.Path.lastPathPart.splitFile.name.string
   let publicAST = parsePublicAPIs(file.Path)
   let wrappedApis = translateToCompatibleWrapperApi(publicAST)
-  wrappedApis.generateWrapperFile(bindingDir.Path, wrapperName, file.Path)
+  discard wrappedApis.generateWrapperFile(bindingDir.Path, wrapperName, file.Path)
   generateBindableModule(bindingDir.Path, wrapperName)
 
 when isMainModule:
