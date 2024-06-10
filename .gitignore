@@ -18,6 +18,11 @@ check
 check.exe
 .check.exe
 bindings/
+a.out
+a.exe
+genbondhon/tests/C/*
+!genbondhon/tests/C/testCode.c
+!genbondhon/tests/C/tCGen.nim
 
 ### Linux ###
 *~

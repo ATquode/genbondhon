@@ -47,7 +47,7 @@ func trimToSignature(node: PNode): PNode =
   node.sons = node.sons[0 .. endIndex]
   return node
 
-func filterPublicApis(node: PNode): seq[PNode] =
+func filterPublicApis*(node: PNode): seq[PNode] =
   ## filters public APIs from the given node,
   ## returns them as sequence of nodes.
   case node.kind

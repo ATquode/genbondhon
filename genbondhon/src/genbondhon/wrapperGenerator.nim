@@ -5,37 +5,33 @@
 import std/[dirs, paths, strformat, terminal]
 import currentconfig
 
-proc relativeModulePath(bindingDir: Path, srcFile: Path): string =
-  let relModFilePath = srcFile.relativePath(bindingDir, '/')
+proc relativeModulePath(): string =
+  let relModFilePath = origFile.relativePath(bindingDirPath, '/')
   let relModPath = relModFilePath.changeFileExt("")
   result = relModPath.string
 
-proc generateWrapperFileContent(
-    bindingDir: Path, srcFile: Path, wrappedApis: string
-): string =
-  let modulePath = bindingDir.relativeModulePath(srcFile)
+proc generateWrapperFileContent(wrappedApis: string): string =
+  let modulePath = relativeModulePath()
   result =
     &"""
 import {modulePath}
 
 {wrappedApis}"""
 
-proc generateWrapperFile*(
-    wrappedApis: string, bindingDir: Path, wrapperName: string, srcFile: Path
-): Path =
+proc generateWrapperFile*(wrappedApis: string, wrapperName: string): Path =
   ## Generates wrapper file in `bindingDir` with `wrapperName`.
   ## Returns wrapper file path.
   let fileName = wrapperName.Path.addFileExt("nim")
-  if not bindingDir.dirExists:
+  if not bindingDirPath.dirExists:
     try:
-      bindingDir.createDir()
+      bindingDirPath.createDir()
     except:
       let exceptionMsg = getCurrentExceptionMsg()
       styledEcho fgRed,
         "Error: Failed to create binding directory. Reason: ", exceptionMsg
       return
-  let filePath = bindingDir / fileName
-  let fileContent = bindingDir.generateWrapperFileContent(srcFile, wrappedApis)
+  let filePath = bindingDirPath / fileName
+  let fileContent = generateWrapperFileContent(wrappedApis)
   if showVerboseOutput:
     styledEcho fgYellow, "Wrapper File Content:"
     echo fileContent

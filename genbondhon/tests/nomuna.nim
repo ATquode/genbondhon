@@ -33,7 +33,7 @@ func constRetChar*(): char =
 func constRetStr*(): string =
   return "what"
 
-func add*(a: int, b: int): int =
+func addInt*(a: int, b: int): int =
   return a + b
 
 proc printCond*(a: bool) =
@@ -42,10 +42,10 @@ proc printCond*(a: bool) =
   else:
     echo "failure"
 
-func add*(a: float, b: float): float =
+func addDouble*(a: float, b: float): float =
   return a + b
 
-func add*(a: float32, b: float32): float64 =
+func addFloat*(a: float32, b: float32): float64 =
   return a + b
 
 proc takeChar*(a: char) =

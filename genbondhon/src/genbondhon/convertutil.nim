@@ -27,3 +27,11 @@ func convertNimAndCompatType*(origType: string, code: string): string =
     &"${code}"
   else:
     code
+
+const nimCompatToCTypeTbl* = {
+  "cint": "int",
+  "cfloat": "float",
+  "cdouble": "double",
+  "cchar": "char",
+  "cstring": "const char*",
+}.toTable
