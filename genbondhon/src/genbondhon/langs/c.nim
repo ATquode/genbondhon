@@ -103,6 +103,23 @@ method getReadMeContent(self: CLangGen): string =
       "$#.lib".format(moduleName)
     else:
       "lib$#.a".format(moduleName)
+  let dynamicLibName =
+    if defined(windows):
+      "$#.dll".format(moduleName)
+    elif defined(macosx):
+      "lib$#.dylib".format(moduleName)
+    else:
+      "lib$#.so".format(moduleName)
+  let testCompileCode = "testCode.c"
+  let wincpdll =
+    if defined(windows):
+      &"""
+Copy the dll to pwd
+
+    cp {string realTestDir.Path / dynamicLibName.Path} .
+"""
+    else:
+      ""
   let outBinExec = if defined(windows): ".\\a.exe" else: "./a.out"
   result =
     &"""
@@ -116,19 +133,28 @@ method getReadMeContent(self: CLangGen): string =
 
     nim c -d:release --noMain:on --app:lib --outdir:{self.langDir.string} {self.bindingModuleFile.string}
 
-#### Usage
+### Usage
 Copy the lib binary and header file to your project.
 
     cp {string self.langDir / self.headerFileName} {realTestDir.string}
 
-For static lib:
+#### For static lib:
 
     cp {string self.langDir / staticLibName.Path} {realTestDir.string}
 
-Include the header and compile your code & link to library. In the following example, `testCode.c` is the code to compile.
+Include the header and compile your code & link to library. In the following example, `{testCompileCode}` is the code to compile.
 
-    gcc {string realTestDir / "testCode.c".Path} {string realTestDir / staticLibName.Path}
+    gcc {string realTestDir / testCompileCode.Path} {string realTestDir / staticLibName.Path}
 
+#### For dynamic lib:
+
+    cp {string self.langDir / dynamicLibName.Path} {realTestDir.string}
+
+Include the header and compile your code & link to library. In the following example, `{testCompileCode}` is the code to compile.
+
+    gcc {string realTestDir / testCompileCode.Path} {string realTestDir / dynamicLibName.Path}
+
+{wincpdll}
 Then run & verify:
 
     {outBinExec}

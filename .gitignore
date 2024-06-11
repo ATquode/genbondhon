@@ -20,6 +20,7 @@ check.exe
 bindings/
 a.out
 a.exe
+nomuna.dll
 genbondhon/tests/C/*
 !genbondhon/tests/C/testCode.c
 !genbondhon/tests/C/tCGen.nim
