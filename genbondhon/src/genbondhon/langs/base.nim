@@ -19,7 +19,7 @@ method generateBinding*(self: BaseLangGen, bindingAST: seq[PNode]) {.base.} =
 method getReadMeContent*(self: BaseLangGen): string {.base.} =
   result =
     &"""
-### Compile
+### Build
 Compile `{self.bindingModuleFile.string}` instead of `{origFile.string}`."""
 
 method generateReadMe*(self: BaseLangGen) {.base.} =

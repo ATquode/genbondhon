@@ -124,7 +124,7 @@ Copy the dll to pwd
   result =
     &"""
 {common}
-### Build
+
 #### Static Library
 
     nim c -d:release --noMain:on --app:staticlib --outdir:{self.langDir.string} {self.bindingModuleFile.string}
