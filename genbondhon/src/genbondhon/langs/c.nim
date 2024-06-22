@@ -146,6 +146,8 @@ Include the header and compile your code & link to library. In the following exa
 
     gcc {string realTestDir / testCompileCode.Path} {string realTestDir / staticLibName.Path}
 
+Then [run & verify](#run--verify).
+
 #### For dynamic lib:
 
     cp {string self.langDir / dynamicLibName.Path} {realTestDir.string}
@@ -155,7 +157,9 @@ Include the header and compile your code & link to library. In the following exa
     gcc {string realTestDir / testCompileCode.Path} {string realTestDir / dynamicLibName.Path}
 
 {wincpdll}
-Then run & verify:
+Then [run & verify](#run--verify).
+
+##### Run & verify:
 
     {outBinExec}
 """
