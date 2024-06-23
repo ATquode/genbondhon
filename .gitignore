@@ -88,6 +88,7 @@ megatest.nim
 ### VisualStudioCode ###
 .vscode/*
 !.vscode/settings.json
+!.vscode/settings.json.license
 !.vscode/tasks.json
 !.vscode/launch.json
 !.vscode/extensions.json
