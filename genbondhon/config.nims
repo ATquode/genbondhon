@@ -30,3 +30,6 @@ task test, "run tests":
       exec execTest
   else:
     exec execTest
+
+task clean, "clean artifacts":
+  exec "git clean -fdX"
