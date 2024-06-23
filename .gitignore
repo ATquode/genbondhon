@@ -23,7 +23,8 @@ a.exe
 nomuna.dll
 genbondhon/tests/C/*
 !genbondhon/tests/C/testCode.c
-!genbondhon/tests/C/tCGen.nim
+!genbondhon/tests/C/tCGenStatic.nim
+!genbondhon/tests/C/tCGenDynamic.nim
 
 ### Linux ###
 *~
@@ -88,6 +89,7 @@ megatest.nim
 ### VisualStudioCode ###
 .vscode/*
 !.vscode/settings.json
+!.vscode/settings.json.license
 !.vscode/tasks.json
 !.vscode/launch.json
 !.vscode/extensions.json
