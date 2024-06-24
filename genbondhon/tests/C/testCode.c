@@ -25,9 +25,9 @@ int main() {
     printCond(f == 8);
     printCond(f == 7);
     double g = addDouble(5.00, 3.00);
-    printf("%lf", g);
+    printf("%lf\n", g);
     double h = addFloat(5.0, 3.0);
-    printf("%lf", h);
+    printf("%lf\n", h);
     char i = 'a';
     takeChar(i);
     printStr("nim");
