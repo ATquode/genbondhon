@@ -3,10 +3,16 @@
 // SPDX-License-Identifier: MIT
 
 #include <stdio.h>
+#ifdef __WIN32__
+#include <windows.h>
+#endif /* __WIN32__ */
 
 #include "nomuna.h"
 
 int main() {
+#ifdef __WIN32__
+    SetConsoleOutputCP(CP_UTF8);
+#endif /* __WIN32__ */
     NimMain();
     noop();
     extraNoOp();
