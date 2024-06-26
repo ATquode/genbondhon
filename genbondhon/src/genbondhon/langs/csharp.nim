@@ -109,6 +109,14 @@ Copy the wrapper file and lib binary to your project.
 
     cp {string self.langDir / self.wrapperFileName} {realTestDir.string}
     cp {string self.langDir / self.dllName.Path} {realTestDir.string}
+
+In Solution Explorer, right click on Project File > Add > Existing Item > Change filter and select the Dll.
+
+Select the Dll file in Solution Explorer, Change Settings of Copy to Output Directory to Copy If Newer.
+
+Add the wrapper file as an existing item to the project.
+
+Use the wrapper file in your code and call wrapper APIs.
 """
 
 method generateBinding*(self: CSharpLangGen, bindingAST: seq[PNode]) =
