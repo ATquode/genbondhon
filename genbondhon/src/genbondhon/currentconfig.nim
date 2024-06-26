@@ -7,6 +7,7 @@ import compiler/options
 
 const testDirPath* = "genbondhon/tests".Path
 var showVerboseOutput* = false
+var shouldUseVCCStr* = true
 var origFile*: Path
 var moduleName* = ""
 var bindingDirPath*: Path

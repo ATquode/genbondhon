@@ -12,10 +12,19 @@ proc relativeModulePath(): string =
 
 proc generateWrapperFileContent(wrappedApis: string): string =
   let modulePath = relativeModulePath()
+  let vccCondImport =
+    if shouldUseVCCStr:
+      &"""
+
+when defined(vcc):
+  proc CoTaskMemAlloc(cb: int): cstring {{.cdecl, dynlib: "ole32.dll", importc.}}
+"""
+    else:
+      ""
   result =
     &"""
 import {modulePath}
-
+{vccCondImport}
 {wrappedApis}"""
 
 proc generateWrapperFile*(wrappedApis: string, wrapperName: string): Path =

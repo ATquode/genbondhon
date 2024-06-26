@@ -4,12 +4,12 @@
 
 import std/[paths, terminal]
 import compiler/[ast, astalgo, idents, parser]
-import langs/[base, c]
+import langs/[base, c, csharp]
 import currentconfig, parseutil
 
 proc getLangGens(bindingDir: Path): seq[BaseLangGen] =
-  result = newSeq[BaseLangGen]()
   result.add newCLangGen(bindingDir)
+  result.add newCSharpLangGen(bindingDir)
 
 proc generateNimMainNode(): PNode =
   let nimMain = "proc NimMain*()"

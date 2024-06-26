@@ -37,11 +37,21 @@ proc translateProc(node: PNode): string =
     else:
       &""": {retType.replaceType}"""
   let procCall = &"""{moduleName}.{procName}({callableParamList.join(", ")})"""
-  let retBody =
+  var retBody =
     if retType == "":
       procCall
     else:
       &"return {procCall.convertType(retType)}"
+  if shouldUseVCCStr and retType == "string":
+    retBody =
+      &"""when defined(vcc):
+    let nimstr = {procCall}
+    let cstr = CoTaskMemAlloc(nimstr.len + 1)
+    {{.emit: ["strcpy(cstr, ", nimstr.cstring, ");"].}}
+    return cstr
+  else:
+    {retBody}
+"""
   result =
     &"""
 proc {procName}*({trParamList.join(", ")}){retTypePart} {{.raises:[], exportc, cdecl, dynlib.}} =
