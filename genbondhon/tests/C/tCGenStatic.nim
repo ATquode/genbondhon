@@ -15,8 +15,8 @@ what
 8
 success
 failure
-8.000000
-8.000000
+8.080000
+8.800000
 a
 nim
 hello ñíℳ'''

@@ -30,9 +30,9 @@ int main() {
     printf("%d\n", f);
     printCond(f == 8);
     printCond(f == 7);
-    double g = addDouble(5.00, 3.00);
+    double g = addDouble(5.03, 3.05);
     printf("%lf\n", g);
-    double h = addFloat(5.0, 3.0);
+    double h = addFloat(5.3, 3.5);
     printf("%lf\n", h);
     char i = 'a';
     takeChar(i);

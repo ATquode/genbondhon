@@ -2,7 +2,26 @@
 #
 # SPDX-License-Identifier: MIT
 
-#!fmt: offdiscard """  output: '''No Operationextra: No Op.212.300000awhat8successfailure8.0000008.000000animhello ñíℳ'''"""#!fmt: on
+#!fmt: off
+discard """
+  output: '''
+No Operation
+extra: No Op.
+2
+1
+2.300000
+a
+what
+8
+success
+failure
+8.080000
+8.800000
+a
+nim
+hello ñíℳ'''
+"""
+#!fmt: on
 
 import std/strutils
 import ../common
