@@ -25,6 +25,7 @@ genbondhon/tests/C/*
 !genbondhon/tests/C/testCode.c
 !genbondhon/tests/C/tCGenStatic.nim
 !genbondhon/tests/C/tCGenDynamic.nim
+genbondhon/tests/C#/nomuna.cs
 
 ### Linux ###
 *~

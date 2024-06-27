@@ -35,3 +35,12 @@ const nimCompatToCTypeTbl* = {
   "cchar": "char",
   "cstring": "const char*",
 }.toTable
+
+const nimCompatToCSharpTypeTbl* = {
+  "cint": "int",
+  "cfloat": "float",
+  "cdouble": "double",
+  "cchar": "char",
+  "cstring": "string",
+  "bool": "bool",
+}.toTable

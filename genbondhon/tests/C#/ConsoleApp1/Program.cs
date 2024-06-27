@@ -1,0 +1,35 @@
+// SPDX-FileCopyrightText: 2024 Rifat Hasan <atunutemp1@gmail.com>
+//
+// SPDX-License-Identifier: MIT
+
+// See https://aka.ms/new-console-template for more information
+using NomunaLib;
+using System.Text;
+
+Console.OutputEncoding = Encoding.UTF8;
+Console.WriteLine("Hello, World!");
+Nomuna.NimMain();
+Nomuna.Noop();
+Nomuna.ExtraNoOp();
+int a = Nomuna.ConstRet();
+Console.WriteLine(a);
+bool b = Nomuna.ConstRetBool();
+Console.WriteLine(b);
+double c = Nomuna.ConstRetFloat();
+Console.WriteLine(c);
+char d = Nomuna.ConstRetChar();
+Console.WriteLine(d);
+string e = Nomuna.ConstRetStr();
+Console.WriteLine(e);
+int f = Nomuna.AddInt(5, 3);
+Console.WriteLine(f);
+Nomuna.PrintCond(f == 8);
+Nomuna.PrintCond(f == 9);
+double g = Nomuna.AddDouble(5.03, 3.05);
+Console.WriteLine(g);
+double h = Nomuna.AddFloat(5.3f, 3.5f);
+Console.WriteLine(h);
+Nomuna.TakeChar('a');
+Nomuna.PrintStr("nim");
+Nomuna.PrintStr("hello ñíℳ");
+
