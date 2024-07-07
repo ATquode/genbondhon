@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-﻿using App1.Activation;
+using App1.Activation;
 using App1.Contracts.Services;
 using App1.Core.Contracts.Services;
 using App1.Core.Services;

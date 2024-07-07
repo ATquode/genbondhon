@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-﻿namespace App1.Activation;
+namespace App1.Activation;
 
 // Extend this class to implement new ActivationHandlers. See DefaultActivationHandler for an example.
 // https://github.com/microsoft/TemplateStudio/blob/main/docs/WinUI/activation.md

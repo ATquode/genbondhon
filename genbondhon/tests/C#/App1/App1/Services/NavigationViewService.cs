@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-﻿using System.Diagnostics.CodeAnalysis;
+using System.Diagnostics.CodeAnalysis;
 using App1.Contracts.Services;
 using App1.Helpers;
 using App1.ViewModels;

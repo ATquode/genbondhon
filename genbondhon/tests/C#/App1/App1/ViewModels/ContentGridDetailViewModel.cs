@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-﻿using App1.Contracts.ViewModels;
+using App1.Contracts.ViewModels;
 using App1.Core.Contracts.Services;
 using App1.Core.Models;
 using CommunityToolkit.Mvvm.ComponentModel;

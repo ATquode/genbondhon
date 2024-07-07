@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-﻿using App1.Helpers;
+using App1.Helpers;
 using Windows.UI.ViewManagement;
 
 namespace App1;

@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-﻿using App1.Core.Models;
+using App1.Core.Models;
 
 namespace App1.Core.Contracts.Services;
 

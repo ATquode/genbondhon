@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-﻿using Newtonsoft.Json;
+using Newtonsoft.Json;
 
 namespace App1.Core.Helpers;
 

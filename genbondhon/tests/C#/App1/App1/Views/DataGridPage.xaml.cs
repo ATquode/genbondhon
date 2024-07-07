@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-﻿using App1.ViewModels;
+using App1.ViewModels;
 using Microsoft.UI.Xaml.Controls;
 
 namespace App1.Views;

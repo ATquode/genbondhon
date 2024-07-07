@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-﻿namespace App1.Behaviors;
+namespace App1.Behaviors;
 
 public enum NavigationViewHeaderMode
 {

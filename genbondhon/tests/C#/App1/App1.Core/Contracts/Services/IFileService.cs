@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-﻿namespace App1.Core.Contracts.Services;
+namespace App1.Core.Contracts.Services;
 
 public interface IFileService
 {

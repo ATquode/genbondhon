@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-﻿using App1.Contracts.Services;
+using App1.Contracts.Services;
 using App1.ViewModels;
 using CommunityToolkit.WinUI.UI.Animations;
 using Microsoft.UI.Xaml.Controls;

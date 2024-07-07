@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-﻿namespace App1.Contracts.Services;
+namespace App1.Contracts.Services;
 
 public interface IPageService
 {

@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-﻿using System.Text;
+using System.Text;
 using App1.Core.Contracts.Services;
 using Newtonsoft.Json;
 

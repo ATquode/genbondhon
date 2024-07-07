@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-﻿namespace App1.Contracts.ViewModels;
+namespace App1.Contracts.ViewModels;
 
 public interface INavigationAware
 {

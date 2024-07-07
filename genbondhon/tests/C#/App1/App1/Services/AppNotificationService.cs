@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-﻿using System.Collections.Specialized;
+using System.Collections.Specialized;
 using System.Web;
 using App1.Contracts.Services;
 using App1.ViewModels;

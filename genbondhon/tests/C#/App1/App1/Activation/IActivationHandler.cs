@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-﻿namespace App1.Activation;
+namespace App1.Activation;
 
 public interface IActivationHandler
 {

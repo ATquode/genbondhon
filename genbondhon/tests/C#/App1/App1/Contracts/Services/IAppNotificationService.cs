@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-﻿using System.Collections.Specialized;
+using System.Collections.Specialized;
 
 namespace App1.Contracts.Services;
 

@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using Microsoft.UI.Xaml.Controls;
 
 namespace App1.Tests.MSTest;

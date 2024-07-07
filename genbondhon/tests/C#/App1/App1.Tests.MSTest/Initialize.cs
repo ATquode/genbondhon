@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-﻿using Microsoft.Windows.ApplicationModel.DynamicDependency;
+using Microsoft.Windows.ApplicationModel.DynamicDependency;
 
 [assembly: WinUITestTarget(typeof(App1.App))]
 

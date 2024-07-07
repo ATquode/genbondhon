@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-﻿namespace App1.Models;
+namespace App1.Models;
 
 public class LocalSettingsOptions
 {

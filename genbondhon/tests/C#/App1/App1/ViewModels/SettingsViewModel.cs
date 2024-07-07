@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-﻿using System.Reflection;
+using System.Reflection;
 using System.Windows.Input;
 using App1.Contracts.Services;
 using App1.Helpers;
