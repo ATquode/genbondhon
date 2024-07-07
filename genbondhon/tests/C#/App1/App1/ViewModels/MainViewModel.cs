@@ -27,6 +27,9 @@ public partial class MainViewModel : ObservableRecipient
     private string stringRetVal;
 
     [ObservableProperty]
+    private string unicodeStringRetVal;
+
+    [ObservableProperty]
     private string addInt1;
 
     [ObservableProperty]
@@ -53,6 +56,12 @@ public partial class MainViewModel : ObservableRecipient
     [ObservableProperty]
     private string addFloatRes;
 
+    [ObservableProperty]
+    private string sayHelloInput;
+
+    [ObservableProperty]
+    private string sayHelloOutput;
+
     public MainViewModel()
     {
         intRetVal = Nomuna.ConstRet();
@@ -60,7 +69,16 @@ public partial class MainViewModel : ObservableRecipient
         doubleRetVal = Nomuna.ConstRetFloat();
         charRetVal = Nomuna.ConstRetChar();
         stringRetVal = Nomuna.ConstRetStr();
-        addInt1 = addInt2 = addDouble1 = addDouble2 = addFloat1 = addFloat2 = "";
+        unicodeStringRetVal = Nomuna.ConstRetUnicodeStr();
+        addInt1 =
+            addInt2 =
+            addDouble1 =
+            addDouble2 =
+            addFloat1 =
+            addFloat2 =
+            sayHelloInput =
+            sayHelloOutput =
+                "";
         addIntRes = addDoubleRes = addFloatRes = "0";
         Nomuna.PrintCond(addIntRes == "0");
         Nomuna.PrintCond(addIntRes != "0");
@@ -98,5 +116,11 @@ public partial class MainViewModel : ObservableRecipient
         var num2 = float.TryParse(AddFloat2, out f) ? f : 0;
         var sum = Nomuna.AddFloat(num1, num2);
         AddFloatRes = sum.ToString();
+    }
+
+    [RelayCommand]
+    private void PerformSayHello()
+    {
+        SayHelloOutput = Nomuna.SayHello(SayHelloInput);
     }
 }

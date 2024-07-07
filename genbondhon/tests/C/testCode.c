@@ -26,6 +26,8 @@ int main() {
     printf("%c\n", d);
     const char* e = constRetStr();
     printf("%s\n", e);
+    const char* j = constRetUnicodeStr();
+    printf("%s\n", j);
     int f = addInt(5, 3);
     printf("%d\n", f);
     printCond(f == 8);
@@ -38,5 +40,7 @@ int main() {
     takeChar(i);
     printStr("nim");
     printStr("hello ñíℳ"); // Unicode
+    const char* k = sayHello("ñíℳ");
+    printf("%s\n", k);
     return 0;
 }

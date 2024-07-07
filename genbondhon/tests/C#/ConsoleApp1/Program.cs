@@ -20,6 +20,8 @@ char d = Nomuna.ConstRetChar();
 Console.WriteLine(d);
 string e = Nomuna.ConstRetStr();
 Console.WriteLine(e);
+string i = Nomuna.ConstRetUnicodeStr();
+Console.WriteLine(i);
 int f = Nomuna.AddInt(5, 3);
 Console.WriteLine(f);
 Nomuna.PrintCond(f == 8);
@@ -31,4 +33,5 @@ Console.WriteLine(h);
 Nomuna.TakeChar('a');
 Nomuna.PrintStr("nim");
 Nomuna.PrintStr("hello ñíℳ");
-
+string j = Nomuna.SayHello("ñíℳ");
+Console.WriteLine(j);

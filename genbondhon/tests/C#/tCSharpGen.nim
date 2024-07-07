@@ -12,6 +12,7 @@ True
 2.3
 a
 what
+প্রোগ্রামিং
 8
 success
 failure
@@ -20,6 +21,7 @@ failure
 a
 nim
 hello ñíℳ
+Héllø ñíℳ
 '''
 """
 #!fmt: on

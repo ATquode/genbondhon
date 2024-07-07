@@ -24,6 +24,7 @@
             <TextBlock Text="{x:Bind sys:String.Format('Double: {0}', ViewModel.DoubleRetVal)}" />
             <TextBlock Text="{x:Bind sys:String.Format('Char: {0}', ViewModel.CharRetVal)}" />
             <TextBlock Text="{x:Bind sys:String.Format('String: {0}', ViewModel.StringRetVal)}" />
+            <TextBlock Text="{x:Bind sys:String.Format('Unicode String: {0}', ViewModel.UnicodeStringRetVal)}" />
         </StackPanel>
 
         <StackPanel Grid.Column="1" Spacing="14">
@@ -87,7 +88,7 @@
             </StackPanel>
 
             <StackPanel Orientation="Horizontal" Spacing="10">
-                <TextBlock FontSize="20" Text="Float: " />
+                <TextBlock FontSize="20" Text="Float:" />
                 <NumberBox
                     x:Name="AddNumFloat1"
                     PlaceholderText="Number 1"
@@ -111,6 +112,19 @@
                 </NumberBox>
                 <TextBlock FontSize="20" Text="=" />
                 <TextBlock FontSize="20" Text="{x:Bind ViewModel.AddFloatRes, Mode=OneWay}" />
+            </StackPanel>
+
+            <StackPanel Orientation="Horizontal" Spacing="10">
+                <TextBlock FontSize="20" Text="String:" />
+                <TextBox PlaceholderText="Name" Text="{x:Bind ViewModel.SayHelloInput, Mode=TwoWay}">
+                    <interactivity:Interaction.Behaviors>
+                        <core:EventTriggerBehavior EventName="LostFocus">
+                            <core:InvokeCommandAction Command="{x:Bind ViewModel.PerformSayHelloCommand}" />
+                        </core:EventTriggerBehavior>
+                    </interactivity:Interaction.Behaviors>
+                </TextBox>
+                <TextBlock FontSize="20" Text=":" />
+                <TextBlock FontSize="20" Text="{x:Bind ViewModel.SayHelloOutput, Mode=OneWay}" />
             </StackPanel>
         </StackPanel>
     </Grid>

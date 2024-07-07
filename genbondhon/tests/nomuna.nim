@@ -33,6 +33,9 @@ func constRetChar*(): char =
 func constRetStr*(): string =
   return "what"
 
+func constRetUnicodeStr*(): string =
+  return "প্রোগ্রামিং"
+
 func addInt*(a: int, b: int): int =
   return a + b
 
@@ -53,3 +56,6 @@ proc takeChar*(a: char) =
 
 proc printStr*(a: string) =
   echo a
+
+func sayHello*(name: string): string =
+  "Héllø " & name

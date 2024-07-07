@@ -12,6 +12,7 @@ extra: No Op.
 2.300000
 a
 what
+প্রোগ্রামিং
 8
 success
 failure
@@ -19,7 +20,8 @@ failure
 8.800000
 a
 nim
-hello ñíℳ'''
+hello ñíℳ
+Héllø ñíℳ'''
 """
 #!fmt: on
 
