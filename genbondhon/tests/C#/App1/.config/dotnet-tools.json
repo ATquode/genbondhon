@@ -8,6 +8,13 @@
         "dotnet-csharpier"
       ],
       "rollForward": false
+    },
+    "xamlstyler.console": {
+      "version": "3.2404.2",
+      "commands": [
+        "xstyler"
+      ],
+      "rollForward": false
     }
   }
 }
