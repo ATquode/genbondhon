@@ -2,19 +2,25 @@
 #
 # SPDX-License-Identifier: MIT
 
-import std/[osproc, strutils]
+import std/[os, osproc, strutils]
 
-proc executeTask*(taskname: string, cmdstr: string = taskname, outputToStd = false) =
+proc executeTask*(
+    taskname: string, cmdstr: string = taskname, outputToStd = false, workingDir = "."
+) =
   let cmd =
     if defined(windows):
       "powershell.exe " & cmdstr
     else:
       cmdstr
+  let curPath = getCurrentDir()
+  if outputToStd:
+    setCurrentDir(workingDir)
   let code =
     if outputToStd:
       execCmd(cmd)
     else:
-      execCmdEx(cmd).exitCode
+      execCmdEx(cmd, workingDir = workingDir).exitCode
+  setCurrentDir(curPath)
   assert code == 0, "$# failed, code: $#".format(taskname, code)
 
 proc commonTasks*() =

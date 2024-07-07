@@ -30,7 +30,7 @@ proc testDynamicLib(moduleName: string, outBinExec: string) =
   commonTasks()
   # compile nim lib
   let libCompileCmd =
-    "nim c -d:release --noMain:on --app:lib --outdir:bindings/C bindings/nomuna.nim"
+    "nim c -d:release --noMain:on --app:lib --nimcache:cacheCDynamic --outdir:bindings/C bindings/nomuna.nim"
   executeTask("nim library compilation", libCompileCmd)
   # copy C header
   let copyHeaderCmd = "cp bindings/C/nomuna.h tests/C"

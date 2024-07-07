@@ -30,7 +30,7 @@ proc testStaticLib(moduleName: string, outBinExec: string) =
   commonTasks()
   # compile nim lib
   let libCompileCmd =
-    "nim c -d:release --noMain:on --app:staticlib --outdir:bindings/C bindings/nomuna.nim"
+    "nim c -d:release --noMain:on --app:staticlib --nimcache:cacheCStatic --outdir:bindings/C bindings/nomuna.nim"
   executeTask("nim library compilation", libCompileCmd)
   # copy C header
   let copyHeaderCmd = "cp bindings/C/nomuna.h tests/C"

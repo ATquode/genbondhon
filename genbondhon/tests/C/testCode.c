@@ -32,8 +32,8 @@ int main() {
     printCond(f == 7);
     double g = addDouble(5.03, 3.05);
     printf("%lf\n", g);
-    double h = addFloat(5.3, 3.5);
-    printf("%lf\n", h);
+    float h = addFloat(5.3, 3.5);
+    printf("%f\n", h);
     char i = 'a';
     takeChar(i);
     printStr("nim");

@@ -7,7 +7,6 @@ using NomunaLib;
 using System.Text;
 
 Console.OutputEncoding = Encoding.UTF8;
-Console.WriteLine("Hello, World!");
 Nomuna.NimMain();
 Nomuna.Noop();
 Nomuna.ExtraNoOp();
@@ -27,7 +26,7 @@ Nomuna.PrintCond(f == 8);
 Nomuna.PrintCond(f == 9);
 double g = Nomuna.AddDouble(5.03, 3.05);
 Console.WriteLine(g);
-double h = Nomuna.AddFloat(5.3f, 3.5f);
+float h = Nomuna.AddFloat(5.3f, 3.5f);
 Console.WriteLine(h);
 Nomuna.TakeChar('a');
 Nomuna.PrintStr("nim");

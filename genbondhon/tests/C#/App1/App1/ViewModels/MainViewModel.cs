@@ -97,7 +97,6 @@ public partial class MainViewModel : ObservableRecipient
         var num1 = float.TryParse(AddFloat1, out f) ? f : 0;
         var num2 = float.TryParse(AddFloat2, out f) ? f : 0;
         var sum = Nomuna.AddFloat(num1, num2);
-        sum = Math.Round(sum, 2);
         AddFloatRes = sum.ToString();
     }
 }

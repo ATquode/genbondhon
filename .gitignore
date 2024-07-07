@@ -21,11 +21,13 @@ bindings/
 a.out
 a.exe
 nomuna.dll
+genbondhon/cache*
 genbondhon/tests/C/*
 !genbondhon/tests/C/testCode.c
 !genbondhon/tests/C/tCGenStatic.nim
 !genbondhon/tests/C/tCGenDynamic.nim
 genbondhon/tests/C#/nomuna.cs
+genbondhon/tests/C#/tCSharpGen.exe
 
 ### Linux ###
 *~

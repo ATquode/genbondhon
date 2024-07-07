@@ -45,7 +45,7 @@ proc printCond*(a: bool) =
 func addDouble*(a: float, b: float): float =
   return a + b
 
-func addFloat*(a: float32, b: float32): float64 =
+func addFloat*(a: float32, b: float32): float32 =
   return a + b
 
 proc takeChar*(a: char) =
