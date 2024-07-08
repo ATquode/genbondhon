@@ -23,6 +23,7 @@ nim
 hello ñíℳ
 Héllø ñíℳ
 '''
+  disabled: unix
 """
 #!fmt: on
 
@@ -48,8 +49,6 @@ proc testConsoleApp(moduleName: string) =
   )
 
 when isMainModule:
-  if not defined(windows):
-    quit(0)
   let moduleName = "nomuna"
 
   testConsoleApp(moduleName)
