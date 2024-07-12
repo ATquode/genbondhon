@@ -20,8 +20,8 @@ proc translateProc(node: PNode): string =
   let formalParamNode = paramNode.get()
   var trParamList, callableParamList = newSeq[string]()
   for i in 1 ..< formalParamNode.safeLen:
-    let paramName = formalParamNode[i][0].ident.s
-    let paramType = formalParamNode[i][1].ident.s
+    let paramName = formalParamNode[i].paramName
+    let paramType = formalParamNode[i].paramType
     let trParam = &"{paramName}: {paramType.replaceType}"
     trParamList.add(trParam)
     let callableParam = &"{paramName.convertType(paramType.replaceType)}"
@@ -36,16 +36,16 @@ proc translateProc(node: PNode): string =
       ""
     else:
       &""": {retType.replaceType}"""
-  let procCall = &"""{moduleName}.{procName}({callableParamList.join(", ")})"""
+  let procCallStmt = &"""{moduleName}.{procName}({callableParamList.join(", ")})"""
   var retBody =
     if retType == "":
-      procCall
+      procCallStmt
     else:
-      &"return {procCall.convertType(retType)}"
+      &"return {procCallStmt.convertType(retType)}"
   if shouldUseVCCStr and retType == "string":
     retBody =
       &"""when defined(vcc):
-    let nimstr = {procCall}
+    let nimstr = {procCallStmt}
     let cstr = CoTaskMemAlloc(nimstr.len + 1)
     {{.emit: ["strcpy(cstr, ", nimstr.cstring, ");"].}}
     return cstr

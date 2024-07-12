@@ -27,6 +27,8 @@ method generateReadMe*(self: BaseLangGen) {.base.} =
   let readMeFile = self.langDir / "ReadMe.md".Path
   readMeFile.string.writeFile(content)
 
-proc ensureDir*(self: BaseLangGen) =
+proc ensureDir*(self: BaseLangGen, extraPath: Path = "".Path) =
   if not self.langDir.dirExists:
     self.langDir.createDir()
+  if extraPath.string != "" and not extraPath.dirExists:
+    extraPath.createDir()

@@ -17,3 +17,13 @@ func procParamNode*(node: PNode): Option[PNode] =
     if node[i].kind == nkFormalParams:
       return some(node[i])
   return none(PNode)
+
+func paramName*(node: PNode): string =
+  ## get paramName from `procParamNode`
+  ## Note: node needs to be formal param node type
+  node[0].ident.s
+
+func paramType*(node: PNode): string =
+  ## get paramType from `procParamNode`
+  ## Note: node needs to be formal param node type
+  node[1].ident.s

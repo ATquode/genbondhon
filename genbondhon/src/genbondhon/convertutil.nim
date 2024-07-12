@@ -44,3 +44,27 @@ const nimCompatToCSharpTypeTbl* = {
   "cstring": "string",
   "bool": "bool",
 }.toTable
+
+const nimCompatAndSwiftTypeTbl* = {
+  "cint": "Int",
+  "cfloat": "Float",
+  "cdouble": "Double",
+  "cchar": "Character",
+  "cstring": "String",
+  "bool": "Bool",
+  "Int": "CInt",
+  "Float": "CFloat",
+  "Double": "CDouble",
+  "Char": "CChar",
+}.toTable
+
+func convertNimAndSwiftType*(origType: string, code: string): string =
+  case origType
+  of "cint", "cfloat", "cdouble", "bool", "Int", "Float", "Double", "Char":
+    &"{nimCompatAndSwiftTypeTbl[origType]}({code})"
+  of "cchar":
+    &"String(UnicodeScalar(UInt8({code})))"
+  of "cstring":
+    &"String(cstring: {code})"
+  else:
+    code

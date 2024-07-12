@@ -32,8 +32,8 @@ func translateProc(node: PNode, dllName: string): string =
   if paramNode.isSome:
     let formalParamNode = paramNode.get()
     for i in 1 ..< formalParamNode.safeLen:
-      let paramName = formalParamNode[i][0].ident.s
-      let paramType = formalParamNode[i][1].ident.s
+      let paramName = formalParamNode[i].paramName
+      let paramType = formalParamNode[i].paramType
       var trParam = &"{paramType.replaceType} {paramName}"
       if paramType.replaceType == "string":
         trParam = &"[MarshalAs(UnmanagedType.LPUTF8Str)] {trParam}"

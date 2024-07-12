@@ -29,8 +29,8 @@ func translateProc(node: PNode): string =
   if paramNode.isSome:
     let formalParamNode = paramNode.get()
     for i in 1 ..< formalParamNode.safeLen:
-      let paramName = formalParamNode[i][0].ident.s
-      let paramType = formalParamNode[i][1].ident.s
+      let paramName = formalParamNode[i].paramName
+      let paramType = formalParamNode[i].paramType
       let trParam = &"{paramType.replaceType} {paramName}"
       trParamList.add(trParam)
     if formalParamNode[0].kind != nkEmpty:
