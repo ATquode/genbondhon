@@ -129,7 +129,9 @@ proc generateSwiftWrapper(self: SwiftLangGen, bindingAST: seq[PNode]) =
 method getReadMeContent(self: SwiftLangGen): string =
   let common = procCall self.BaseLangGen.getReadMeContent()
   let bindingMacosPath = self.langDir / "macOS".Path
-  let realTestDirMac = testDirPath / "Swift".Path / "macOS".Path
+  let realTestDir = testDirPath / "Swift".Path
+  let realTestDirMac = realTestDir / "macOS".Path
+  let testDirSwiftModule = realTestDirMac / self.cModuleName.Path
   let staticLibName = "lib$#.a".format(moduleName).Path
   result =
     &"""
@@ -138,24 +140,25 @@ method getReadMeContent(self: SwiftLangGen): string =
 ### Note
 This generated module can be used in both macOS and iOS.
 
-#### Static Library
 ### macOS
+#### Static Library
 
     nim c -d:release --noMain:on --app:staticlib --outdir:{bindingMacosPath.string} {self.bindingModuleFile.string}
 
 #### Dynamic Library
 Not supported
 
-### Usage
+#### Usage
 Copy the module and lib binary to your project. Put the lib binary inside module directory.
 
-    cp {self.swiftCModuleDir.string} {realTestDirMac.string}
-    cp {string bindingMacosPath / staticLibName} {realTestDirMac.string}
+    mkdir {realTestDirMac.string}
+    cp {self.swiftCModuleDir.string} {testDirSwiftModule.string}
+    cp {string bindingMacosPath / staticLibName} {testDirSwiftModule.string}
 
 Then see [Setup Xcode](#setup-xcode)
 
 ### Setup Xcode
-In Xcode, add the module directory's parent to `Swift Compiler - Search Paths` and `Import Paths`.
+In Xcode, add the module directory's parent to `Swift Compiler - Search Paths` > `Import Paths`.
 Do not include the module directory itself in the path.
 
 For example, let's say you have put the module directory in {string realTestDirMac / "CommandLineApplication1/CommandLineApplication1".Path / self.cModuleName.Path},

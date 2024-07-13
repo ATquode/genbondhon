@@ -55,16 +55,18 @@ const nimCompatAndSwiftTypeTbl* = {
   "Int": "CInt",
   "Float": "CFloat",
   "Double": "CDouble",
-  "Char": "CChar",
+  "Character": "CChar",
 }.toTable
 
 func convertNimAndSwiftType*(origType: string, code: string): string =
   case origType
-  of "cint", "cfloat", "cdouble", "bool", "Int", "Float", "Double", "Char":
+  of "cint", "cfloat", "cdouble", "bool", "Int", "Float", "Double":
     &"{nimCompatAndSwiftTypeTbl[origType]}({code})"
-  of "cchar":
-    &"String(UnicodeScalar(UInt8({code})))"
   of "cstring":
-    &"String(cstring: {code})"
+    &"String(cString: {code})"
+  of "cchar":
+    &"Character(UnicodeScalar(UInt8(bitPattern: {code})))"
+  of "Character":
+    &"""CChar(String({code})) ?? CChar("x")!"""
   else:
     code
