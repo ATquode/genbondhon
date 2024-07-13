@@ -152,7 +152,7 @@ Not supported
 Copy the module and lib binary to your project. Put the lib binary inside module directory.
 
     mkdir {realTestDirMac.string}
-    cp {self.swiftCModuleDir.string} {testDirSwiftModule.string}
+    cp -r {self.swiftCModuleDir.string} {testDirSwiftModule.string}
     cp {string bindingMacosPath / staticLibName} {testDirSwiftModule.string}
 
 Then see [Setup Xcode](#setup-xcode)
