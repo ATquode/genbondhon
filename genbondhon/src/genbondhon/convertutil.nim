@@ -67,6 +67,6 @@ func convertNimAndSwiftType*(origType: string, code: string): string =
   of "cchar":
     &"Character(UnicodeScalar(UInt8(bitPattern: {code})))"
   of "Character":
-    &"""CChar(String({code})) ?? CChar("x")!"""
+    &"String({code}).utf8CString[0]"
   else:
     code
