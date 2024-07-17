@@ -162,7 +162,7 @@ In Xcode, add the module directory's parent to `Swift Compiler - Search Paths` >
 Do not include the module directory itself in the path.
 
 For example, let's say you have put the module directory in {string realTestDirMac / "CommandLineApplication1/CommandLineApplication1".Path / self.cModuleName.Path},
-then you should add `$(PROJECT_DIR)/CommandLineApplication1` to the search path & import path.
+then you should add `$(PROJECT_DIR)/CommandLineApplication1` to the search path > import path.
 $(PROJECT_DIR) refers to the directory with .xcproj file.
 So the path will be {string realTestDirMac / "CommandLineApplication1/CommandLineApplication1".Path}, the parent directory of {self.cModuleName}.
 
