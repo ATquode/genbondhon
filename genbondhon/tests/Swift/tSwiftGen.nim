@@ -1,0 +1,69 @@
+# SPDX-FileCopyrightText: 2024 Rifat Hasan <atunutemp1@gmail.com>
+#
+# SPDX-License-Identifier: MIT
+
+#!fmt: off
+discard """
+  output:'''
+No Operation
+extra: No Op.
+2
+true
+2.3
+a
+what
+প্রোগ্রামিং
+8
+success
+failure
+8.08
+8.8
+a
+nim
+hello ñíℳ
+Héllø ñíℳ
+'''
+  disabled: windows
+  disabled: linux
+"""
+#!fmt: on
+
+import std/[osproc, strutils]
+import ../common
+
+proc getBuildDir(projectPath: string): string =
+  let targetBuildDirCmd =
+    "xcodebuild -project CommandLineTool1.xcodeproj/ -showBuildSettings | grep TARGET_BUILD_DIR"
+  let (grepOutput, exitCode) = execCmdEx(targetBuildDirCmd, workingDir = projectPath)
+  assert exitCode == 0, "Finding build Dir Failed, code: $#".format(exitCode)
+  let releaseDir = grepOutput.split('=')[2].strip
+  let debugDir = releaseDir[0 ..< (releaseDir.len - "Release".len)] & "Debug"
+  return debugDir
+
+proc testCommandLineTool(moduleName: string) =
+  commonTasks()
+  # compile nim lib
+  let libCompileCmd =
+    "nim c -d:release --noMain:on --app:staticlib --nimcache:cacheSwift --outdir:bindings/Swift/macOS bindings/nomuna.nim"
+  executeTask("nim library compilation", libCompileCmd)
+  # copy Swift wrapper
+  let commandLineToolDir = "tests/Swift/macOS/CommandLineTool1"
+  let copyCModuleCmd = "cp -r bindings/Swift/CNomuna " & commandLineToolDir & "/CNomuna"
+  executeTask("Copy CModule", copyCModuleCmd)
+  # copy static lib
+  let copyLibCmd =
+    "cp bindings/Swift/macOS/libnomuna.a " & commandLineToolDir & "/CNomuna"
+  executeTask("Copy lib binary", copyLibCmd)
+  # build project
+  let xcodeBuildCmd =
+    "xcodebuild -project CommandLineTool1.xcodeproj -scheme CommandLineTool1"
+  executeTask("Build Project", xcodeBuildCmd, workingDir = commandLineToolDir)
+  # run project
+  let productDir = getBuildDir(commandLineToolDir)
+  let runCmd = productDir & "/CommandLineTool1"
+  executeTask("Run Project", runCmd, outputToStd = true)
+
+when isMainModule:
+  let moduleName = "nomuna"
+
+  testCommandLineTool(moduleName)
