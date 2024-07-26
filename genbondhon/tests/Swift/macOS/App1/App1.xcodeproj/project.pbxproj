@@ -148,8 +148,7 @@
 				F598CBC42C4C2DA400993581 /* nomuna.swift */,
 				F598CBC52C4C2DA400993581 /* module.modulemap */,
 			);
-			name = CNomuna;
-			path = ../CNomuna;
+			path = CNomuna;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */

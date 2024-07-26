@@ -14,14 +14,14 @@ import SwiftUI
 @main
 struct App1App: App {
     var contentViewHandler: ContentViewHandler
-    
+
     init() {
         NimMain()
         noop()
         extraNoOp()
         contentViewHandler = ContentViewHandler()
     }
-    
+
     var body: some Scene {
         WindowGroup {
             ContentView(handler: contentViewHandler)

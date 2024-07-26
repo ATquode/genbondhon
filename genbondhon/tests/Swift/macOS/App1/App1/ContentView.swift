@@ -13,11 +13,11 @@ import SwiftUI
 
 struct ContentView: View {
     @ObservedObject var handler: ContentViewHandler
-    
+
     init(handler: ContentViewHandler? = nil) {
         self.handler = handler ?? ContentViewHandler()
     }
-    
+
     var body: some View {
         Grid(horizontalSpacing: 100) {
             GridRow(alignment: .top) {
@@ -25,7 +25,7 @@ struct ContentView: View {
                     Text("Constant Returns")
                         .font(.largeTitle)
                         .padding([.bottom], 10)
-                    
+
                     Text("Int: \(constRet())")
                     Text("Bool: \(String(constRetBool()))")
                     Text("Double: \(constRetFloat())")
@@ -33,11 +33,11 @@ struct ContentView: View {
                     Text("String: \(constRetStr())")
                     Text("Unicode String: \(constRetUnicodeStr())")
                 }
-                
+
                 VStack(alignment: .leading) {
                     Text("Add")
                         .font(.largeTitle)
-                    
+
                     HStack {
                         Text("Int:")
                             .frame(width: 50, alignment: .leading)
@@ -52,22 +52,30 @@ struct ContentView: View {
                         Text(String(handler.addIntRes))
                             .frame(width: 100, alignment: .leading)
                     }
-                    
+
                     HStack {
                         Text("Double:")
                             .frame(width: 50, alignment: .leading)
-                        TextField("Number 1", value: $handler.addDouble1, format: FloatingPointFormatStyle<Double>.number)
-                            .frame(width: 70)
+                        TextField(
+                            "Number 1",
+                            value: $handler.addDouble1,
+                            format: FloatingPointFormatStyle<Double>.number
+                        )
+                        .frame(width: 70)
                         Text("+")
                             .frame(width: 10)
-                        TextField("Number 2", value: $handler.addDouble2, format: FloatingPointFormatStyle<Double>.number)
-                            .frame(width: 70)
+                        TextField(
+                            "Number 2",
+                            value: $handler.addDouble2,
+                            format: FloatingPointFormatStyle<Double>.number
+                        )
+                        .frame(width: 70)
                         Text("=")
                             .frame(width: 10)
                         Text(String(handler.addDoubleRes))
                             .frame(width: 100, alignment: .leading)
                     }
-                    
+
                     HStack {
                         Text("Float:")
                             .frame(width: 50, alignment: .leading)
@@ -82,7 +90,7 @@ struct ContentView: View {
                         Text(String(handler.addFloatRes))
                             .frame(width: 100, alignment: .leading)
                     }
-                    
+
                     HStack {
                         Text("String:")
                             .frame(width: 50, alignment: .leading)

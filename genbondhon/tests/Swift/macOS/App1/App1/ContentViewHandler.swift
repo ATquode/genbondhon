@@ -19,29 +19,29 @@ class ContentViewHandler: ObservableObject {
     @Published var addFloat1: Float?
     @Published var addFloat2: Float?
     @Published var sayHelloInput: String
-    
+
     var addIntRes: Int {
         let num1 = addInt1 ?? 0
         let num2 = addInt2 ?? 0
         return addInt(a: num1, b: num2)
     }
-    
+
     var addDoubleRes: Double {
         let num1 = addDouble1 ?? 0
         let num2 = addDouble2 ?? 0
         return addDouble(a: num1, b: num2)
     }
-    
+
     var addFloatRes: Float {
         let num1 = addFloat1 ?? 0
         let num2 = addFloat2 ?? 0
         return addFloat(a: num1, b: num2)
     }
-    
+
     var sayHelloOutput: String {
         return sayHello(name: sayHelloInput)
     }
-    
+
     init() {
         sayHelloInput = ""
         printCond(a: addIntRes == 0)
