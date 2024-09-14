@@ -48,11 +48,13 @@ proc testCommandLineTool(moduleName: string) =
   executeTask("nim library compilation", libCompileCmd)
   # copy Swift wrapper
   let commandLineToolDir = "tests/Swift/macOS/CommandLineTool1"
-  let copyCModuleCmd = "cp -r bindings/Swift/CNomuna " & commandLineToolDir & "/CommandLineTool1/CNomuna"
+  let copyCModuleCmd =
+    "cp -r bindings/Swift/CNomuna " & commandLineToolDir & "/CommandLineTool1/CNomuna"
   executeTask("Copy CModule", copyCModuleCmd)
   # copy static lib
   let copyLibCmd =
-    "cp bindings/Swift/macOS/libnomuna.a " & commandLineToolDir & "/CommandLineTool1/CNomuna"
+    "cp bindings/Swift/macOS/libnomuna.a " & commandLineToolDir &
+    "/CommandLineTool1/CNomuna"
   executeTask("Copy lib binary", copyLibCmd)
   # build project
   let xcodeBuildCmd =
