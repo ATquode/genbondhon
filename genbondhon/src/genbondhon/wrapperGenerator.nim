@@ -40,7 +40,13 @@ proc generateWrapperFile*(wrappedApis: string, wrapperName: string): Path =
         "Error: Failed to create binding directory. Reason: ", exceptionMsg
       return
   let filePath = bindingDirPath / fileName
-  let fileContent = generateWrapperFileContent(wrappedApis)
+  let nimMainStr = "proc NimMain*() {.raises:[], exportc, cdecl, dynlib, importc.}"
+  let wrapperApis =
+    &"""
+{nimMainStr}
+
+{wrappedApis}"""
+  let fileContent = generateWrapperFileContent(wrapperApis)
   if showVerboseOutput:
     styledEcho fgYellow, "Wrapper File Content:"
     echo fileContent

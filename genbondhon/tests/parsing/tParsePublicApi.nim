@@ -25,10 +25,13 @@ for i in 0 ..< expectedPublicProcs.len:
 let wrappedApis = publicApis.translateToCompatibleWrapperApi()
 let wrappedFile = wrappedApis.generateWrapperFile(wrappedFileName)
 let bindingApis = wrappedFile.parsePublicAPIs()
-assert bindingApis.len == publicApiCount
+assert bindingApis.len == publicApiCount + 1 # public APIs + NimMain()
 
-for i in 0 ..< expectedPublicProcs.len:
-  assert bindingApis[i].procName == expectedPublicProcs[i],
-    "$# doesn't match $#".format(bindingApis[i].procName, expectedPublicProcs[i])
+var expectedWrapperProcs = @["NimMain"]
+expectedWrapperProcs.add(expectedPublicProcs)
+
+for i in 0 ..< expectedWrapperProcs.len:
+  assert bindingApis[i].procName == expectedWrapperProcs[i],
+    "$# doesn't match $#".format(bindingApis[i].procName, expectedWrapperProcs[i])
 
 dirs.removeDir(bindingDirPath)
