@@ -4,11 +4,12 @@
 
 import std/[paths, terminal]
 import compiler/[ast, astalgo, idents, parser]
-import langs/[base, c, csharp, swift]
+import langs/[base, c, cpp, csharp, swift]
 import currentconfig, parseutil
 
 proc getLangGens(bindingDir: Path): seq[BaseLangGen] =
   result.add newCLangGen(bindingDir)
+  result.add newCppLangGen(bindingDir)
   result.add newCSharpLangGen(bindingDir)
   result.add newSwiftLangGen(bindingDir)
 

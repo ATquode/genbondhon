@@ -7,8 +7,8 @@ import compiler/ast
 import base
 import ../[convertutil, currentconfig, util]
 
-type CLangGen = ref object of BaseLangGen
-  headerFileName: Path
+type CLangGen* = ref object of BaseLangGen
+  headerFileName*: Path
 
 proc newCLangGen*(bindingDir: Path): CLangGen =
   ## `CLangGen` constructor
@@ -39,7 +39,7 @@ func translateProc(node: PNode): string =
     &"""
 {retType.replaceType} {funcName}({trParamList.join(", ")});"""
 
-func translateApi(api: PNode): string =
+func translateApi*(api: PNode): string =
   case api.kind
   of nkProcDef, nkFuncDef, nkMethodDef:
     result = translateProc(api)
@@ -85,9 +85,30 @@ proc generateCHeader(self: CLangGen, bindingAST: seq[PNode]) =
   self.ensureDir()
   headerFilePath.string.writeFile(content)
 
-method getReadMeContent(self: CLangGen): string =
+method realTestDir(self: CLangGen): Path {.base.} =
+  testDirPath / "C".Path
+
+method testCompileCode(self: CLangGen): string {.base.} =
+  "testCode.c"
+
+method staticLibBuildCmd(self: CLangGen): string {.base.} =
+  &"nim c -d:release --noMain:on --app:staticlib --outdir:{self.langDir.string} {self.bindingModuleFile.string}"
+
+method dynamicLibBuildCmd(self: CLangGen): string {.base.} =
+  &"nim c -d:release --noMain:on --app:lib --outdir:{self.langDir.string} {self.bindingModuleFile.string}"
+
+method compileTestCodeStaticLibCmd(
+    self: CLangGen, staticLibName: string
+): string {.base.} =
+  &"gcc {string self.realTestDir / self.testCompileCode.Path} {string self.realTestDir / staticLibName.Path}"
+
+method compileTestCodeDynamicLibCmd(
+    self: CLangGen, dynamicLibName: string
+): string {.base.} =
+  &"gcc {string self.realTestDir / self.testCompileCode.Path} {string self.realTestDir / dynamicLibName.Path}"
+
+method getReadMeContent*(self: CLangGen): string =
   let common = procCall self.BaseLangGen.getReadMeContent()
-  let realTestDir = testDirPath / "C".Path
   let staticLibName =
     if defined(windows):
       "$#.lib".format(moduleName)
@@ -100,13 +121,12 @@ method getReadMeContent(self: CLangGen): string =
       "lib$#.dylib".format(moduleName)
     else:
       "lib$#.so".format(moduleName)
-  let testCompileCode = "testCode.c"
   let wincpdll =
     if defined(windows):
       &"""
 Copy the dll to pwd
 
-    cp {string realTestDir.Path / dynamicLibName.Path} .
+    cp {string self.realTestDir / dynamicLibName.Path} .
 """
     else:
       ""
@@ -117,34 +137,34 @@ Copy the dll to pwd
 
 #### Static Library
 
-    nim c -d:release --noMain:on --app:staticlib --outdir:{self.langDir.string} {self.bindingModuleFile.string}
+    {self.staticLibBuildCmd}
 
 #### Dynamic Library
 
-    nim c -d:release --noMain:on --app:lib --outdir:{self.langDir.string} {self.bindingModuleFile.string}
+    {self.dynamicLibBuildCmd}
 
 ### Usage
 Copy the header file and lib binary to your project.
 
-    cp {string self.langDir / self.headerFileName} {realTestDir.string}
+    cp {string self.langDir / self.headerFileName} {self.realTestDir.string}
 
 #### For static lib:
 
-    cp {string self.langDir / staticLibName.Path} {realTestDir.string}
+    cp {string self.langDir / staticLibName.Path} {self.realTestDir.string}
 
-Include the header and compile your code & link to library. In the following example, `{testCompileCode}` is the code to compile.
+Include the header and compile your code & link to library. In the following example, `{self.testCompileCode}` is the code to compile.
 
-    gcc {string realTestDir / testCompileCode.Path} {string realTestDir / staticLibName.Path}
+    {self.compileTestCodeStaticLibCmd(staticLibName)}
 
 Then [run & verify](#run--verify).
 
 #### For dynamic lib:
 
-    cp {string self.langDir / dynamicLibName.Path} {realTestDir.string}
+    cp {string self.langDir / dynamicLibName.Path} {self.realTestDir.string}
 
-Include the header and compile your code & link to library. In the following example, `{testCompileCode}` is the code to compile.
+Include the header and compile your code & link to library. In the following example, `{self.testCompileCode}` is the code to compile.
 
-    gcc {string realTestDir / testCompileCode.Path} {string realTestDir / dynamicLibName.Path}
+    {self.compileTestCodeDynamicLibCmd(dynamicLibName)}
 
 {wincpdll}
 Then [run & verify](#run--verify).
