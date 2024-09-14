@@ -50,8 +50,7 @@ proc translateProc(node: PNode): string =
     {{.emit: ["strcpy(cstr, ", nimstr.cstring, ");"].}}
     return cstr
   else:
-    {retBody}
-"""
+    {retBody}"""
   result =
     &"""
 proc {procName}*({trParamList.join(", ")}){retTypePart} {{.raises:[], exportc, cdecl, dynlib.}} =
