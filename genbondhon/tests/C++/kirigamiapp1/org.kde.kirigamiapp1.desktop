@@ -1,0 +1,13 @@
+# SPDX-License-Identifier: CC0-1.0
+# SPDX-FileCopyrightText: 2024 Rifat Hasan <atunutemp1@gmail.com>
+[Desktop Entry]
+Name=KirigamiApp1
+Comment=KirigamiApp1 Kirigami Application
+Version=1.0
+Exec=kirigamiapp1
+Icon=applications-development
+Type=Application
+Terminal=false
+# Add an actual main category here (and possibly applicable additional ones)
+#   https://specifications.freedesktop.org/menu-spec/latest/apa.html#main-category-registry
+Categories=Qt;KDE;

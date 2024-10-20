@@ -169,6 +169,13 @@ Include the header and compile your code & link to library. In the following exa
 {wincpdll}
 Then [run & verify](#run--verify).
 
+#### Usage with CMake
+Update your CMakeLists.txt appropriately (don't replace existing `add_executable` or `target_link_libraries`):
+
+    target_link_libraries(${{PROJECT_NAME}} ${{CMAKE_CURRENT_LIST_DIR}}/{staticLibName})
+
+    add_executable(${{PROJECT_NAME}} {self.headerFileName.string})
+
 ##### Run & verify:
 
     {outBinExec}
