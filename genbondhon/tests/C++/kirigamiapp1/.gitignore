@@ -7,9 +7,9 @@
 
 ### Project ###
 build/
-.clang-format
 libnomuna.a
 nomuna.hpp
+*.bak
 
 ### Qt ###
 # C++ objects and libs
