@@ -3,8 +3,8 @@
 
 #pragma once
 
-#include <QQmlEngine>
 #include <AbstractKirigamiApplication>
+#include <QQmlEngine>
 
 #include "datamanager.h"
 

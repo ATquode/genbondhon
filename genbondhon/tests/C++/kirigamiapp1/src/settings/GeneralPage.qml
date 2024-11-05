@@ -1,9 +1,7 @@
 // SPDX-FileCopyrightText: 2024 Rifat Hasan <atunutemp1@gmail.com>
 // SPDX-License-Identifier: GPL-2.0-or-later
+pragma ComponentBehavior
 
-pragma ComponentBehavior: Bound
-
-import QtQuick
 import org.kde.kirigamiaddons.formcard as FormCard
 
 FormCard.FormCardPage {

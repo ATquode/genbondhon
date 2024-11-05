@@ -8,40 +8,38 @@ import org.kde.kirigami as Kirigami
 import org.kde.kirigamiaddons.formcard as FormCard
 
 FormCard.FormCardPage {
-	id: incrementerPage
+    id: incrementerPage
 
-	title: i18nc("@title", "KirigamiApp1")
+    actions: [incrementCounterAction]
+    title: i18nc("@title", "KirigamiApp1")
 
-	actions: [incrementCounterAction]
+    Kirigami.Icon {
+        Layout.alignment: Qt.AlignHCenter
+        Layout.topMargin: Kirigami.Units.largeSpacing * 4
+        implicitHeight: Math.round(Kirigami.Units.iconSizes.huge * 1.5)
+        implicitWidth: Math.round(Kirigami.Units.iconSizes.huge * 1.5)
+        source: "applications-development"
+    }
 
-	Kirigami.Icon {
-		source: "applications-development"
-		implicitWidth: Math.round(Kirigami.Units.iconSizes.huge * 1.5)
-		implicitHeight: Math.round(Kirigami.Units.iconSizes.huge * 1.5)
+    Kirigami.Heading {
+        Layout.fillWidth: true
+        Layout.topMargin: Kirigami.Units.largeSpacing
+        horizontalAlignment: Qt.AlignHCenter
+        text: i18nc("@title", "Welcome to KirigamiApp1") + '\n' + i18nc("@info:status", "Counter: %1", root.counter)
+    }
 
-		Layout.alignment: Qt.AlignHCenter
-		Layout.topMargin: Kirigami.Units.largeSpacing * 4
-	}
+    FormCard.FormCard {
+        Layout.topMargin: Kirigami.Units.largeSpacing * 4
 
-	Kirigami.Heading {
-		text: i18nc("@title", "Welcome to KirigamiApp1") + '\n' + i18nc("@info:status", "Counter: %1", root.counter)
-		horizontalAlignment: Qt.AlignHCenter
+        FormCard.FormButtonDelegate {
+            action: incrementCounterAction
+        }
 
-		Layout.topMargin: Kirigami.Units.largeSpacing
-		Layout.fillWidth: true
-	}
+        FormCard.FormDelegateSeparator {
+        }
 
-	FormCard.FormCard {
-		Layout.topMargin: Kirigami.Units.largeSpacing * 4
-
-		FormCard.FormButtonDelegate {
-			action: incrementCounterAction
-		}
-
-		FormCard.FormDelegateSeparator {}
-
-		FormCard.FormButtonDelegate {
-			action: aboutAction
-		}
-	}
+        FormCard.FormButtonDelegate {
+            action: aboutAction
+        }
+    }
 }

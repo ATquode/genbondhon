@@ -11,10 +11,10 @@ KirigamiSettings.ConfigurationView {
 
     modules: [
         KirigamiSettings.ConfigurationModule {
-            moduleId: "general"
-            text: i18nc("@action:button", "General")
             icon.name: "preferences-system-symbolic"
+            moduleId: "general"
             page: () => Qt.createComponent("org.kde.kirigamiapp1.settings", "GeneralPage")
+            text: i18nc("@action:button", "General")
         }
     ]
 }
