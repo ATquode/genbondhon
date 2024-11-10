@@ -27,7 +27,7 @@ proc newSwiftLangGen*(bindingDir: Path): SwiftLangGen =
   initBaseLangGen(result)
 
 func replaceType(nimSwiftType: string): string =
-  ## Replaces Nim Compat Types to C# Types
+  ## Replaces Nim Compat Types to Swift Types & vice versa
   nimCompatAndSwiftTypeTbl.getOrDefault(nimSwiftType, nimSwiftType)
 
 func convertType(code: string, origType: string): string =
