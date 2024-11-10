@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MIT
 
-import std/[options, paths, sequtils, strformat, strutils, tables, terminal]
+import std/[options, paths, strformat, strutils, tables, terminal]
 import compiler/ast
 import base
 import ../[convertutil, currentconfig, util]
@@ -47,10 +47,7 @@ func translateApi*(api: PNode): string =
     result = "Cannot translate Api to C"
 
 func containsBool(apis: seq[PNode]): bool =
-  apis.anyIt(
-    if it.procParamNode.isSome and it.procParamNode.get[0].kind != nkEmpty and
-        it.procParamNode.get[0].ident.s == "bool": true else: false
-  )
+  apis.containsType("bool")
 
 func generateCHeaderContent(headerName: string, bindingAST: seq[PNode]): string =
   let headerGuard = headerName.toUpperAscii & "_H"

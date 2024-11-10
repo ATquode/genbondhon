@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MIT
 
-import std/options
+import std/[sequtils, sugar, options]
 import compiler/ast
 
 func procName*(node: PNode): string =
@@ -27,3 +27,27 @@ func paramType*(node: PNode): string =
   ## get paramType from `procParamNode`
   ## Note: node needs to be formal param node type
   node[1].ident.s
+
+func returnTypeContainsType(retTypeNode: PNode, reqType: string): bool =
+  if retTypeNode.kind != nkEmpty and retTypeNode.ident.s == reqType: true else: false
+
+func paramListContainsType(paramList: seq[PNode], reqType: string): bool =
+  paramList.anyIt(it.paramType == reqType)
+
+func containsType*(apis: seq[PNode], reqType: string): bool =
+  for i in 0 ..< apis.len:
+    let api = apis[i]
+    if api.procParamNode.isNone:
+      continue
+    let formalParamNode = api.procParamNode.get()
+    let retTypeNode = formalParamNode[0]
+    if retTypeNode.returnTypeContainsType(reqType):
+      return true
+    if formalParamNode.safeLen == 1:
+      continue
+    let paramList = collect:
+      for i in 1 ..< formalParamNode.safeLen:
+        formalParamNode[i]
+    if paramList.paramListContainsType(reqType):
+      return true
+  return false
