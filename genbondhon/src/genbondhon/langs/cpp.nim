@@ -12,7 +12,7 @@ type CppLangGen = ref object of CLangGen
 proc newCppLangGen*(bindingDir: Path): CppLangGen =
   ## `CppLangGen` constructor
   result = CppLangGen(
-    langDir: bindingDir / "C++".Path, headerFileName: moduleName.Path.addFileExt(".hpp")
+    langDir: bindingDir / "C++".Path, headerFileName: moduleName.Path.addFileExt("hpp")
   )
   initBaseLangGen(result)
 
