@@ -4,15 +4,18 @@
 
 import std/paths
 import compiler/ast
-import langs/[base, c, cpp, csharp, swift]
+import langs/[base, c, cpp, csharp, kotlin, swift]
 
-proc getLangGens(bindingDir: Path): seq[BaseLangGen] =
+proc getLangGens(bindingDir: Path, jvmPkgName: string): seq[BaseLangGen] =
   result.add newCLangGen(bindingDir)
   result.add newCppLangGen(bindingDir)
   result.add newCSharpLangGen(bindingDir)
   result.add newSwiftLangGen(bindingDir)
+  result.add newKotlinLangGen(bindingDir, jvmPkgName)
 
-proc generateLanguageBindings*(bindingAST: seq[PNode], bindingDir: Path) =
-  let langGens = getLangGens(bindingDir)
+proc generateLanguageBindings*(
+    bindingAST: seq[PNode], bindingDir: Path, jvmPkgName: string
+) =
+  let langGens = getLangGens(bindingDir, jvmPkgName)
   for langGen in langGens:
     langGen.generateBinding(bindingAST)

@@ -70,3 +70,36 @@ func convertNimAndSwiftType*(origType: string, code: string): string =
     &"String({code}).utf8CString[0]"
   else:
     code
+
+const nimCompatAndJNITypeTbl* = {
+  "cint": "jint",
+  "cfloat": "jfloat",
+  "cdouble": "jdouble",
+  "cchar": "jchar",
+  "cstring": "jstring",
+  "bool": "jboolean",
+  "jint": "int",
+  "jfloat": "float",
+  "jdouble": "double",
+  "jchar": "char",
+  "jboolean": "bool",
+}.toTable
+
+func convertNimAndJNIType*(origType: string, code: string): string =
+  case origType
+  of "cint", "cfloat", "cdouble", "cchar", "bool", "jint", "jfloat", "jdouble", "jchar",
+      "jboolean":
+    &"({nimCompatAndJNITypeTbl[origType]}){code}"
+  of "cstring":
+    &"env->NewStringUTF({code})"
+  else:
+    code
+
+const nimCompatToKotlinTypeTbl* = {
+  "cint": "Int",
+  "cfloat": "Float",
+  "cdouble": "Double",
+  "cchar": "Char",
+  "cstring": "String",
+  "bool": "Boolean",
+}.toTable

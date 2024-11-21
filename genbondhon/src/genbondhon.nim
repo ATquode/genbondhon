@@ -7,14 +7,15 @@ const helpTxt =
 Generate bindings for Nim libraries to platform native technologies.
 
 Usage:
-  genbondhon [-b <bindingDirName>] [-w <wrapperFileName>] [--verbose] <file>
-  genbondhon [--bindingDir <bindingDirName>] [--wrapperName <wrapperFileName>] [--verbose] <file>
+  genbondhon [-b <bindingDirName>] [-w <wrapperFileName>] [--jvmPkgName <jvmPackageName>] [--verbose] <file>
+  genbondhon [--bindingDir <bindingDirName>] [--wrapperName <wrapperFileName>] [--jvmPkgName <jvmPackageName>] [--verbose] <file>
   genbondhon --version
   genbondhon -h | --help
 
 Options:
   -b <bindingDirName>, --bindingDir <bindingDirName>          Binding Directory Path [default: bindings].
   -w <wrapperFileName>, --wrapperName <wrapperFileName>       Wrapper File Name [default: binding_api].
+  --jvmPkgName <jvmPackageName>                               JVM Package Name (e.g. for android) [default: com.example.test]
   --verbose                                                   Show verbose output.
   -h --help                                                   Show help message.
   --version                                                   Show version
@@ -32,7 +33,11 @@ const version = "../genbondhon.nimble".staticRead.newStringStream.loadConfig.get
 )
 
 proc generateBindings(
-    bindingDir: string, wrapperName: string, verbose: bool, file: string
+    bindingDir: string,
+    wrapperName: string,
+    jvmPkgName: string,
+    verbose: bool,
+    file: string,
 ) =
   ## generates bindings for public APIs of the given nim file.
   showVerboseOutput = verbose
@@ -44,7 +49,7 @@ proc generateBindings(
   let wrapperPath = wrappedApis.generateWrapperFile(wrapperName)
   generateBindableModule(bindingDir.Path, wrapperName)
   let bindingAST = parsePublicAPIs(wrapperPath)
-  generateLanguageBindings(bindingAST, bindingDir.Path)
+  generateLanguageBindings(bindingAST, bindingDir.Path, jvmPkgName)
 
 when isMainModule:
   let args = docopt(helpTxt, version = version)
