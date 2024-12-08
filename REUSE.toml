@@ -1,0 +1,14 @@
+# SPDX-FileCopyrightText: 2024 Rifat Hasan <atunutemp1@gmail.com>
+#
+# SPDX-License-Identifier: CC0-1.0
+
+version = 1
+SPDX-PackageName = "genbondhon"
+SPDX-PackageSupplier = "Rifat Hasan <atunutemp1@gmail.com>"
+SPDX-PackageDownloadLocation = "https://github.com/ATquode/genbondhon https://gitlab.com/ATquode/genbondhon https://bitbucket.org/ATquode/genbondhon"
+
+[[annotations]]
+path = "_deps/nim-compiler/**"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2006-2023 Andreas Rumpf"
+SPDX-License-Identifier = "MIT"
