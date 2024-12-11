@@ -21,12 +21,17 @@ bindings/
 a.out
 a.exe
 aCDyn.exe
+aCDyn.out
 aCStat.exe
+aCStat.out
 aCppDyn.exe
+aCppDyn.out
 aCppStat.exe
+aCppStat.out
 nomuna.dll
 Cnomuna.dll
 Cppnomuna.dll
+androidCache
 genbondhon/cache*
 genbondhon/testresults.html
 genbondhon/tests/common
@@ -47,6 +52,8 @@ genbondhon/tests/C++/*
 genbondhon/tests/C#/nomuna.cs
 genbondhon/tests/C#/tCSharpGen
 genbondhon/tests/C#/tCSharpGen.exe
+genbondhon/tests/Kotlin/tKotlinGen
+genbondhon/tests/Kotlin/tKotlinGen.exe
 genbondhon/tests/Swift/tSwiftGen
 CNomuna
 
