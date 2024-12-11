@@ -28,5 +28,7 @@ proc commonTasks*() =
   executeTask("nim build")
   # run
   let binaryName = if defined(windows): "genbondhon.exe" else: "genbondhon"
-  let runCmd = "./dist/$# ./tests/nomuna.nim".format(binaryName)
+  var runCmd = "./dist/$# ./tests/nomuna.nim  --jvmPkgName com.example.myapplication1".format(
+    binaryName
+  )
   executeTask("genbondhon run", runCmd)
