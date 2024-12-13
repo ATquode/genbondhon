@@ -14,7 +14,7 @@ proc NDKPath(appRootDir: string): string =
     sdkDirEnd = contents.len
   let sdkDirLine = contents[sdkDirStart ..< sdkDirEnd]
   let sdkDirLineParts = sdkDirLine.split('=')
-  let sdkDirLocation = sdkDirLineParts[^1]
+  let sdkDirLocation = sdkDirLineParts[^1].multiReplace([("C\\:", "C:"), ("\\\\", "/")])
   let ndkDirs = toSeq(walkDir(Path(sdkDirLocation & "/ndk"), relative = true))
     .filterIt(it.kind == pcDir)
     .mapIt(it.path.splitPath[1].string)
@@ -22,12 +22,10 @@ proc NDKPath(appRootDir: string): string =
   let latestNdkDir = ndkDirs[0]
   return sdkDirLocation & "/ndk/" & latestNdkDir
 
-func getHostCPU(): string =
-  if hostCPU == "amd64": "x86_64" else: hostCPU
-
 proc findNimStdLib(): string =
   ## Tries to find a path to a valid "system.nim" file.
   ## Returns "" on failure.
+  ## modifying `findNimStdLib` from compiler/nimeval.nim
   try:
     let nimexe = os.findExe("nim")
       # this can't work with choosenim shims, refs https://github.com/dom96/choosenim/issues/189
@@ -39,6 +37,10 @@ proc findNimStdLib(): string =
     if not fileExists(result / "system.nim"):
       when defined(unix):
         result = nimexe.expandSymlink.splitPath()[0] /../ "lib"
+        if not fileExists(result / "system.nim"):
+          return ""
+      else:
+        result = result.splitPath()[0] / "apps/nim/current/lib" # for scoop
         if not fileExists(result / "system.nim"):
           return ""
   except OSError, ValueError:
@@ -53,8 +55,9 @@ proc testBuildingApp(moduleName: string) =
   executeTask("generate cpp code from nim code", compileCmd)
   # compile to object files
   let myApplicationDir = "tests/Kotlin/MyApplication1"
+  let clangExe = if defined(windows): "clang++.exe" else: "clang++"
   let libCompileCmd =
-    &"{myApplicationDir.NDKPath}/toolchains/llvm/prebuilt/{hostOS}-{getHostCPU()}/bin/clang++ -target aarch64-linux-android24 -c -I {findNimStdLib()} -fPIC *.cpp"
+    &"{myApplicationDir.NDKPath}/toolchains/llvm/prebuilt/{hostOS}-x86_64/bin/{clangExe} -target aarch64-linux-android24 -c -I {findNimStdLib()} -fPIC *.cpp"
   executeTask(
     "compiling cpp code to object files", libCompileCmd, workingDir = androidCacheDir
   )
@@ -69,7 +72,8 @@ proc testBuildingApp(moduleName: string) =
     &"cp -r bindings/Kotlin/Nomuna.kt {mainBuildFlavorDir}/java/com/example/myapplication1/"
   executeTask("Copy Kotlin wrapper", copyKotlinWrapperCmd)
   # build project
-  let gradleBuildCmd = "./gradlew assembleDebug"
+  let gradlew = if defined(windows): "gradlew.bat" else: "gradlew"
+  let gradleBuildCmd = &"./{gradlew} assembleDebug"
   executeTask("Build Project", gradleBuildCmd, workingDir = myApplicationDir)
 
 when isMainModule:
