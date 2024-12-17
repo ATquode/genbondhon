@@ -132,7 +132,7 @@ func generateJNIWrapperContent(
   result =
     &"""
 #include <jni.h>
-#include "{self.headerFileName}"
+#include "{self.headerFileName.string}"
 
 {jniApis.join("\n\n")}
 """
@@ -162,7 +162,7 @@ cmake_minimum_required(VERSION 3.22.1)
 project("{modName.jniLibName}")
 
 add_library(${{PROJECT_NAME}} SHARED
-        {modName.jniWrapperFileName} {self.headerFileName})
+        {modName.jniWrapperFileName} {self.headerFileName.string})
 
 find_library(log-lib log)
 target_link_libraries(${{PROJECT_NAME}}
