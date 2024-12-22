@@ -28,17 +28,16 @@ Héllø ñíℳ
 """
 #!fmt: on
 
-import std/[osproc, strutils]
+import std/[osproc, strformat, strutils]
 import ../common
 
-proc getBuildDir(projectPath: string): string =
+proc getBuildDir(projectPath: string, buildCmd: string): string =
   let targetBuildDirCmd =
-    "xcodebuild -project CommandLineTool1.xcodeproj/ -showBuildSettings | grep TARGET_BUILD_DIR"
+    &"{buildCmd} -showBuildSettings | grep TARGET_BUILD_DIR"
   let (grepOutput, exitCode) = execCmdEx(targetBuildDirCmd, workingDir = projectPath)
   assert exitCode == 0, "Finding build Dir Failed, code: $#".format(exitCode)
-  let releaseDir = grepOutput.split('=')[2].strip
-  let debugDir = releaseDir[0 ..< (releaseDir.len - "Release".len)] & "Debug"
-  return debugDir
+  let buildDir = grepOutput.split('=')[^1].strip
+  return buildDir
 
 proc testCommandLineTool(moduleName: string) =
   commonTasks()
@@ -58,10 +57,10 @@ proc testCommandLineTool(moduleName: string) =
   executeTask("Copy lib binary", copyLibCmd)
   # build project
   let xcodeBuildCmd =
-    "xcodebuild -project CommandLineTool1.xcodeproj -scheme CommandLineTool1"
+    """xcodebuild -project CommandLineTool1.xcodeproj/ -scheme CommandLineTool1 -destination "name=My Mac" -configuration Debug"""
   executeTask("Build Project", xcodeBuildCmd, workingDir = commandLineToolDir)
   # run project
-  let productDir = getBuildDir(commandLineToolDir)
+  let productDir = getBuildDir(commandLineToolDir, xcodeBuildCmd)
   let runCmd = productDir & "/CommandLineTool1"
   executeTask("Run Project", runCmd, outputToStd = true)
 
