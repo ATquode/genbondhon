@@ -30,7 +30,6 @@ Héllø ñíℳ
 import ../common
 
 proc testConsoleApp(moduleName: string) =
-  commonTasks()
   # compile nim lib
   let libCompileCmd =
     "nim c --cc:vcc -d:release --noMain:on --app:lib --nimcache:cacheC# --outdir:bindings/C# bindings/nomuna.nim"

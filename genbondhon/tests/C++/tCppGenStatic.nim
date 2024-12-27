@@ -28,8 +28,7 @@ Héllø ñíℳ'''
 import std/strutils
 import ../common
 
-proc testStaticLib(moduleName: string, outBinExec: string) =
-  commonTasks()
+proc testStaticLib(moduleName: string, outFile: string) =
   # compile nim lib
   let libCompileCmd =
     "nim cpp -d:release --noMain:on --app:staticlib --nimcache:cacheCppStatic --outdir:bindings/C++ bindings/nomuna.nim"
@@ -46,13 +45,24 @@ proc testStaticLib(moduleName: string, outBinExec: string) =
   let copyLibCmd = "cp bindings/C++/$# tests/C++".format(staticLibName)
   executeTask("Copy lib binary", copyLibCmd)
   # compile C++ code, link with static lib
-  let compileCppCmd = "g++ tests/C++/testCode.cpp tests/C++/$#".format(staticLibName)
+  let compileCppCmd =
+    "g++ tests/C++/testCode.cpp tests/C++/$# -o $#".format(staticLibName, outFile)
   executeTask("Compile C++ code", compileCppCmd)
   # run C++ code output
-  executeTask("Running a.out", outBinExec, outputToStd = true)
+  let outBinExec =
+    if defined(windows):
+      ".\\$#".format(outFile)
+    else:
+      "./$#".format(outFile)
+  executeTask("Running $#".format(outFile), outBinExec, outputToStd = true)
 
 when isMainModule:
   let moduleName = "nomuna"
-  let outBinExec = if defined(windows): ".\\a.exe" else: "./a.out"
+  let outName = "aCppStat"
+  let outFileName =
+    if defined(windows):
+      "$#.exe".format(outName)
+    else:
+      "$#.out".format(outName)
 
-  testStaticLib(moduleName, outBinExec)
+  testStaticLib(moduleName, outFileName)

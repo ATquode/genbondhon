@@ -30,3 +30,6 @@ proc commonTasks*() =
   let binaryName = if defined(windows): "genbondhon.exe" else: "genbondhon"
   let runCmd = "./dist/$# ./tests/nomuna.nim".format(binaryName)
   executeTask("genbondhon run", runCmd)
+
+when isMainModule:
+  commonTasks()

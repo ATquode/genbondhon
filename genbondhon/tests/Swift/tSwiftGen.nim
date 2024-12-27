@@ -32,15 +32,13 @@ import std/[osproc, strformat, strutils]
 import ../common
 
 proc getBuildDir(projectPath: string, buildCmd: string): string =
-  let targetBuildDirCmd =
-    &"{buildCmd} -showBuildSettings | grep TARGET_BUILD_DIR"
+  let targetBuildDirCmd = &"{buildCmd} -showBuildSettings | grep TARGET_BUILD_DIR"
   let (grepOutput, exitCode) = execCmdEx(targetBuildDirCmd, workingDir = projectPath)
   assert exitCode == 0, "Finding build Dir Failed, code: $#".format(exitCode)
   let buildDir = grepOutput.split('=')[^1].strip
   return buildDir
 
 proc testCommandLineTool(moduleName: string) =
-  commonTasks()
   # compile nim lib
   let libCompileCmd =
     "nim c -d:release --noMain:on --app:staticlib --nimcache:cacheSwift --outdir:bindings/Swift/macOS bindings/nomuna.nim"

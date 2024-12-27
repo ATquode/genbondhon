@@ -24,11 +24,14 @@ task build, "build in release mode and put into dist folder":
   exec "nim c -d:release --outdir:" & cwd & "/dist " & cwd & "/src/genbondhon.nim"
 
 task test, "run tests":
-  const execTest = "testament all"
+  const execPreReq = "nim c -r tests/common.nim"
+  const execTest = "testament --megatest:off all"
   if fromOutside:
     withDir "genbondhon":
+      exec execPreReq
       exec execTest
   else:
+    exec execPreReq
     exec execTest
 
 task clean, "clean artifacts":
