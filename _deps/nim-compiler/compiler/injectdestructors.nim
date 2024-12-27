@@ -807,8 +807,7 @@ template handleNestedTempl(
             if it.kind == nkFinally:
               p(it[^1], c, branchScope, normal)
             else:
-              maybeVoid(it[^1], branchScope)
-            ,
+              maybeVoid(it[^1], branchScope),
           )
         else:
           processScopeExpr(c, branchScope, it[^1], processCall, tmpFlags)
@@ -1049,8 +1048,7 @@ proc p(
                 if v.kind == nkSym:
                   {IsDecl}
                 else:
-                  {}
-                ,
+                  {},
               )
             elif ri.kind == nkEmpty and c.inLoop > 0:
               let skipInit =
@@ -1065,8 +1063,7 @@ proc p(
                   if v.kind == nkSym:
                     {IsDecl}
                   else:
-                    {}
-                  ,
+                    {},
                 )
         else: # keep the var but transform 'ri':
           var v = copyNode(n)

@@ -2410,8 +2410,7 @@ proc rawExecute(c: PCtx, start: int, tos: PStackFrame): TFullReg =
         elif c.callsite != nil and c.callsite.safeLen > 1:
           c.callsite[1].info
         else:
-          c.debug[pc]
-        ,
+          c.debug[pc],
       )
       x.flags.incl nfIsRef
       # prevent crashes in the compiler resulting from wrong macros:

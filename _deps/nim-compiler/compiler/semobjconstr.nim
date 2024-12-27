@@ -523,8 +523,7 @@ proc semObjConstr(
         "object constructor needs an object type".dup(addDeclaredLoc(c.config, t))
       else:
         "cannot instantiate: '" & typeToString(t, preferDesc) &
-          "'; the object's generic parameters cannot be inferred and must be explicitly given"
-      ,
+          "'; the object's generic parameters cannot be inferred and must be explicitly given",
     )
 
   # Check if the object is fully initialized by recursively testing each

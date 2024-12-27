@@ -310,8 +310,7 @@ proc genTry(c: var Con, n: PNode) =
       if n[^1].kind == nkFinally:
         n[^1]
       else:
-        newNode(nkEmpty)
-    ,
+        newNode(nkEmpty),
   )
 
   inc c.inTryStmt

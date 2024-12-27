@@ -325,8 +325,7 @@ proc setupArgsForParallelism(
       if i < formals.len:
         formals[i].typ
       else:
-        n.typ
-      ,
+        n.typ,
       abstractInst,
     )
     #if containsTyRef(argType):

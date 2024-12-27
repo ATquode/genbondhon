@@ -1753,8 +1753,7 @@ proc genSym(p: PProc, n: PNode, r: var TCompRes) =
         if s.astdef != nil:
           s.astdef
         else:
-          newNodeI(nkEmpty, s.info)
-        ,
+          newNodeI(nkEmpty, s.info),
       )
     if s.kind == skParam:
       genCopyForParamIfNeeded(p, n)

@@ -153,8 +153,7 @@ proc getCurrentExceptionMsgWrapper(a: VmArgs) {.nimcall.} =
     if a.currentException.isNil:
       ""
     else:
-      a.currentException[3].skipColon.strVal
-    ,
+      a.currentException[3].skipColon.strVal,
   )
 
 proc getCurrentExceptionWrapper(a: VmArgs) {.nimcall.} =

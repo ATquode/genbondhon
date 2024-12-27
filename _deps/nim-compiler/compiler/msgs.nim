@@ -132,8 +132,7 @@ proc fileInfoIdx*(
         if pseudoPath:
           RelativeFile filename
         else:
-          relativeTo(canon, conf.projectPath)
-        ,
+          relativeTo(canon, conf.projectPath),
       )
     )
     conf.m.filenameToIndexTbl[canon2] = result
@@ -591,8 +590,7 @@ proc liMessage*(
     if msg in warnMin .. hintMax and msg != hintUserRaw:
       $msg
     else:
-      ""
-    # xxx not sure why hintUserRaw is special
+      "" # xxx not sure why hintUserRaw is special
   case msg
   of errMin .. errMax:
     sev = Severity.Error
@@ -847,8 +845,7 @@ proc genSuccessX*(conf: ConfigRef) =
     if conf.filenameOption == foAbs:
       $conf.projectFull
     else:
-      $conf.projectName
-    # xxx honor conf.filenameOption more accurately
+      $conf.projectName # xxx honor conf.filenameOption more accurately
   var output: string
   if optCompileOnly in conf.globalOptions and conf.cmd != cmdJsonscript:
     output = $conf.jsonBuildFile

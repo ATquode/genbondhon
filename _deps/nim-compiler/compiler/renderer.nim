@@ -673,8 +673,7 @@ proc lsub(g: TSrcGen, n: PNode): int =
     result = len("distinct") + (if n.len > 0: lsub(g, n[0]) + 1 else: 0)
     if n.len > 1:
       result += (if n[1].kind == nkWith: len("_with_")
-      else: len("_without_")
-      )
+      else: len("_without_"))
       result += lcomma(g, n[1])
   of nkStaticTy:
     result = (if n.len > 0: lsub(g, n[0]) else: 0) + len("static[]")

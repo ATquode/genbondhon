@@ -1274,8 +1274,7 @@ proc produceSym(
       if op.typ[1].kind == tyVar:
         d[0]
       else:
-        d
-      ,
+        d,
     )
     result.ast[bodyPos].add newAsgnStmt(d, src)
   else:

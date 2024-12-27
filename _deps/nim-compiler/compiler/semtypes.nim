@@ -1527,8 +1527,7 @@ proc semProcTypeNode(
         if a[j].kind == nkPragmaExpr:
           a[j][0]
         else:
-          a[j]
-        ,
+          a[j],
         c,
       )
       if arg.name.id == ord(wUnderscore):
@@ -2005,8 +2004,7 @@ proc semTypeOf2(c: PContext, n: PNode, prev: PType): PType =
     if m == 1:
       {efInTypeof}
     else:
-      {}
-    ,
+      {},
   )
   closeScope(c)
   fixupTypeOf(c, prev, t)

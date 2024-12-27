@@ -814,8 +814,7 @@ proc binaryArithOverflow(p: BProc, e: PNode, d: var TLoc, m: TMagic) =
         if t.kind == tyInt64:
           prc64[m]
         else:
-          prc[m]
-        ,
+          prc[m],
       )
       putIntoDest(p, d, e, "($#)($#)" % [getTypeDesc(p.module, e.typ), res])
     else:
@@ -3163,8 +3162,7 @@ proc genMagicExpr(p: BProc, e: PNode, d: var TLoc, op: TMagic) =
         if underlying.kind == tyInt64:
           fun64[op]
         else:
-          fun[op]
-        ,
+          fun[op],
       )
 
       putIntoDest(p, a, e[1], "($#)($#)" % [getTypeDesc(p.module, ranged), res])
@@ -3682,8 +3680,7 @@ proc downConv(p: BProc, n: PNode, d: var TLoc) =
       if isRef:
         "&" & r
       else:
-        r
-      ,
+        r,
       a.storage,
     )
 

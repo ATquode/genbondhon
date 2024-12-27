@@ -815,8 +815,7 @@ proc processSwitch*(
         if pass == passPP:
           processCfgPath(conf, path, info)
         else:
-          processPath(conf, path, info)
-        ,
+          processPath(conf, path, info),
         info,
       )
   of "nimblepath", "babelpath":

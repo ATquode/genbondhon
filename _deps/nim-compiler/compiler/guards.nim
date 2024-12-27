@@ -350,8 +350,7 @@ proc buildAdd*(a: PNode, b: BiggestInt, o: Operators): PNode =
     if b != 0:
       o.opAdd.buildCall(a, nkIntLit.newIntNode(b))
     else:
-      a
-    ,
+      a,
     o,
   )
 

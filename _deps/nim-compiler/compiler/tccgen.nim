@@ -86,8 +86,7 @@ proc run*(conf: ConfigRef, args: string) =
     map(
       split(args),
       proc(x: string): cstring =
-        cstring(x)
-      ,
+        cstring(x),
     )
   var err = tinyc.run(gTinyC, cint(s.len), cast[cstringArray](addr(s[0]))) != 0'i32
   closeCCState(gTinyC)

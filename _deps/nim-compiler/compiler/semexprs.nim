@@ -716,8 +716,7 @@ proc semArrayConstr(
       if expectedElementType != nil and typeAllowed(expectedElementType, skLet, c) == nil:
         expectedElementType
       else:
-        newTypeS(tyEmpty, c)
-      ,
+        newTypeS(tyEmpty, c),
     ) # needs an empty basetype!
     lastIndex = toInt128(-1)
   else:
@@ -1947,8 +1946,7 @@ proc takeImplicitAddr(c: PContext, n: PNode, isLent: bool): PNode =
     if n.typ.kind in {tyVar, tyLent}:
       n.typ
     else:
-      makePtrType(c, n.typ)
-    ,
+      makePtrType(c, n.typ),
   )
   result.add(n)
 
@@ -2869,8 +2867,7 @@ proc semSetConstr(c: PContext, n: PNode, expectedType: PType = nil): PNode =
       if expectedElementType != nil and typeAllowed(expectedElementType, skLet, c) == nil:
         expectedElementType
       else:
-        newTypeS(tyEmpty, c)
-      ,
+        newTypeS(tyEmpty, c),
     )
   else:
     # only semantic checking for all elements, later type checking:

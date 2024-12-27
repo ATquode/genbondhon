@@ -1146,8 +1146,7 @@ proc callCCompiler*(conf: ConfigRef) =
       prettyCmds = map(
         prettyCmds,
         proc(curr: string): string =
-          return curr.replace("CC", "Link")
-        ,
+          return curr.replace("CC", "Link"),
       )
       execCmdsInParallel(conf, cmds, prettyCb)
       # only if not cached - copy the resulting main file from the nimcache folder to its originally intended destination

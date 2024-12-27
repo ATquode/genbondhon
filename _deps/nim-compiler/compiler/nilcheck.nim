@@ -711,8 +711,7 @@ proc union(ctx: NilCheckerContext, l: NilMap, r: NilMap): NilMap =
       if h.len > 0:
         h[^1].info
       else:
-        TLineInfo(line: 0)
-      # assert h.len > 0
+        TLineInfo(line: 0) # assert h.len > 0
     # echo "history", name, value, r[name], h[^1].info.line
     result.store(ctx, index, union(value, r[index]), TAssign, info)
 

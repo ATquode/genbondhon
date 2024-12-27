@@ -2673,8 +2673,7 @@ proc matchesAux(c: PContext, n, nOrig: PNode, m: var TCandidate, marker: var Int
       if formalLen > 1:
         m.callee.n[1].sym
       else:
-        nil
-      # current routine parameter
+        nil # current routine parameter
     container: PNode = nil # constructed container
   let firstArgBlock = findFirstArgBlock(m, n)
   while a < n.len:

@@ -57,8 +57,7 @@ proc semTypeOf(c: PContext, n: PNode): PNode =
     if m == 1:
       {efInTypeof}
     else:
-      {}
-    ,
+      {},
   )
   result.add typExpr
   result.typ = makeTypeDesc(c, typExpr.typ)

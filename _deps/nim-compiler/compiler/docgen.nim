@@ -1853,8 +1853,7 @@ proc setIndexTitle(d: PDoc, useMetaTitle: bool) =
         filename
         # keep .rst/.md extension
       else:
-        changeFileExt(filename, "")
-      # rm .nim extension
+        changeFileExt(filename, "") # rm .nim extension
     linkTitle =
       if d.standaloneDoc:
         term

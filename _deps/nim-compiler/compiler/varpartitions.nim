@@ -301,8 +301,7 @@ proc connect(v: var Partitions, a, b: PSym, info: TLineInfo) =
           if gb != nil:
             gb.mutations
           else:
-            @[]
-        ,
+            @[],
       )
     of isRootOf:
       var g = addr v.graphs[v.s[ra].con.graphIndex]
