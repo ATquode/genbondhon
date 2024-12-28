@@ -44,23 +44,20 @@ proc testDynamicLib(moduleName: string, outFile: string) =
       "lib$#.dylib".format(moduleName)
     else:
       "lib$#.so".format(moduleName)
-  var copyLibCmd = "cp bindings/C++/$# tests/C++".format(dynamicLibName)
-  let newDllName = "Cpp$#".format(dynamicLibName)
-  if defined(windows):
-    copyLibCmd = copyLibCmd & "/$#".format(newDllName)
+  let copyLibCmd = "cp bindings/C++/$# tests/C++".format(dynamicLibName)
   executeTask("Copy lib binary", copyLibCmd)
   # compile C++ code, link with dynamic lib
   let compileCppCmd =
     "g++ tests/C++/testCode.cpp tests/C++/$# -o $#".format(dynamicLibName, outFile)
   executeTask("Compile C++ code", compileCppCmd)
-  # copy dll to pwd on windows
+  # copy binary to test dir on windows
   if defined(windows):
-    let copyDllCmd = "cp tests/C++/$# .".format(newDllName)
-    executeTask("Copy dll to pwd", copyDllCmd)
+    let copyBinCmd = "cp $# tests/C++/".format(outFile)
+    executeTask("Copy $# to test dir".format(outFile), copyBinCmd)
   # run C++ code output
   let outBinExec =
     if defined(windows):
-      ".\\$#".format(outFile)
+      ".\\tests\\C++\\$#".format(outFile)
     else:
       "./$#".format(outFile)
   executeTask("Running $#".format(outFile), outBinExec, outputToStd = true)
