@@ -5,23 +5,24 @@
 #!fmt: off
 discard """
   output: '''
-No Operation
-extra: No Op.
-2
 1
+2
 2.3
-a
-what
-প্রোগ্রামিং
 8
-success
-failure
 8.08
 8.8
+Héllø ñíℳ
+No Operation
 a
-nim
+a
+extra: No Op.
+failure
 hello ñíℳ
-Héllø ñíℳ'''
+nim
+success
+what
+প্রোগ্রামিং'''
+  sortoutput: true
 """
 #!fmt: on
 
