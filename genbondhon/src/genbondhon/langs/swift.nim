@@ -133,10 +133,14 @@ proc generateSwiftWrapper(self: SwiftLangGen, bindingAST: seq[PNode]) =
 method getReadMeContent(self: SwiftLangGen): string =
   let common = procCall self.BaseLangGen.getReadMeContent()
   let bindingMacosPath = self.langDir / "macOS".Path
+  let bindingIosPath = self.langDir / "iOS".Path
   let realTestDir = testDirPath / "Swift".Path
   let realTestDirMac = realTestDir / "macOS".Path
-  let testDirSwiftModule = realTestDirMac / self.cModuleName.Path
+  let realTestDirIos = realTestDir / "iOS".Path
+  let testDirSwiftModuleMac = realTestDirMac / self.cModuleName.Path
+  let testDirSwiftModuleIos = realTestDirIos / self.cModuleName.Path
   let staticLibName = "lib$#.a".format(moduleName).Path
+  let iosCacheDir = "iosCache"
   result =
     &"""
 {common}
@@ -156,8 +160,51 @@ Not supported
 Copy the module and lib binary to your project. Put the lib binary inside module directory.
 
     mkdir {realTestDirMac.string}
-    cp -r {self.swiftCModuleDir.string} {testDirSwiftModule.string}
-    cp {string bindingMacosPath / staticLibName} {testDirSwiftModule.string}
+    cp -r {self.swiftCModuleDir.string} {testDirSwiftModuleMac.string}
+    cp {string bindingMacosPath / staticLibName} {testDirSwiftModuleMac.string}
+
+Then see [Setup Xcode](#setup-xcode)
+
+### iOS
+#### Static Library
+First, compile the nim code to C code for iOS with the following command.
+
+    nim c -c -d:release --os:ios --noMain:on --app:staticLib --nimcache:{iosCacheDir} {self.bindingModuleFile.string}
+    cd {iosCacheDir}
+
+Then compile the C code for iOS.
+You have to build for iPhone device and simulator separately.
+You may choose to build only one.
+Provide the directory of `"nimbase.h"` for include.
+Provide all generated C files. It will generate .o files.
+
+##### iPhone Device
+
+    xcrun -sdk iphoneos clang -c -arch arm64 -I /usr/local/Cellar/nim/2.0.4/nim/lib *.c
+
+##### iPhone Simulator
+
+    xcrun -sdk iphonesimulator clang -c -I /usr/local/Cellar/nim/2.0.4/nim/lib *.c
+
+===
+
+Archive the obj files to static library. Remove {iosCacheDir} directory, it isn't needed anymore.
+
+    cd ..
+    ar r {staticLibName.string} {iosCacheDir}/*.o
+    rm -r {iosCacheDir}
+    mkdir {bindingIosPath.string}
+    cp {staticLibName.string} {bindingIosPath.string}
+
+#### Dynamic Library
+Not supported
+
+#### Usage
+Copy the module and lib binary to your project. Put the lib binary inside module directory.
+
+    mkdir {realTestDirIos.string}
+    cp -r {self.swiftCModuleDir.string} {testDirSwiftModuleIos.string}
+    cp {string bindingIosPath / staticLibName} {testDirSwiftModuleIos.string}
 
 Then see [Setup Xcode](#setup-xcode)
 
