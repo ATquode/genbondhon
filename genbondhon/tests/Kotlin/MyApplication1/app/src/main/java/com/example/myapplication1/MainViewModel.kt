@@ -28,14 +28,15 @@ class MainViewModel : ViewModel() {
         nomuna.printStr("hello ñíℳ")
     }
 
-    val retCardUiState = ReturnCardUiState(
-        nomuna.constRet(),
-        nomuna.constRetBool(),
-        nomuna.constRetFloat(),
-        nomuna.constRetChar(),
-        nomuna.constRetStr(),
-        nomuna.constRetUnicodeStr()
-    )
+    val retCardUiState =
+        ReturnCardUiState(
+            nomuna.constRet(),
+            nomuna.constRetBool(),
+            nomuna.constRetFloat(),
+            nomuna.constRetChar(),
+            nomuna.constRetStr(),
+            nomuna.constRetUnicodeStr(),
+        )
 
     private var _addCardUiState = MutableStateFlow(AddCardUiState())
     val addCardUiState: StateFlow<AddCardUiState> = _addCardUiState.asStateFlow()
@@ -110,17 +111,16 @@ class MainViewModel : ViewModel() {
         }
     }
 
-    private fun verifyIntOrEmpty(num: String): Boolean {
-        return num.toIntOrNull() != null || num.isEmpty()
-    }
+    private fun verifyIntOrEmpty(num: String): Boolean = num.toIntOrNull() != null || num.isEmpty()
 
-    private fun verifyDoubleOrEmpty(num: String): Boolean {
-        return num.toDoubleOrNull() != null || num.isEmpty()
-    }
+    private fun verifyDoubleOrEmpty(num: String): Boolean = num.toDoubleOrNull() != null || num.isEmpty()
 
-    private fun verifyFloatOrEmpty(num: String): Boolean {
-        return (num.toFloatOrNull() != null && (if (num.contains('.')) num.substring(num.indexOf('.') + 1).length <= 2 else true)) || num.isEmpty()
-    }
+    private fun verifyFloatOrEmpty(num: String): Boolean =
+        (
+            num.toFloatOrNull() != null &&
+                (if (num.contains('.')) num.substring(num.indexOf('.') + 1).length <= 2 else true)
+        ) ||
+            num.isEmpty()
 
     private fun performAddInt() {
         val num1 = inputHolder.addInt1.toIntOrNull() ?: 0
@@ -155,17 +155,30 @@ class MainViewModel : ViewModel() {
 
 interface InputContainer {
     val addInt1: String
+
     fun updateIntNum1(num: String)
+
     val addInt2: String
+
     fun updateIntNum2(num: String)
+
     val addDouble1: String
+
     fun updateDoubleNum1(num: String)
+
     val addDouble2: String
+
     fun updateDoubleNum2(num: String)
+
     val addFloat1: String
+
     fun updateFloatNum1(num: String)
+
     val addFloat2: String
+
     fun updateFloatNum2(num: String)
+
     val sayHelloInput: String
+
     fun updateStrInput(str: String)
 }

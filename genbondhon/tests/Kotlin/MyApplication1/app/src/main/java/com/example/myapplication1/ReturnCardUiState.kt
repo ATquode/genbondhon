@@ -10,5 +10,5 @@ data class ReturnCardUiState(
     val doubleRetVal: Double,
     val charRetVal: Char,
     val stringRetVal: String,
-    val unicodeStringRetVal: String
+    val unicodeStringRetVal: String,
 )

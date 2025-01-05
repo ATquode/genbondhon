@@ -50,7 +50,7 @@ fun MainView(mainViewModel: MainViewModel = viewModel<MainViewModel>()) {
     MainContent(
         mainViewModel.retCardUiState,
         addCardUiState,
-        mainViewModel.inputHolder
+        mainViewModel.inputHolder,
     )
 }
 
@@ -58,27 +58,30 @@ fun MainView(mainViewModel: MainViewModel = viewModel<MainViewModel>()) {
 fun MainContent(
     returnCardUiState: ReturnCardUiState,
     addCardUiState: AddCardUiState,
-    inputVars: InputContainer
+    inputVars: InputContainer,
 ) {
     MyApplication1Theme {
         Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
             Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding)
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding),
             ) {
                 ConstantReturnListCard(
-                    modifier = Modifier
-                        .padding(10.dp)
-                        .fillMaxWidth(),
-                    uiState = returnCardUiState
+                    modifier =
+                        Modifier
+                            .padding(10.dp)
+                            .fillMaxWidth(),
+                    uiState = returnCardUiState,
                 )
                 AddListCard(
-                    modifier = Modifier
-                        .padding(10.dp)
-                        .fillMaxWidth(),
+                    modifier =
+                        Modifier
+                            .padding(10.dp)
+                            .fillMaxWidth(),
                     uiState = addCardUiState,
-                    inputVars = inputVars
+                    inputVars = inputVars,
                 )
             }
         }
@@ -86,7 +89,10 @@ fun MainContent(
 }
 
 @Composable
-fun ConstantReturnListCard(modifier: Modifier = Modifier, uiState: ReturnCardUiState) {
+fun ConstantReturnListCard(
+    modifier: Modifier = Modifier,
+    uiState: ReturnCardUiState,
+) {
     CardView(modifier) {
         Text(text = "Constant Returns", style = MaterialTheme.typography.titleLarge)
         Text(text = "Int: ${uiState.intRetVal}")
@@ -102,7 +108,7 @@ fun ConstantReturnListCard(modifier: Modifier = Modifier, uiState: ReturnCardUiS
 fun AddListCard(
     modifier: Modifier,
     uiState: AddCardUiState,
-    inputVars: InputContainer
+    inputVars: InputContainer,
 ) {
     CardView(modifier) {
         Text(text = "Add", style = MaterialTheme.typography.titleLarge)
@@ -112,7 +118,7 @@ fun AddListCard(
             addNum1 = inputVars.addInt1,
             updateNum1 = inputVars::updateIntNum1,
             addNum2 = inputVars.addInt2,
-            updateNum2 = inputVars::updateIntNum2
+            updateNum2 = inputVars::updateIntNum2,
         )
         AddRow(
             labelStr = "Double:",
@@ -120,7 +126,7 @@ fun AddListCard(
             addNum1 = inputVars.addDouble1,
             updateNum1 = inputVars::updateDoubleNum1,
             addNum2 = inputVars.addDouble2,
-            updateNum2 = inputVars::updateDoubleNum2
+            updateNum2 = inputVars::updateDoubleNum2,
         )
         AddRow(
             labelStr = "Float:",
@@ -128,12 +134,12 @@ fun AddListCard(
             addNum1 = inputVars.addFloat1,
             updateNum1 = inputVars::updateFloatNum1,
             addNum2 = inputVars.addFloat2,
-            updateNum2 = inputVars::updateFloatNum2
+            updateNum2 = inputVars::updateFloatNum2,
         )
         SayHelloRow(
             outputStr = uiState.sayHelloOutput,
             inputStr = inputVars.sayHelloInput,
-            updateInputStr = inputVars::updateStrInput
+            updateInputStr = inputVars::updateStrInput,
         )
     }
 }
@@ -145,11 +151,11 @@ fun AddRow(
     addNum1: String,
     updateNum1: (String) -> Unit,
     addNum2: String,
-    updateNum2: (String) -> Unit
+    updateNum2: (String) -> Unit,
 ) {
     Row(
         horizontalArrangement = Arrangement.spacedBy(10.dp),
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(text = labelStr)
         OutlinedTextField(
@@ -159,7 +165,7 @@ fun AddRow(
                 Text(text = "Number 1")
             },
             modifier = Modifier.weight(1f),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
         )
         Text(text = "+")
         OutlinedTextField(
@@ -169,7 +175,7 @@ fun AddRow(
                 Text(text = "Number 2")
             },
             modifier = Modifier.weight(1f),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
         )
         Text(text = "=")
         Text(text = addResult)
@@ -180,11 +186,11 @@ fun AddRow(
 fun SayHelloRow(
     outputStr: String,
     inputStr: String,
-    updateInputStr: (String) -> Unit
+    updateInputStr: (String) -> Unit,
 ) {
     Row(
         horizontalArrangement = Arrangement.spacedBy(10.dp),
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(text = "String:")
         OutlinedTextField(
@@ -193,7 +199,7 @@ fun SayHelloRow(
             label = {
                 Text(text = "Name")
             },
-            modifier = Modifier.weight(1f)
+            modifier = Modifier.weight(1f),
         )
         Text(text = ":")
         Text(text = outputStr)
@@ -201,9 +207,12 @@ fun SayHelloRow(
 }
 
 @Composable
-fun CardView(modifier: Modifier, content: @Composable ColumnScope.() -> Unit) {
+fun CardView(
+    modifier: Modifier,
+    content: @Composable ColumnScope.() -> Unit,
+) {
     Card(
-        modifier = modifier
+        modifier = modifier,
     ) {
         Column(modifier = Modifier.padding(10.dp)) {
             content()
@@ -214,20 +223,20 @@ fun CardView(modifier: Modifier, content: @Composable ColumnScope.() -> Unit) {
 @Preview(
     name = "Light-Blue",
     showBackground = true,
-    wallpaper = Wallpapers.BLUE_DOMINATED_EXAMPLE
+    wallpaper = Wallpapers.BLUE_DOMINATED_EXAMPLE,
 )
 @Preview(
     name = "Dark-Blue",
     showBackground = true,
     wallpaper = Wallpapers.BLUE_DOMINATED_EXAMPLE,
-    uiMode = Configuration.UI_MODE_NIGHT_YES
+    uiMode = Configuration.UI_MODE_NIGHT_YES,
 )
 @Composable
 fun GreetingPreview() {
     MainContent(
         ReturnCardUiState(2, false, 2.0, 'A', "str", "fe"),
         AddCardUiState(),
-        InputVars("", "", "", "", "", "", "")
+        InputVars("", "", "", "", "", "", ""),
     )
 }
 
@@ -238,13 +247,19 @@ data class InputVars(
     override val addDouble2: String,
     override val addFloat1: String,
     override val addFloat2: String,
-    override val sayHelloInput: String
+    override val sayHelloInput: String,
 ) : InputContainer {
-    override fun updateIntNum1(num: String) {}
-    override fun updateIntNum2(num: String) {}
-    override fun updateDoubleNum1(num: String) {}
-    override fun updateDoubleNum2(num: String) {}
-    override fun updateFloatNum1(num: String) {}
-    override fun updateFloatNum2(num: String) {}
-    override fun updateStrInput(str: String) {}
+    override fun updateIntNum1(num: String) { /* no-op */ }
+
+    override fun updateIntNum2(num: String) { /* no-op */ }
+
+    override fun updateDoubleNum1(num: String) { /* no-op */ }
+
+    override fun updateDoubleNum2(num: String) { /* no-op */ }
+
+    override fun updateFloatNum1(num: String) { /* no-op */ }
+
+    override fun updateFloatNum2(num: String) { /* no-op */ }
+
+    override fun updateStrInput(str: String) { /* no-op */ }
 }
