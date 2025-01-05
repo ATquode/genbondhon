@@ -36,30 +36,6 @@ proc NDKPath(appRootDir: Path): Path =
   let latestNdkDir = ndkDirs[0].Path
   return sdkDirLocation / "ndk".Path / latestNdkDir
 
-proc findNimStdLib(): string =
-  ## Tries to find a path to a valid "system.nim" file.
-  ## Returns "" on failure.
-  ## modifying `findNimStdLib` from compiler/nimeval.nim
-  try:
-    let nimexe = os.findExe("nim")
-      # this can't work with choosenim shims, refs https://github.com/dom96/choosenim/issues/189
-      # it'd need `nim dump --dump.format:json . | jq -r .libpath`
-      # which we should simplify as `nim dump --key:libpath`
-    if nimexe.len == 0:
-      return ""
-    result = nimexe.splitPath()[0] /../ "lib"
-    if not fileExists(result / "system.nim"):
-      when defined(unix):
-        result = nimexe.expandSymlink.splitPath()[0] /../ "lib"
-        if not fileExists(result / "system.nim"):
-          return ""
-      else:
-        result = result.splitPath()[0] / "apps/nim/current/lib" # for scoop
-        if not fileExists(result / "system.nim"):
-          return ""
-  except OSError, ValueError:
-    return ""
-
 func getHostOS(): string =
   if defined(macosx): "darwin" else: hostOS
 

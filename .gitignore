@@ -31,7 +31,11 @@ aCppStat.out
 nomuna.dll
 Cnomuna.dll
 Cppnomuna.dll
+libnomuna.a
+libnomuna-x64.a
+libnomuna-arm64.a
 androidCache
+iosCache
 genbondhon/cache*
 genbondhon/testresults.html
 genbondhon/tests/common
@@ -54,6 +58,7 @@ genbondhon/tests/C#/tCSharpGen
 genbondhon/tests/C#/tCSharpGen.exe
 genbondhon/tests/Kotlin/tKotlinGen
 genbondhon/tests/Kotlin/tKotlinGen.exe
+genbondhon/tests/Swift/tIosGen
 genbondhon/tests/Swift/tSwiftGen
 CNomuna
 
