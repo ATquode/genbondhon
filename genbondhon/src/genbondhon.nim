@@ -46,7 +46,7 @@ proc generateBindings(
   bindingDirPath = bindingDir.Path
   let publicAST = parsePublicAPIs(origFile)
   let wrappedApis = translateToCompatibleWrapperApi(publicAST)
-  let wrapperPath = wrappedApis.generateWrapperFile(wrapperName)
+  let wrapperPath = wrappedApis.generateWrapperFile(wrapperName, publicAST)
   generateBindableModule(bindingDir.Path, wrapperName)
   let bindingAST = parsePublicAPIs(wrapperPath)
   generateLanguageBindings(bindingAST, bindingDir.Path, jvmPkgName)

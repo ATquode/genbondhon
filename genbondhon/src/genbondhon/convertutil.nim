@@ -103,3 +103,12 @@ const nimCompatToKotlinTypeTbl* = {
   "cstring": "String",
   "bool": "Boolean",
 }.toTable
+
+const nimCompatToTypeScriptTypeTbl* = {
+  "cint": "number",
+  "cfloat": "number",
+  "cdouble": "number",
+  "cchar": "string",
+  "cstring": "string",
+  "bool": "boolean",
+}.toTable

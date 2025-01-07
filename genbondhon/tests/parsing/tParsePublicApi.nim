@@ -21,7 +21,7 @@ for i in 0 ..< expectedPublicProcs.len:
   check publicApis[i].procName == expectedPublicProcs[i]
 
 let wrappedApis = publicApis.translateToCompatibleWrapperApi()
-let wrappedFile = wrappedApis.generateWrapperFile(wrappedFileName)
+let wrappedFile = wrappedApis.generateWrapperFile(wrappedFileName, publicApis)
 let bindingApis = wrappedFile.parsePublicAPIs()
 check bindingApis.len == publicApiCount + 1 # public APIs + NimMain()
 

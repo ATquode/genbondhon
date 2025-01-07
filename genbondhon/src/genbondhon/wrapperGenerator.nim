@@ -2,15 +2,16 @@
 #
 # SPDX-License-Identifier: MIT
 
-import std/[dirs, paths, strformat, terminal]
-import currentconfig
+import std/[dirs, paths, sequtils, strformat, strutils, sugar, terminal]
+import compiler/ast
+import currentconfig, util
 
 proc relativeModulePath(): string =
   let relModFilePath = origFile.relativePath(bindingDirPath, '/')
   let relModPath = relModFilePath.changeFileExt("")
   result = relModPath.string
 
-proc generateWrapperFileContent(wrappedApis: string): string =
+proc generateWrapperFileContent(wrappedApis: string, apiNames: seq[string]): string =
   let modulePath = relativeModulePath()
   let vccCondImport =
     if shouldUseVCCStr:
@@ -21,13 +22,19 @@ when defined(vcc):
 """
     else:
       ""
+  let exportedApiNames = &"""{{ {apiNames.join(", ")} }}"""
   result =
     &"""
 import {modulePath}
 {vccCondImport}
-{wrappedApis}"""
+{wrappedApis}
+when defined(js):
+  {{.emit: "\nexport {exportedApiNames};".}}
+"""
 
-proc generateWrapperFile*(wrappedApis: string, wrapperName: string): Path =
+proc generateWrapperFile*(
+    wrappedApis: string, wrapperName: string, publicAST: seq[PNode]
+): Path =
   ## Generates wrapper file in `bindingDir` with `wrapperName`.
   ## Returns wrapper file path.
   let fileName = wrapperName.Path.addFileExt("nim")
@@ -46,7 +53,8 @@ proc generateWrapperFile*(wrappedApis: string, wrapperName: string): Path =
 {nimMainStr}
 
 {wrappedApis}"""
-  let fileContent = generateWrapperFileContent(wrapperApis)
+  let apiNames = publicAST.map(x => x.procName)
+  let fileContent = generateWrapperFileContent(wrapperApis, apiNames)
   if showVerboseOutput:
     styledEcho fgYellow, "Wrapper File Content:"
     echo fileContent

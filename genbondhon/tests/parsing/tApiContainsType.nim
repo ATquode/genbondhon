@@ -16,7 +16,7 @@ let publicApis = filePath.parsePublicAPIs()
 check publicApis.containsType("string")
 
 let wrappedApis = publicApis.translateToCompatibleWrapperApi()
-let wrappedFile = wrappedApis.generateWrapperFile(wrappedFileName)
+let wrappedFile = wrappedApis.generateWrapperFile(wrappedFileName, publicApis)
 let bindingApis = wrappedFile.parsePublicAPIs()
 check bindingApis.containsType("bool")
 check bindingApis.containsType("cstring")
