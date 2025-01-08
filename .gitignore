@@ -34,6 +34,8 @@ Cppnomuna.dll
 libnomuna.a
 libnomuna-x64.a
 libnomuna-arm64.a
+nomuna.d.ts
+nomuna.mjs
 androidCache
 iosCache
 genbondhon/cache*
