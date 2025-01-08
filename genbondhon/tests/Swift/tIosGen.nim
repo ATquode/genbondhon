@@ -2,6 +2,13 @@
 #
 # SPDX-License-Identifier: MIT
 
+#!fmt: off
+discard """
+  disabled: windows
+  disabled: linux
+"""
+#!fmt: on
+
 import std/[dirs, paths, strformat]
 import ../common
 
