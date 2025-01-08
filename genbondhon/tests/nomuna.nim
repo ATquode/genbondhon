@@ -36,7 +36,7 @@ func constRetStr*(): string =
 func constRetUnicodeStr*(): string =
   return "প্রোগ্রামিং"
 
-func addInt*(a: int, b: int): int =
+func addIntNum*(a: int, b: int): int =
   return a + b
 
 proc printCond*(a: bool) =

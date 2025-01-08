@@ -32,7 +32,7 @@ int main() {
     const char* g = constRetUnicodeStr();
     string h = g;
     cout << h << endl;
-    int i = addInt(5, 3);
+    int i = addIntNum(5, 3);
     cout << i << endl;
     printCond(i == 8);
     printCond(i == 7);

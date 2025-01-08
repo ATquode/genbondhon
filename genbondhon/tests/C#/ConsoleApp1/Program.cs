@@ -22,7 +22,7 @@ string e = Nomuna.ConstRetStr();
 Console.WriteLine(e);
 string i = Nomuna.ConstRetUnicodeStr();
 Console.WriteLine(i);
-int f = Nomuna.AddInt(5, 3);
+int f = Nomuna.AddIntNum(5, 3);
 Console.WriteLine(f);
 Nomuna.PrintCond(f == 8);
 Nomuna.PrintCond(f == 9);

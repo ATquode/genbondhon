@@ -28,7 +28,7 @@ int main() {
     printf("%s\n", e);
     const char* j = constRetUnicodeStr();
     printf("%s\n", j);
-    int f = addInt(5, 3);
+    int f = addIntNum(5, 3);
     printf("%d\n", f);
     printCond(f == 8);
     printCond(f == 7);

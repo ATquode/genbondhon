@@ -53,7 +53,7 @@ DataManager *DataManager::create(QQmlEngine *, QJSEngine *engine)
 
 void DataManager::onAddIntChanged()
 {
-    intNumRes = addInt(intNum1, intNum2);
+    intNumRes = addIntNum(intNum1, intNum2);
     Q_EMIT addIntResChanged(intNumRes);
 }
 

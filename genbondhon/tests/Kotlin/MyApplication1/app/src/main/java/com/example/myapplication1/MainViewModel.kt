@@ -126,7 +126,7 @@ class MainViewModel : ViewModel() {
         val num1 = inputHolder.addInt1.toIntOrNull() ?: 0
         val num2 = inputHolder.addInt2.toIntOrNull() ?: 0
         _addCardUiState.update { currentState ->
-            currentState.copy(addIntRes = nomuna.addInt(num1, num2).toString())
+            currentState.copy(addIntRes = nomuna.addIntNum(num1, num2).toString())
         }
     }
 

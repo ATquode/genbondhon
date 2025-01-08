@@ -93,7 +93,7 @@ public partial class MainViewModel : ObservableRecipient
         int i;
         var num1 = int.TryParse(AddInt1, out i) ? i : 0;
         var num2 = int.TryParse(AddInt2, out i) ? i : 0;
-        var sum = Nomuna.AddInt(num1, num2);
+        var sum = Nomuna.AddIntNum(num1, num2);
         AddIntRes = sum.ToString();
     }
 

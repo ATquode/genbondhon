@@ -23,7 +23,7 @@ class ContentViewHandler: ObservableObject {
     var addIntRes: Int {
         let num1 = addInt1 ?? 0
         let num2 = addInt2 ?? 0
-        return addInt(a: num1, b: num2)
+        return addIntNum(a: num1, b: num2)
     }
 
     var addDoubleRes: Double {
