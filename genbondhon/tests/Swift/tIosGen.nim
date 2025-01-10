@@ -51,10 +51,10 @@ proc testBuildingMyApp(moduleName: string) =
   executeTask("Copy static lib to binding dir", copyLibCmdToBinding)
   # copy Swift wrapper
   let myAppDir = "tests/Swift/iOS/MyApp1"
-  let copyCModuleCmd = &"cp -r bindings/Swift/CNomuna {myAppDir}/MyApp1/CNomuna"
+  let copyCModuleCmd = &"cp -r bindings/Swift/CNomuna {myAppDir}/MyApp1/"
   executeTask("Copy CModule", copyCModuleCmd)
   # copy static lib
-  let copyLibCmd = &"cp bindings/Swift/iOS/libnomuna.a {myAppDir}/MyApp1/CNomuna"
+  let copyLibCmd = &"cp bindings/Swift/iOS/libnomuna.a {myAppDir}/MyApp1/CNomuna/"
   executeTask("Copy lib binary", copyLibCmd)
   # build project
   let xcodeBuildCmd =
