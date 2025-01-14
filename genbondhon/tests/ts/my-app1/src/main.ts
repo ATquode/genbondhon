@@ -9,7 +9,7 @@ import { extraNoOp, noop, printCond, printStr, takeChar } from "./lib/nomuna";
 
 noop();
 extraNoOp();
-let a = 7;
+const a = 7;
 printCond(a === 7);
 printCond(a !== 7);
 takeChar("a".charCodeAt(0).toString());

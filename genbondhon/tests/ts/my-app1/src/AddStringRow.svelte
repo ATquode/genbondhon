@@ -28,7 +28,7 @@ SPDX-License-Identifier: MIT
     placeholder="Name"
     class="input input-bordered w-full max-w-xs"
     bind:value={input}
-    oninput={(e) => onNameInput()}
+    oninput={() => onNameInput()}
   />
   <span>:</span>
   <span class="min-w-24">{output}</span>
