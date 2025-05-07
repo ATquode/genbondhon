@@ -7,11 +7,14 @@
 
 ### Project ###
 packages/
-_deps/*
-!_deps/nim-compiler
+deps/*
+!deps/atlas.config
+!deps/atlas.config.license
+!deps/REUSE.toml
+!deps/nim-compiler
 
-genbondhon/genbondhon
-genbondhon/genbondhon.exe
+genbondhon
+genbondhon.exe
 dist/
 check
 .check
@@ -38,32 +41,32 @@ nomuna.d.ts
 nomuna.mjs
 androidCache
 iosCache
-genbondhon/cache*
-genbondhon/testresults.html
-genbondhon/tests/common
-genbondhon/tests/common.exe
-genbondhon/tests/parsing/tApiContainsType
-genbondhon/tests/parsing/tApiContainsType.exe
-genbondhon/tests/parsing/tParsePublicApi
-genbondhon/tests/parsing/tParsePublicApi.exe
-genbondhon/tests/C/*
-!genbondhon/tests/C/testCode.c
-!genbondhon/tests/C/tCGenStatic.nim
-!genbondhon/tests/C/tCGenDynamic.nim
-genbondhon/tests/C++/*
-!genbondhon/tests/C++/testCode.cpp
-!genbondhon/tests/C++/tCppGenStatic.nim
-!genbondhon/tests/C++/tCppGenDynamic.nim
-!genbondhon/tests/C++/kirigamiapp1
-genbondhon/tests/C#/nomuna.cs
-genbondhon/tests/C#/tCSharpGen
-genbondhon/tests/C#/tCSharpGen.exe
-genbondhon/tests/Kotlin/tKotlinGen
-genbondhon/tests/Kotlin/tKotlinGen.exe
-genbondhon/tests/Swift/tIosGen
-genbondhon/tests/Swift/tSwiftGen
-genbondhon/tests/ts/tTypeScriptGen
-genbondhon/tests/ts/tTypeScriptGen.exe
+cache*
+testresults.html
+tests/common
+tests/common.exe
+tests/parsing/tApiContainsType
+tests/parsing/tApiContainsType.exe
+tests/parsing/tParsePublicApi
+tests/parsing/tParsePublicApi.exe
+tests/C/*
+!tests/C/testCode.c
+!tests/C/tCGenStatic.nim
+!tests/C/tCGenDynamic.nim
+tests/C++/*
+!tests/C++/testCode.cpp
+!tests/C++/tCppGenStatic.nim
+!tests/C++/tCppGenDynamic.nim
+!tests/C++/kirigamiapp1
+tests/C#/nomuna.cs
+tests/C#/tCSharpGen
+tests/C#/tCSharpGen.exe
+tests/Kotlin/tKotlinGen
+tests/Kotlin/tKotlinGen.exe
+tests/Swift/tIosGen
+tests/Swift/tSwiftGen
+tests/ts/tTypeScriptGen
+tests/ts/tTypeScriptGen.exe
 CNomuna
 
 ### Linux ###

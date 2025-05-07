@@ -135,24 +135,24 @@ _hello.d.ts_
 
 ### Development
 
-To setup the project, doing `atlas install genbondhon.nimble` inside `genbondhon/` directory should suffice.
+This project requires atlas 0.9.0, which is shipped with nim 2.2.4. It is possible to use the updated atlas to install the dependencies, and use any other nim 2 version.
 
-This project uses nim tasks defined in genbondhon/config.nims for development.
-Tasks can be called from command line from both the root directory or the `genbondhon/` directory.
+To setup the project, doing `atlas install genbondhon.nimble` should suffice.
+
+This project uses nim tasks defined in config.nims for development.
+Tasks can be called from command line from the root directory.
 
 To create a release build, run
 
     nim build
 
-To run debug build, if you are in root directory, use
+To run debug build, use
 
-    nim dev genbondhon/tests/nomuna.nim
-
-Change the `nomuna.nim` path if you are inside `genboondhon` directory, e.g. `tests/nomuna.nim`.
+    nim dev tests/nomuna.nim
 
 Add flags after the filepath if needed, e.g.
 
-    nim dev genbondhon/tests/nomuna.nim --verbose
+    nim dev tests/nomuna.nim --verbose
 
 To check formatting & linting, run
 
