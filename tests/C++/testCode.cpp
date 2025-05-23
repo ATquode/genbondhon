@@ -47,5 +47,6 @@ int main() {
     const char* m = sayHello("ñíℳ");
     string n = m;
     cout << n << endl;
+    print2Str("Hello", "World!");
     return 0;
 }

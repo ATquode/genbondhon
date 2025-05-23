@@ -21,6 +21,9 @@ DataManager::DataManager(QObject *parent)
     printCond(intNumRes == 0);
     printCond(intNumRes != 0);
     takeChar('a');
+    printStr("nim");
+    printStr("hello ñíℳ");
+    print2Str("Hello", "World!");
 }
 
 DataManager *DataManager::getSingleton()

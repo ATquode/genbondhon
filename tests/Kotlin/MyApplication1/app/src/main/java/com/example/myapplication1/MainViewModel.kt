@@ -26,6 +26,7 @@ class MainViewModel : ViewModel() {
         nomuna.takeChar('a')
         nomuna.printStr("nim")
         nomuna.printStr("hello ñíℳ")
+        nomuna.print2Str("Hello", "World!")
     }
 
     val retCardUiState =

@@ -22,6 +22,7 @@ a
 nim
 hello ñíℳ
 Héllø ñíℳ
+Hello World!
 '''
   disabled: windows
   disabled: linux

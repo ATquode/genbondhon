@@ -18,6 +18,7 @@ import {
   takeChar,
   printStr,
   sayHello,
+  print2Str,
 } from "./nomuna";
 
 noop();
@@ -48,3 +49,4 @@ printStr("nim");
 printStr("hello ñíℳ"); // Unicode
 let k = sayHello("ñíℳ");
 console.log(k);
+print2Str("Hello", "World!");

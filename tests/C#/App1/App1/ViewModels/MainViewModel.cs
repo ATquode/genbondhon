@@ -85,6 +85,7 @@ public partial class MainViewModel : ObservableRecipient
         Nomuna.TakeChar('a');
         Nomuna.PrintStr("nim");
         Nomuna.PrintStr("hello ñíℳ");
+        Nomuna.Print2Str("Hello", "World!");
     }
 
     [RelayCommand]

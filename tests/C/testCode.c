@@ -42,5 +42,6 @@ int main() {
     printStr("hello ñíℳ"); // Unicode
     const char* k = sayHello("ñíℳ");
     printf("%s\n", k);
+    print2Str("Hello", "World!");
     return 0;
 }

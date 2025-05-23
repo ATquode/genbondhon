@@ -21,7 +21,8 @@ failure
 a
 nim
 hello ñíℳ
-Héllø ñíℳ'''
+Héllø ñíℳ
+Hello World!'''
 """
 #!fmt: on
 

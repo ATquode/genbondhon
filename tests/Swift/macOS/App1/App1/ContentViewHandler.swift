@@ -49,5 +49,6 @@ class ContentViewHandler: ObservableObject {
         takeChar(a: "a")
         printStr(a: "nim")
         printStr(a: "hello ñíℳ")
+        print2Str(str1: "Hello", str2: "World!")
     }
 }

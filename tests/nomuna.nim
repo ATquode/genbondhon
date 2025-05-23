@@ -59,3 +59,6 @@ proc printStr*(a: string) =
 
 func sayHello*(name: string): string =
   "Héllø " & name
+
+proc print2Str*(str1: string, str2: string) =
+  echo str1, " ", str2
