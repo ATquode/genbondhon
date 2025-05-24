@@ -47,7 +47,7 @@ proc translateProc(node: PNode): string =
       &"""when defined(vcc):
     let nimstr = {procCallStmt}
     let cstr = CoTaskMemAlloc(nimstr.len + 1)
-    {{.emit: ["strcpy(cstr, ", nimstr.cstring, ");"].}}
+    {{.emit: ["strcpy(", cstr, ", ", nimstr.cstring, ");"].}}
     return cstr
   else:
     {retBody}"""
