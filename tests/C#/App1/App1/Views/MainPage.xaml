@@ -2,7 +2,6 @@
     x:Class="App1.Views.MainPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:core="using:Microsoft.Xaml.Interactions.Core"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:interactivity="using:Microsoft.Xaml.Interactivity"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -40,9 +39,9 @@
                     PlaceholderText="Number 1"
                     Text="{x:Bind ViewModel.AddInt1, Mode=TwoWay}">
                     <interactivity:Interaction.Behaviors>
-                        <core:EventTriggerBehavior EventName="LostFocus">
-                            <core:InvokeCommandAction Command="{x:Bind ViewModel.PerformAddIntCommand}" />
-                        </core:EventTriggerBehavior>
+                        <interactivity:EventTriggerBehavior EventName="LostFocus">
+                            <interactivity:InvokeCommandAction Command="{x:Bind ViewModel.PerformAddIntCommand}" />
+                        </interactivity:EventTriggerBehavior>
                     </interactivity:Interaction.Behaviors>
                 </NumberBox>
                 <TextBlock FontSize="20" Text="+" />
@@ -51,9 +50,9 @@
                     PlaceholderText="Number 2"
                     Text="{x:Bind ViewModel.AddInt2, Mode=TwoWay}">
                     <interactivity:Interaction.Behaviors>
-                        <core:EventTriggerBehavior EventName="LostFocus">
-                            <core:InvokeCommandAction Command="{x:Bind ViewModel.PerformAddIntCommand}" />
-                        </core:EventTriggerBehavior>
+                        <interactivity:EventTriggerBehavior EventName="LostFocus">
+                            <interactivity:InvokeCommandAction Command="{x:Bind ViewModel.PerformAddIntCommand}" />
+                        </interactivity:EventTriggerBehavior>
                     </interactivity:Interaction.Behaviors>
                 </NumberBox>
                 <TextBlock FontSize="20" Text="=" />
@@ -67,9 +66,9 @@
                     PlaceholderText="Number 1"
                     Text="{x:Bind ViewModel.AddDouble1, Mode=TwoWay}">
                     <interactivity:Interaction.Behaviors>
-                        <core:EventTriggerBehavior EventName="LostFocus">
-                            <core:InvokeCommandAction Command="{x:Bind ViewModel.PerformAddDoubleCommand}" />
-                        </core:EventTriggerBehavior>
+                        <interactivity:EventTriggerBehavior EventName="LostFocus">
+                            <interactivity:InvokeCommandAction Command="{x:Bind ViewModel.PerformAddDoubleCommand}" />
+                        </interactivity:EventTriggerBehavior>
                     </interactivity:Interaction.Behaviors>
                 </NumberBox>
                 <TextBlock FontSize="20" Text="+" />
@@ -78,9 +77,9 @@
                     PlaceholderText="Number 2"
                     Text="{x:Bind ViewModel.AddDouble2, Mode=TwoWay}">
                     <interactivity:Interaction.Behaviors>
-                        <core:EventTriggerBehavior EventName="LostFocus">
-                            <core:InvokeCommandAction Command="{x:Bind ViewModel.PerformAddDoubleCommand}" />
-                        </core:EventTriggerBehavior>
+                        <interactivity:EventTriggerBehavior EventName="LostFocus">
+                            <interactivity:InvokeCommandAction Command="{x:Bind ViewModel.PerformAddDoubleCommand}" />
+                        </interactivity:EventTriggerBehavior>
                     </interactivity:Interaction.Behaviors>
                 </NumberBox>
                 <TextBlock FontSize="20" Text="=" />
@@ -94,9 +93,9 @@
                     PlaceholderText="Number 1"
                     Text="{x:Bind ViewModel.AddFloat1, Mode=TwoWay}">
                     <interactivity:Interaction.Behaviors>
-                        <core:EventTriggerBehavior EventName="LostFocus">
-                            <core:InvokeCommandAction Command="{x:Bind ViewModel.PerformAddFloatCommand}" />
-                        </core:EventTriggerBehavior>
+                        <interactivity:EventTriggerBehavior EventName="LostFocus">
+                            <interactivity:InvokeCommandAction Command="{x:Bind ViewModel.PerformAddFloatCommand}" />
+                        </interactivity:EventTriggerBehavior>
                     </interactivity:Interaction.Behaviors>
                 </NumberBox>
                 <TextBlock FontSize="20" Text="+" />
@@ -105,9 +104,9 @@
                     PlaceholderText="Number 2"
                     Text="{x:Bind ViewModel.AddFloat2, Mode=TwoWay}">
                     <interactivity:Interaction.Behaviors>
-                        <core:EventTriggerBehavior EventName="LostFocus">
-                            <core:InvokeCommandAction Command="{x:Bind ViewModel.PerformAddFloatCommand}" />
-                        </core:EventTriggerBehavior>
+                        <interactivity:EventTriggerBehavior EventName="LostFocus">
+                            <interactivity:InvokeCommandAction Command="{x:Bind ViewModel.PerformAddFloatCommand}" />
+                        </interactivity:EventTriggerBehavior>
                     </interactivity:Interaction.Behaviors>
                 </NumberBox>
                 <TextBlock FontSize="20" Text="=" />
@@ -118,9 +117,9 @@
                 <TextBlock FontSize="20" Text="String:" />
                 <TextBox PlaceholderText="Name" Text="{x:Bind ViewModel.SayHelloInput, Mode=TwoWay}">
                     <interactivity:Interaction.Behaviors>
-                        <core:EventTriggerBehavior EventName="LostFocus">
-                            <core:InvokeCommandAction Command="{x:Bind ViewModel.PerformSayHelloCommand}" />
-                        </core:EventTriggerBehavior>
+                        <interactivity:EventTriggerBehavior EventName="LostFocus">
+                            <interactivity:InvokeCommandAction Command="{x:Bind ViewModel.PerformSayHelloCommand}" />
+                        </interactivity:EventTriggerBehavior>
                     </interactivity:Interaction.Behaviors>
                 </TextBox>
                 <TextBlock FontSize="20" Text=":" />
