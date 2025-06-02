@@ -4,6 +4,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:interactivity="using:Microsoft.Xaml.Interactivity"
+    xmlns:local="using:App1.Views"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:sys="using:System"
     mc:Ignorable="d">
@@ -32,86 +33,29 @@
                 FontSize="24"
                 Text="Add" />
 
-            <StackPanel Orientation="Horizontal" Spacing="10">
-                <TextBlock FontSize="20" Text="Int:" />
-                <NumberBox
-                    x:Name="AddNumInt1"
-                    PlaceholderText="Number 1"
-                    Text="{x:Bind ViewModel.AddInt1, Mode=TwoWay}">
-                    <interactivity:Interaction.Behaviors>
-                        <interactivity:EventTriggerBehavior EventName="LostFocus">
-                            <interactivity:InvokeCommandAction Command="{x:Bind ViewModel.PerformAddIntCommand}" />
-                        </interactivity:EventTriggerBehavior>
-                    </interactivity:Interaction.Behaviors>
-                </NumberBox>
-                <TextBlock FontSize="20" Text="+" />
-                <NumberBox
-                    x:Name="AddNumInt2"
-                    PlaceholderText="Number 2"
-                    Text="{x:Bind ViewModel.AddInt2, Mode=TwoWay}">
-                    <interactivity:Interaction.Behaviors>
-                        <interactivity:EventTriggerBehavior EventName="LostFocus">
-                            <interactivity:InvokeCommandAction Command="{x:Bind ViewModel.PerformAddIntCommand}" />
-                        </interactivity:EventTriggerBehavior>
-                    </interactivity:Interaction.Behaviors>
-                </NumberBox>
-                <TextBlock FontSize="20" Text="=" />
-                <TextBlock FontSize="20" Text="{x:Bind ViewModel.AddIntRes, Mode=OneWay}" />
-            </StackPanel>
+            <local:AddRow
+                Title="Int"
+                AddNum1="{x:Bind ViewModel.AddInt1, Mode=TwoWay}"
+                AddNum2="{x:Bind ViewModel.AddInt2, Mode=TwoWay}"
+                AddNumRes="{x:Bind ViewModel.AddIntRes, Mode=OneWay}"
+                Formatter="{x:Bind ViewModel.IntFormatter}"
+                PerformAddCommand="{x:Bind ViewModel.PerformAddIntCommand}" />
 
-            <StackPanel Orientation="Horizontal" Spacing="10">
-                <TextBlock FontSize="20" Text="Double:" />
-                <NumberBox
-                    x:Name="AddNumDouble1"
-                    PlaceholderText="Number 1"
-                    Text="{x:Bind ViewModel.AddDouble1, Mode=TwoWay}">
-                    <interactivity:Interaction.Behaviors>
-                        <interactivity:EventTriggerBehavior EventName="LostFocus">
-                            <interactivity:InvokeCommandAction Command="{x:Bind ViewModel.PerformAddDoubleCommand}" />
-                        </interactivity:EventTriggerBehavior>
-                    </interactivity:Interaction.Behaviors>
-                </NumberBox>
-                <TextBlock FontSize="20" Text="+" />
-                <NumberBox
-                    x:Name="AddNumDouble2"
-                    PlaceholderText="Number 2"
-                    Text="{x:Bind ViewModel.AddDouble2, Mode=TwoWay}">
-                    <interactivity:Interaction.Behaviors>
-                        <interactivity:EventTriggerBehavior EventName="LostFocus">
-                            <interactivity:InvokeCommandAction Command="{x:Bind ViewModel.PerformAddDoubleCommand}" />
-                        </interactivity:EventTriggerBehavior>
-                    </interactivity:Interaction.Behaviors>
-                </NumberBox>
-                <TextBlock FontSize="20" Text="=" />
-                <TextBlock FontSize="20" Text="{x:Bind ViewModel.AddDoubleRes, Mode=OneWay}" />
-            </StackPanel>
+            <local:AddRow
+                Title="Double"
+                AddNum1="{x:Bind ViewModel.AddDouble1, Mode=TwoWay}"
+                AddNum2="{x:Bind ViewModel.AddDouble2, Mode=TwoWay}"
+                AddNumRes="{x:Bind ViewModel.AddDoubleRes, Mode=OneWay}"
+                Formatter="{x:Bind ViewModel.DoubleFormatter}"
+                PerformAddCommand="{x:Bind ViewModel.PerformAddDoubleCommand}" />
 
-            <StackPanel Orientation="Horizontal" Spacing="10">
-                <TextBlock FontSize="20" Text="Float:" />
-                <NumberBox
-                    x:Name="AddNumFloat1"
-                    PlaceholderText="Number 1"
-                    Text="{x:Bind ViewModel.AddFloat1, Mode=TwoWay}">
-                    <interactivity:Interaction.Behaviors>
-                        <interactivity:EventTriggerBehavior EventName="LostFocus">
-                            <interactivity:InvokeCommandAction Command="{x:Bind ViewModel.PerformAddFloatCommand}" />
-                        </interactivity:EventTriggerBehavior>
-                    </interactivity:Interaction.Behaviors>
-                </NumberBox>
-                <TextBlock FontSize="20" Text="+" />
-                <NumberBox
-                    x:Name="AddNumFloat2"
-                    PlaceholderText="Number 2"
-                    Text="{x:Bind ViewModel.AddFloat2, Mode=TwoWay}">
-                    <interactivity:Interaction.Behaviors>
-                        <interactivity:EventTriggerBehavior EventName="LostFocus">
-                            <interactivity:InvokeCommandAction Command="{x:Bind ViewModel.PerformAddFloatCommand}" />
-                        </interactivity:EventTriggerBehavior>
-                    </interactivity:Interaction.Behaviors>
-                </NumberBox>
-                <TextBlock FontSize="20" Text="=" />
-                <TextBlock FontSize="20" Text="{x:Bind ViewModel.AddFloatRes, Mode=OneWay}" />
-            </StackPanel>
+            <local:AddRow
+                Title="Float"
+                AddNum1="{x:Bind ViewModel.AddFloat1, Mode=TwoWay}"
+                AddNum2="{x:Bind ViewModel.AddFloat2, Mode=TwoWay}"
+                AddNumRes="{x:Bind ViewModel.AddFloatRes, Mode=OneWay}"
+                Formatter="{x:Bind ViewModel.FloatFormatter}"
+                PerformAddCommand="{x:Bind ViewModel.PerformAddFloatCommand}" />
 
             <StackPanel Orientation="Horizontal" Spacing="10">
                 <TextBlock FontSize="20" Text="String:" />

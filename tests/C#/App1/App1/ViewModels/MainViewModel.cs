@@ -2,6 +2,7 @@
 //
 // SPDX-License-Identifier: MIT
 
+using System.Diagnostics;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using NomunaLib;
@@ -61,6 +62,39 @@ public partial class MainViewModel : ObservableRecipient
 
     [ObservableProperty]
     private string sayHelloOutput;
+
+    private readonly Lazy<DecimalFormatter> _intFormatter =
+        new(() =>
+        {
+            var formatter = new DecimalFormatter { FractionDigits = 0 };
+            var rounder = new IncrementNumberRounder
+            {
+                RoundingAlgorithm = RoundingAlgorithm.RoundDown
+            };
+            formatter.NumberRounder = rounder;
+            return formatter;
+        });
+    public DecimalFormatter IntFormatter => _intFormatter.Value;
+
+    private readonly Lazy<DecimalFormatter> _doubleFormatter =
+        new(() =>
+        {
+            var formatter = new DecimalFormatter { FractionDigits = 4 };
+            var rounder = new IncrementNumberRounder { Increment = 0.0001 };
+            formatter.NumberRounder = rounder;
+            return formatter;
+        });
+    public DecimalFormatter DoubleFormatter => _doubleFormatter.Value;
+
+    private readonly Lazy<DecimalFormatter> _floatFormatter =
+        new(() =>
+        {
+            var formatter = new DecimalFormatter { FractionDigits = 2 };
+            var rounder = new IncrementNumberRounder { Increment = 0.01 };
+            formatter.NumberRounder = rounder;
+            return formatter;
+        });
+    public DecimalFormatter FloatFormatter => _floatFormatter.Value;
 
     public MainViewModel()
     {
