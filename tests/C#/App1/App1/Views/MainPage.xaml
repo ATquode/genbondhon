@@ -9,12 +9,21 @@
     xmlns:sys="using:System"
     mc:Ignorable="d">
 
-    <Grid x:Name="ContentArea">
+    <Grid x:Name="ContentArea" RowSpacing="40">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*" />
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
-        <StackPanel Grid.Column="0">
+        <StackPanel
+            x:Name="ConstantBlock"
+            Grid.Row="0"
+            Grid.RowSpan="1"
+            Grid.Column="0"
+            Grid.ColumnSpan="2">
             <TextBlock
                 Padding="0,10"
                 FontSize="24"
@@ -27,7 +36,13 @@
             <TextBlock Text="{x:Bind sys:String.Format('Unicode String: {0}', ViewModel.UnicodeStringRetVal)}" />
         </StackPanel>
 
-        <StackPanel Grid.Column="1" Spacing="14">
+        <StackPanel
+            x:Name="AddBlock"
+            Grid.Row="1"
+            Grid.RowSpan="1"
+            Grid.Column="0"
+            Grid.ColumnSpan="2"
+            Spacing="14">
             <TextBlock
                 Padding="0,10"
                 FontSize="24"
@@ -70,5 +85,24 @@
                 <TextBlock FontSize="20" Text="{x:Bind ViewModel.SayHelloOutput, Mode=OneWay}" />
             </StackPanel>
         </StackPanel>
+
+        <VisualStateManager.VisualStateGroups>
+            <VisualStateGroup>
+                <VisualState>
+                    <VisualState.StateTriggers>
+                        <AdaptiveTrigger MinWindowWidth="720" />
+                    </VisualState.StateTriggers>
+                    <VisualState.Setters>
+                        <Setter Target="ConstantBlock.(Grid.Column)" Value="0" />
+                        <Setter Target="ConstantBlock.(Grid.RowSpan)" Value="2" />
+                        <Setter Target="ConstantBlock.(Grid.ColumnSpan)" Value="1" />
+                        <Setter Target="AddBlock.(Grid.Row)" Value="0" />
+                        <Setter Target="AddBlock.(Grid.Column)" Value="1" />
+                        <Setter Target="AddBlock.(Grid.RowSpan)" Value="2" />
+                        <Setter Target="AddBlock.(Grid.ColumnSpan)" Value="1" />
+                    </VisualState.Setters>
+                </VisualState>
+            </VisualStateGroup>
+        </VisualStateManager.VisualStateGroups>
     </Grid>
 </Page>
