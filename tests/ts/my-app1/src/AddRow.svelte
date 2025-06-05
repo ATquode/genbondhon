@@ -20,35 +20,43 @@ SPDX-License-Identifier: MIT
   let output: number = $state(0);
 
   function validateInput1(value: string) {
-    if (value === "") {
-      number1 = 0;
-      input1 = "";
-      output = addFunc(number1, number2);
-      return;
-    } else if (validationFunc(value)) {
-      number1 = +value;
-      output = addFunc(number1, number2);
-      if (value.length > 0 && value.slice(-1) === "0") {
-        return;
-      }
-    }
-    input1 = number1.toString();
+    validateInput(
+      value,
+      (num) => (number1 = num),
+      (input) => (input1 = input),
+      () => number1,
+    );
   }
 
   function validateInput2(value: string) {
+    validateInput(
+      value,
+      (num) => (number2 = num),
+      (input) => (input2 = input),
+      () => number2,
+    );
+  }
+
+  function validateInput(
+    value: string,
+    setNumber: (num: number) => void,
+    setInput: (input: string) => void,
+    getNumber: () => number,
+  ) {
     if (value === "") {
-      number2 = 0;
-      input2 = "";
+      setNumber(0);
+      setInput("");
       output = addFunc(number1, number2);
       return;
     } else if (validationFunc(value)) {
-      number2 = +value;
+      let num = +value;
+      setNumber(num);
       output = addFunc(number1, number2);
       if (value.length > 0 && value.slice(-1) === "0") {
         return;
       }
     }
-    input2 = number2.toString();
+    setInput(getNumber().toString());
   }
 </script>
 
