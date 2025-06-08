@@ -7,6 +7,13 @@ import base
 import compiler/ast
 import ../[convertutil, currentconfig, util]
 
+const androidAbiArchArray = [
+  (arch: "arm64", abi: "arm64-v8a", target: "aarch64"),
+  (arch: "arm", abi: "armeabi-v7a", target: "armv7a"),
+  (arch: "i386", abi: "x86", target: "i686"),
+  (arch: "amd64", abi: "x86_64", target: "x86_64"),
+]
+
 type KotlinLangGen = ref object of BaseLangGen
   cppModuleDir: Path
   cppLangDir: Path
@@ -166,7 +173,7 @@ add_library(${{PROJECT_NAME}} SHARED
 
 find_library(log-lib log)
 target_link_libraries(${{PROJECT_NAME}}
-        ${{CMAKE_CURRENT_LIST_DIR}}/lib{modName}.a
+        ${{CMAKE_CURRENT_LIST_DIR}}/${{ANDROID_ABI}}/lib{modName}.a
         android
         ${{log-lib}})
 """
@@ -244,22 +251,53 @@ proc generateKotlinWrapper(self: KotlinLangGen, bindingAST: seq[PNode]) =
   let wrapperFilePath = self.langDir / self.wrapperFileName
   wrapperFilePath.string.writeFile(content)
 
+func getNimCompilationCommands(
+    self: KotlinLangGen, androidCacheDirBase: string
+): string =
+  var cmds: seq[string]
+  for (arch, _, _) in androidAbiArchArray:
+    cmds.add &"""
+    nim cpp -c -d:release --cpu:{arch} --os:android -d:androidNDK --noMain:on --app:staticlib --nimcache:{androidCacheDirBase}-{arch} {self.bindingModuleFile.string}"""
+  return cmds.join("\n")
+
+func getCppCompilationCommands(androidCacheDirBase: string): string =
+  var cmds: seq[string]
+  for (arch, _, target) in androidAbiArchArray:
+    cmds.add &"""
+    cd {androidCacheDirBase}-{arch}
+    ~/Android/Sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/linux-x86_64/bin/clang++ -target {target}-linux-android24 -c -I ~/Applications/nim/lib -fPIC *.cpp
+    cd .."""
+  return cmds.join("\n")
+
+func getArchiveCommands(libFileName: string, androidCacheDirBase: string): string =
+  var cmds: seq[string]
+  for (arch, abi, _) in androidAbiArchArray:
+    cmds.add &"""
+    mkdir {abi}
+    ar r {abi}/{libFileName} {androidCacheDirBase}-{arch}/*.o
+    rm -r {androidCacheDirBase}-{arch}"""
+  return cmds.join("\n")
+
+func moveLibCommands(self: KotlinLangGen): string =
+  var cmds: seq[string]
+  for (_, abi, _) in androidAbiArchArray:
+    cmds.add &"""
+    mv {abi}/ {self.cppModuleDir}/"""
+  return cmds.join("\n")
+
 method getReadMeContent(self: KotlinLangGen): string =
   let common = procCall self.BaseLangGen.getReadMeContent()
-  let androidCacheDir = "androidCache"
+  let androidCacheDirBase = "androidCache"
   let libFileName = &"lib{moduleName}.a"
   result =
     &"""
 {common}
 Provide JVM Package Name in command line using the respective option.
 
-### Note
-These instructions are for ARM64 build. For other CPU architectures, change the cpu flags respectively.
-
 #### Static Library
 First, compile the nim code to C++ code for android with the following command.
 
-    nim cpp -c -d:release --cpu:arm64 --os:android -d:androidNDK --noMain:on --app:staticlib --nimcache:{androidCacheDir} {self.bindingModuleFile.string}
+{getNimCompilationCommands(self, androidCacheDirBase)}
 
 Then compile the C++ code with proper android C++ compiler. You may find it as
 `$ANDROID_HOME/ndk/$ndkVer/toolchains/llvm/prebuilt/$hostOS/bin/clang++`.
@@ -267,18 +305,15 @@ Provide the target architecture and minAndroidSdkVersion, e.g. aarch64-linux-and
 Provide the directory of `"nimbase.h"` for include.
 Provide all generated C++ files. It will generate .o files.
 
-    cd {androidCacheDir}
-    ~/Android/Sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/linux-x86_64/bin/clang++ -target aarch64-linux-android24 -c -I ~/Applications/nim/lib -fPIC *.cpp
-    cd ..
+{getCppCompilationCommands(androidCacheDirBase)}
 
-Archive the obj files to static library. Remove {androidCacheDir} directory, it isn't needed anymore.
+Archive the obj files to static libraries. Remove {androidCacheDirBase}-* directories, they aren't needed anymore.
 
-    ar r {libFileName} {androidCacheDir}/*.o
-    rm -r {androidCacheDir}
+{getArchiveCommands(libFileName, androidCacheDirBase)}
 
-Copy this `{libFileName}` file to `{self.cppModuleDir.string}`.
+Copy this `{libFileName}` files to `{self.cppModuleDir.string}`.
 
-    mv {libFileName} {string self.cppModuleDir / libFileName.Path}
+{self.moveLibCommands}
 
 Collect `{self.wrapperFileName.string}` and `cpp` folder from `{self.langDir.string}`.
 Put them in the respective location inside your android project directory.
@@ -293,9 +328,6 @@ Since we are building only for ARM64, ABI filter is being set as such.
         ...
         defaultConfig {{
             ...
-            ndk {{
-                abiFilters.add("arm64-v8a")
-            }}
         }}
 
         externalNativeBuild {{

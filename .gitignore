@@ -39,7 +39,7 @@ libnomuna-x64.a
 libnomuna-arm64.a
 nomuna.d.ts
 nomuna.mjs
-androidCache
+androidCache*
 iosCache
 cache*
 testresults.html
