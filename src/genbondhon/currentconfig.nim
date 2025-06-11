@@ -5,7 +5,7 @@
 import std/paths
 import compiler/options
 
-const testDirPath* = "genbondhon/tests".Path
+const testDirPath* = "tests".Path
 var showVerboseOutput* = false
 var shouldUseVCCStr* = true
 var origFile*: Path
