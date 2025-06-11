@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		F5CB34352DF7FAE100F3DBE1 /* libnomuna.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = F5CB34342DF7FAE100F3DBE1 /* libnomuna.xcframework */; };
 		F5D0BA262D24722400D9B1C2 /* MyApp1App.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5D0BA252D24722400D9B1C2 /* MyApp1App.swift */; };
 		F5D0BA282D24722400D9B1C2 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5D0BA272D24722400D9B1C2 /* ContentView.swift */; };
 		F5D0BA2A2D24722A00D9B1C2 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F5D0BA292D24722A00D9B1C2 /* Assets.xcassets */; };
@@ -14,7 +15,6 @@
 		F5D0BA372D24722C00D9B1C2 /* MyApp1Tests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5D0BA362D24722C00D9B1C2 /* MyApp1Tests.swift */; };
 		F5D0BA412D24722C00D9B1C2 /* MyApp1UITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5D0BA402D24722C00D9B1C2 /* MyApp1UITests.swift */; };
 		F5D0BA432D24722C00D9B1C2 /* MyApp1UITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5D0BA422D24722C00D9B1C2 /* MyApp1UITestsLaunchTests.swift */; };
-		F5D0BA542D25B4EF00D9B1C2 /* libnomuna.a in Frameworks */ = {isa = PBXBuildFile; fileRef = F5D0BA512D25B4EF00D9B1C2 /* libnomuna.a */; };
 		F5D0BA552D25B4EF00D9B1C2 /* nomuna.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5D0BA522D25B4EF00D9B1C2 /* nomuna.swift */; };
 		F5D0BA572D261A5600D9B1C2 /* ContentViewHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5D0BA562D261A5600D9B1C2 /* ContentViewHandler.swift */; };
 /* End PBXBuildFile section */
@@ -37,6 +37,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		F5CB34342DF7FAE100F3DBE1 /* libnomuna.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; path = libnomuna.xcframework; sourceTree = "<group>"; };
 		F5D0BA222D24722400D9B1C2 /* MyApp1.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MyApp1.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		F5D0BA252D24722400D9B1C2 /* MyApp1App.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MyApp1App.swift; sourceTree = "<group>"; };
 		F5D0BA272D24722400D9B1C2 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -48,7 +49,6 @@
 		F5D0BA402D24722C00D9B1C2 /* MyApp1UITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MyApp1UITests.swift; sourceTree = "<group>"; };
 		F5D0BA422D24722C00D9B1C2 /* MyApp1UITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MyApp1UITestsLaunchTests.swift; sourceTree = "<group>"; };
 		F5D0BA502D25B4EF00D9B1C2 /* nomuna.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = nomuna.h; sourceTree = "<group>"; };
-		F5D0BA512D25B4EF00D9B1C2 /* libnomuna.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libnomuna.a; sourceTree = "<group>"; };
 		F5D0BA522D25B4EF00D9B1C2 /* nomuna.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = nomuna.swift; sourceTree = "<group>"; };
 		F5D0BA532D25B4EF00D9B1C2 /* module.modulemap */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = "sourcecode.module-map"; path = module.modulemap; sourceTree = "<group>"; };
 		F5D0BA562D261A5600D9B1C2 /* ContentViewHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentViewHandler.swift; sourceTree = "<group>"; };
@@ -59,7 +59,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				F5D0BA542D25B4EF00D9B1C2 /* libnomuna.a in Frameworks */,
+				F5CB34352DF7FAE100F3DBE1 /* libnomuna.xcframework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -141,8 +141,8 @@
 		F5D0BA4F2D25B4EE00D9B1C2 /* CNomuna */ = {
 			isa = PBXGroup;
 			children = (
+				F5CB34342DF7FAE100F3DBE1 /* libnomuna.xcframework */,
 				F5D0BA502D25B4EF00D9B1C2 /* nomuna.h */,
-				F5D0BA512D25B4EF00D9B1C2 /* libnomuna.a */,
 				F5D0BA522D25B4EF00D9B1C2 /* nomuna.swift */,
 				F5D0BA532D25B4EF00D9B1C2 /* module.modulemap */,
 			);

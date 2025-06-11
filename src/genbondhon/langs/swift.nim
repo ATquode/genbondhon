@@ -134,6 +134,7 @@ method getReadMeContent(self: SwiftLangGen): string =
   let common = procCall self.BaseLangGen.getReadMeContent()
   let bindingMacosPath = self.langDir / "macOS".Path
   let bindingIosPath = self.langDir / "iOS".Path
+  let headerFilePath = self.swiftCModuleDir / self.headerFileName.Path
   let realTestDir = testDirPath / "Swift".Path
   let realTestDirMac = realTestDir / "macOS".Path
   let realTestDirIos = realTestDir / "iOS".Path
@@ -141,6 +142,11 @@ method getReadMeContent(self: SwiftLangGen): string =
   let testDirSwiftModuleIos = realTestDirIos / self.cModuleName.Path
   let staticLibName = "lib$#.a".format(moduleName).Path
   let iosCacheDir = "iosCache"
+  let tempIosDir = "iOS".Path
+  let tempIosSimulatorDir = "iOSSimulator".Path
+  let staticx64 = "lib$#-x64.a".format(moduleName).Path
+  let staticarm64 = "lib$#-arm64.a".format(moduleName).Path
+  let xcframeworkName = "lib$#.xcframework".format(moduleName).Path
   result =
     &"""
 {common}
@@ -170,31 +176,49 @@ Then see [Setup Xcode](#setup-xcode)
 First, compile the nim code to C code for iOS with the following command.
 
     nim c -c -d:release --os:ios --noMain:on --app:staticLib --nimcache:{iosCacheDir} {self.bindingModuleFile.string}
-    cd {iosCacheDir}
 
-Then compile the C code for iOS.
-You have to build for iPhone device and simulator separately.
-You may choose to build only one.
+Then compile the C code for iOS and archive the obj files to static library.
+You have to build & archive for iPhone device and simulator separately. Remove the obj files between separate builds.
 Provide the directory of `"nimbase.h"` for include.
 Provide all generated C files. It will generate .o files.
 
 ##### iPhone Device
 
+    cd {iosCacheDir}
     xcrun -sdk iphoneos clang -c -arch arm64 -I /usr/local/Cellar/nim/2.0.4/nim/lib *.c
+    cd ..
+    mkdir {tempIosDir.string}
+    ar r {string tempIosDir / staticLibName} {iosCacheDir}/*.o
 
 ##### iPhone Simulator
 
-    xcrun -sdk iphonesimulator clang -c -I /usr/local/Cellar/nim/2.0.4/nim/lib *.c
+For iPhone Simulator, build for both x86_64 and arm64.
+
+    rm {iosCacheDir}/*.o
+    cd {iosCacheDir}
+    xcrun -sdk iphonesimulator clang -c -arch x86_64 -I /usr/local/Cellar/nim/2.0.4/nim/lib *.c
+    cd ..
+    mkdir {tempIosSimulatorDir.string}
+    ar r {string tempIosSimulatorDir / staticx64} {iosCacheDir}/*.o
+    rm {iosCacheDir}/*.o
+    cd {iosCacheDir}
+    xcrun -sdk iphonesimulator clang -c -arch arm64 -I /usr/local/Cellar/nim/2.0.4/nim/lib *.c
+    cd ..
+    ar r {string tempIosSimulatorDir / staticarm64} {iosCacheDir}/*.o
+
+Use lipo to create fat binary.
+
+    lipo -create -output {string tempIosSimulatorDir / staticLibName} {string tempIosSimulatorDir / staticx64} {string tempIosSimulatorDir / staticarm64}
 
 ===
 
-Archive the obj files to static library. Remove {iosCacheDir} directory, it isn't needed anymore.
+Create XCFramework from the static libraries.
 
-    cd ..
-    ar r {staticLibName.string} {iosCacheDir}/*.o
-    rm -r {iosCacheDir}
-    mkdir {bindingIosPath.string}
-    cp {staticLibName.string} {bindingIosPath.string}
+    xcodebuild -create-xcframework -library {string tempIosDir / staticLibName} -headers {headerFilePath.string} -library {string tempIosSimulatorDir / staticLibName} -headers {headerFilePath.string} -output {string bindingIosPath / xcframeworkName}
+
+Remove {iosCacheDir}, iOS, iOSSimulator directories. They aren't neeeded anymore.
+
+    rm -r {iosCacheDir} {tempIosDir.string} {tempIosSimulatorDir.string}
 
 #### Dynamic Library
 Not supported
@@ -202,9 +226,8 @@ Not supported
 #### Usage
 Copy the module and lib binary to your project. Put the lib binary inside module directory.
 
-    mkdir {realTestDirIos.string}
-    cp -r {self.swiftCModuleDir.string} {testDirSwiftModuleIos.string}
-    cp {string bindingIosPath / staticLibName} {testDirSwiftModuleIos.string}
+    cp -r {self.swiftCModuleDir.string}/ {testDirSwiftModuleIos.string}/
+    cp -r {string bindingIosPath / xcframeworkName} {testDirSwiftModuleIos.string}
 
 Then see [Setup Xcode](#setup-xcode)
 
