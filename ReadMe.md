@@ -154,6 +154,10 @@ Add flags after the filepath if needed, e.g.
 
     nim dev tests/nomuna.nim --verbose
 
+You can use [monit](https://github.com/jiro4989/monit) for live reload. Install, and then use the following to build and run debug build with live reload.
+
+    monit run
+
 To check formatting & linting, run
 
     nimcr check.nim

@@ -1,0 +1,18 @@
+# SPDX-FileCopyrightText: 2025 Rifat Hasan <atunutemp1@gmail.com>
+#
+# SPDX-License-Identifier: CC0-1.0
+
+%YAML 1.2
+%TAG !n! tag:nimyaml.org,2016:
+--- !n!custom:MonitorConfig
+sleep: 1
+targets:
+  -
+    name: dev
+    paths: [src, tests]
+    commands: [nim dev tests/nomuna.nim]
+    extensions: [.nim]
+    files: []
+    exclude_extensions: []
+    exclude_files: []
+    once: true
