@@ -11,9 +11,9 @@ proc parseFile(file: Path): PNode =
   let content = readFile(file.string)
   let cache = newIdentCache()
   let node = parseString(content, cache, configRef, file.lastPathPart.string)
-  if showVerboseOutput:
-    styledEcho styleBright, fgYellow, "Full AST:"
-    echo treeToYaml(configRef, node)
+  # if showVerboseOutput:
+  #   styledEcho styleBright, fgYellow, "Full AST:"
+  #   echo treeToYaml(configRef, node)
   return node
 
 func isExported(node: PNode): bool =
@@ -55,10 +55,17 @@ func filterPublicApis*(node: PNode): seq[PNode] =
     for i in 0 ..< node.safeLen:
       let filteredNodes = filterPublicApis(node[i])
       result.add(filteredNodes)
+  of nkTypeSection:
+    for i in 0 ..< node.safeLen:
+      let filteredNodes = filterPublicApis(node[i])
+      result.add(filteredNodes)
   of nkProcDef, nkFuncDef, nkMethodDef:
     if node.isExported:
       let trNode = node.trimToSignature()
       result.add(trNode)
+  of nkTypeDef:
+    if node.isExported:
+      result.add(node)
   else:
     discard
 
@@ -67,8 +74,8 @@ proc parsePublicAPIs*(file: Path): seq[PNode] =
   ## ASTs, where the ASTs are of public access.
   let rootNode = parseFile(file)
   let apiNodes = filterPublicApis(rootNode)
-  if showVerboseOutput:
-    styledEcho styleBright, fgYellow, "Public exported AST:"
-    for node in apiNodes:
-      echo treeToYaml(configRef, node)
+  # if showVerboseOutput:
+  #   styledEcho styleBright, fgYellow, "Public exported AST:"
+  #   for node in apiNodes:
+  #     echo treeToYaml(configRef, node)
   return apiNodes

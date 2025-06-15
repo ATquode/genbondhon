@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: MIT
 
 import std/[options, strformat, strutils, tables, terminal]
-import compiler/ast
+import compiler/[ast, astalgo]
 import convertutil, currentconfig, util
 
 func replaceType(nimType: string): string =
@@ -63,9 +63,9 @@ proc wrapApi(api: PNode): string =
   else:
     result = "Cannot wrap api"
 
-proc generateWrapperApi(publicAST: seq[PNode]): string =
+proc generateWrapperApi(wrappableAST: seq[PNode]): string =
   var trApis = newSeq[string]()
-  for api in publicAST:
+  for api in wrappableAST:
     let wrappedApi = wrapApi(api)
     trApis.add(wrappedApi)
   result =
@@ -73,9 +73,30 @@ proc generateWrapperApi(publicAST: seq[PNode]): string =
 {trApis.join("\n\n")}
 """
 
-proc translateToCompatibleWrapperApi*(publicAST: seq[PNode]): string =
-  let apiContent = generateWrapperApi(publicAST)
+proc separateWrappableAST(publicAST: seq[PNode]): (seq[PNode], seq[PNode]) =
+  ## separate public AST into wrappable and unwrappable ASTs
+  var wrappableAST, unwrappableAST: seq[PNode]
+  for node in publicAST:
+    case node.kind
+    of nkTypeDef:
+      unwrappableAST.add(node)
+    of nkProcDef, nkFuncDef, nkMethodDef:
+      wrappableAST.add(node)
+    else:
+      if showVerboseOutput:
+        styledEcho fgYellow, "Unhandled AST: $#".format(node.kind)
+  return (wrappableAST, unwrappableAST)
+
+proc translateToCompatibleWrapperApi*(
+    publicAST: seq[PNode]
+): (string, seq[PNode], seq[PNode]) =
+  let (wrappableAST, unwrappableAST) = separateWrappableAST(publicAST)
+  if showVerboseOutput:
+    styledEcho fgYellow, "Unwrappable AST:"
+    for node in unwrappableAST:
+      echo treeToYaml(configRef, node)
+  let apiContent = generateWrapperApi(wrappableAST)
   if showVerboseOutput:
     styledEcho fgYellow, "Wrapped Apis:"
     echo apiContent
-  return apiContent
+  return (apiContent, wrappableAST, unwrappableAST)

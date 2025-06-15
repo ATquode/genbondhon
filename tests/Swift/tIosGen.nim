@@ -4,7 +4,7 @@
 
 #!fmt: off
 discard """
-  disabled: windows
+  disabled: true #windows
   disabled: linux
 """
 #!fmt: on

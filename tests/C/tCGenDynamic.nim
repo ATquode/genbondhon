@@ -16,6 +16,7 @@ Héllø ñíℳ
 No Operation
 a
 a
+direction raw value: 2
 extra: No Op.
 failure
 hello ñíℳ

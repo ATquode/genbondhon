@@ -22,7 +22,8 @@ a
 nim
 hello ñíℳ
 Héllø ñíℳ
-Hello World!'''
+Hello World!
+direction raw value: 2'''
 """
 #!fmt: on
 

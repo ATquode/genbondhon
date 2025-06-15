@@ -43,5 +43,7 @@ int main() {
     const char* k = sayHello("ñíℳ");
     printf("%s\n", k);
     print2Str("Hello", "World!");
+    Direction direction = SOUTH;
+    printDirectionRawValue(direction);
     return 0;
 }

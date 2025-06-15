@@ -21,7 +21,7 @@ Options:
   --version                                                   Show version
 """
 
-import std/[parsecfg, paths, streams]
+import std/[parsecfg, paths, sequtils, streams]
 import docopt
 import docopt/dispatch
 import
@@ -45,10 +45,12 @@ proc generateBindings(
   moduleName = origFile.lastPathPart.splitFile.name.string
   bindingDirPath = bindingDir.Path
   let publicAST = parsePublicAPIs(origFile)
-  let wrappedApis = translateToCompatibleWrapperApi(publicAST)
-  let wrapperPath = wrappedApis.generateWrapperFile(wrapperName, publicAST)
+  let (wrappedApis, wrappableAST, unwrappableAST) =
+    translateToCompatibleWrapperApi(publicAST)
+  let wrapperPath = wrappedApis.generateWrapperFile(wrapperName, wrappableAST)
   generateBindableModule(bindingDir.Path, wrapperName)
-  let bindingAST = parsePublicAPIs(wrapperPath)
+  let wrapperAST = parsePublicAPIs(wrapperPath)
+  let bindingAST = concat(unwrappableAST, wrapperAST)
   generateLanguageBindings(bindingAST, bindingDir.Path, jvmPkgName)
 
 when isMainModule:

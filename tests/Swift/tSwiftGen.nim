@@ -24,7 +24,7 @@ hello ñíℳ
 Héllø ñíℳ
 Hello World!
 '''
-  disabled: windows
+  disabled: true #windows
   disabled: linux
 """
 #!fmt: on

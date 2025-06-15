@@ -21,6 +21,29 @@ func replaceType(nimCType: string): string =
   ## Replaces Nim Compat Types to C Types
   nimCompatToCTypeTbl.getOrDefault(nimCType, nimCType)
 
+func translateEnum(node: PNode): string =
+  let enumName = node.itemName
+  let enumValsParent = node[2]
+  var enumVals: seq[string]
+  for i in 1 ..< enumValsParent.safeLen:
+    let enumVal = enumValsParent[i].ident.s
+    let val =
+      &"""
+    {enumVal.toUpperAscii}"""
+    enumVals.add(val)
+  result =
+    &"""
+typedef enum {{
+{enumVals.join(",\n")}
+}} {enumName};"""
+
+func translateType(node: PNode): string =
+  case node.subType
+  of nkEnumTy:
+    result = translateEnum(node)
+  else:
+    result = "Cannot translate Api to C"
+
 func translateProc(node: PNode): string =
   let funcName = procName(node)
   let paramNode = procParamNode(node)
@@ -41,6 +64,8 @@ func translateProc(node: PNode): string =
 
 func translateApi*(api: PNode): string =
   case api.kind
+  of nkTypeDef:
+    result = translateType(api)
   of nkProcDef, nkFuncDef, nkMethodDef:
     result = translateProc(api)
   else:

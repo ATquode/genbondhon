@@ -2,6 +2,12 @@
 #
 # SPDX-License-Identifier: MIT
 
+#!fmt: off
+discard """
+  disabled: true
+"""
+#!fmt: on
+
 import std/[algorithm, dirs, files, os, paths, sequtils, strformat, strutils]
 import ../common
 

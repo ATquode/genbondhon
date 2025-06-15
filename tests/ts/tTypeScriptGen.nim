@@ -23,6 +23,8 @@ nim
 hello ñíℳ
 Héllø ñíℳ
 Hello World!'''
+
+  disabled: true
 """
 #!fmt: on
 

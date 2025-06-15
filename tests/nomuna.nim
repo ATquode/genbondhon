@@ -4,6 +4,17 @@
 
 import std/strutils
 
+type
+  Direction* {.pure.} = enum
+    north
+    east
+    south
+    west
+
+  MyEnum {.pure.} = enum
+    valueA
+    valueB
+
 proc noop*() =
   echo "No Operation"
 
@@ -62,3 +73,6 @@ func sayHello*(name: string): string =
 
 proc print2Str*(str1: string, str2: string) =
   echo str1, " ", str2
+
+proc printDirectionRawValue*(direction: Direction) =
+  echo "direction raw value: ", ord(direction)

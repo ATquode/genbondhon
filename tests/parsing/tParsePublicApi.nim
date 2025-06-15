@@ -8,7 +8,7 @@ import
     [currentconfig, parseutil, wrapperTranslator, wrapperGenerator, util]
 
 let filePath = "tests/nomuna.nim".Path # Testament starts from parent of `tests` dir
-let publicApiCount = 16
+let publicApiCount = 18
 origFile = filePath
 moduleName = filePath.lastPathPart.splitFile.name.string
 bindingDirPath = "bindingTest".Path
@@ -16,17 +16,22 @@ let wrappedFileName = "wrappedApi.nim"
 let publicApis = filePath.parsePublicAPIs()
 check publicApis.len == publicApiCount
 
-const expectedPublicProcs = ["noop", "extraNoOp"]
-for i in 0 ..< expectedPublicProcs.len:
-  check publicApis[i].procName == expectedPublicProcs[i]
+const expectedPublicNames = ["Direction", "noop", "extraNoOp"]
+for i in 0 ..< expectedPublicNames.len:
+  check publicApis[i].itemName == expectedPublicNames[i]
 
-let wrappedApis = publicApis.translateToCompatibleWrapperApi()
-let wrappedFile = wrappedApis.generateWrapperFile(wrappedFileName, publicApis)
+let (wrappedApis, wrappableAST, unwrappableAST) =
+  publicApis.translateToCompatibleWrapperApi()
+let wrappedFile = wrappedApis.generateWrapperFile(wrappedFileName, wrappableAST)
 let bindingApis = wrappedFile.parsePublicAPIs()
-check bindingApis.len == publicApiCount + 1 # public APIs + NimMain()
+check bindingApis.len == publicApiCount + 1 - unwrappableAST.len
+  # public APIs + NimMain() - Unwrappable APIs
 
 var expectedWrapperProcs = @["NimMain"]
-expectedWrapperProcs.add(expectedPublicProcs)
+expectedWrapperProcs.add(
+  expectedPublicNames.toOpenArray(1, expectedPublicNames.len - 1)
+    # Drop Unwrappable APIs from `expectedPublicNames`
+)
 
 for i in 0 ..< expectedWrapperProcs.len:
   check bindingApis[i].procName == expectedWrapperProcs[i]

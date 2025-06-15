@@ -5,7 +5,23 @@
 import std/[sequtils, sugar, options]
 import compiler/ast
 
-func procName*(node: PNode): string =
+func subType*(node: PNode): TNodeKind =
+  ## get actual type from TypeDef node
+  ## Note: node needs to be TypeDef type node
+  node[2].kind
+
+func itemName*(node: PNode): string =
+  ## get identifier name from node
+  var itemNode = node[0]
+  if itemNode.kind == nkPragmaExpr:
+    itemNode = itemNode[0]
+  if itemNode.kind == nkPostfix:
+    itemNode = itemNode[1]
+  else:
+    itemNode = itemNode[0]
+  return itemNode.ident.s
+
+func procName*(node: PNode): string {.deprecated: "use `itemName` instead".} =
   ## get proc/func/method name from node
   ## Note: node needs to be proc/func/method type node,
   ## proc needs to be **public**
