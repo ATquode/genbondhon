@@ -5,7 +5,7 @@
 import std/[paths, strformat, strutils, terminal]
 import compiler/ast
 import base, c
-import ../currentconfig
+import ../[currentconfig, util]
 
 type CppLangGen = ref object of CLangGen
 
@@ -16,11 +16,31 @@ proc newCppLangGen*(bindingDir: Path): CppLangGen =
   )
   initBaseLangGen(result)
 
-func generateCppHeaderContent(headerName: string, bindingAST: seq[PNode]): string =
+method translateEnum(self: CppLangGen, node: PNode): string =
+  let enumName = node.itemName
+  let enumValsParent = node[2]
+  var enumVals: seq[string]
+  for i in 1 ..< enumValsParent.safeLen:
+    let enumVal = enumValsParent[i].ident.s
+    let val =
+      &"""
+    {enumVal.toUpperAscii}"""
+    enumVals.add(val)
+  result =
+    &"""
+enum class {enumName} {{
+    {enumVals.join(",\n    ")}
+}};"""
+  let lastLineIndex = result.rfind("\n")
+  result.insert("    ", lastLineIndex + 1)
+
+func generateCppHeaderContent(
+    self: CppLangGen, headerName: string, bindingAST: seq[PNode]
+): string =
   let headerGuard = headerName.toUpperAscii & "_HPP"
   var cApis: seq[string]
   for api in bindingAST:
-    let trApi = translateApi(api)
+    let trApi = self.translateApi(api)
     cApis.add(trApi)
   result =
     &"""
@@ -35,7 +55,7 @@ extern "C" {{
 """
 
 proc generateCppHeader(self: CppLangGen, bindingAST: seq[PNode]) =
-  let content = generateCppHeaderContent(moduleName, bindingAST)
+  let content = self.generateCppHeaderContent(moduleName, bindingAST)
   if showVerboseOutput:
     styledEcho fgGreen, "Cpp Header Content:"
     echo content

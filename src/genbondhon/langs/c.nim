@@ -21,7 +21,7 @@ func replaceType(nimCType: string): string =
   ## Replaces Nim Compat Types to C Types
   nimCompatToCTypeTbl.getOrDefault(nimCType, nimCType)
 
-func translateEnum(node: PNode): string =
+method translateEnum(self: CLangGen, node: PNode): string {.base.} =
   let enumName = node.itemName
   let enumValsParent = node[2]
   var enumVals: seq[string]
@@ -37,10 +37,10 @@ typedef enum {{
 {enumVals.join(",\n")}
 }} {enumName};"""
 
-func translateType(node: PNode): string =
+func translateType(self: CLangGen, node: PNode): string =
   case node.subType
   of nkEnumTy:
-    result = translateEnum(node)
+    result = self.translateEnum(node)
   else:
     result = "Cannot translate Api to C"
 
@@ -62,10 +62,10 @@ func translateProc(node: PNode): string =
     &"""
 {retType.replaceType} {funcName}({trParamList.join(", ")});"""
 
-func translateApi*(api: PNode): string =
+func translateApi*(self: CLangGen, api: PNode): string =
   case api.kind
   of nkTypeDef:
-    result = translateType(api)
+    result = self.translateType(api)
   of nkProcDef, nkFuncDef, nkMethodDef:
     result = translateProc(api)
   else:
@@ -74,7 +74,9 @@ func translateApi*(api: PNode): string =
 func containsBool(apis: seq[PNode]): bool =
   apis.containsType("bool")
 
-func generateCHeaderContent(headerName: string, bindingAST: seq[PNode]): string =
+func generateCHeaderContent(
+    self: CLangGen, headerName: string, bindingAST: seq[PNode]
+): string =
   let headerGuard = headerName.toUpperAscii & "_H"
   let optionalStdBoolH =
     if bindingAST.containsBool:
@@ -86,7 +88,7 @@ func generateCHeaderContent(headerName: string, bindingAST: seq[PNode]): string 
       ""
   var cApis: seq[string]
   for api in bindingAST:
-    let trApi = translateApi(api)
+    let trApi = self.translateApi(api)
     cApis.add(trApi)
   result =
     &"""
@@ -99,7 +101,7 @@ func generateCHeaderContent(headerName: string, bindingAST: seq[PNode]): string 
 """
 
 proc generateCHeader(self: CLangGen, bindingAST: seq[PNode]) =
-  let content = generateCHeaderContent(moduleName, bindingAST)
+  let content = self.generateCHeaderContent(moduleName, bindingAST)
   if showVerboseOutput:
     styledEcho fgGreen, "C Header Content:"
     echo content

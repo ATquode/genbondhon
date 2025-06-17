@@ -48,5 +48,7 @@ int main() {
     string n = m;
     cout << n << endl;
     print2Str("Hello", "World!");
+    Direction direction = Direction::SOUTH;
+    printDirectionRawValue(direction);
     return 0;
 }
