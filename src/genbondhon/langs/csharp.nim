@@ -24,6 +24,23 @@ func replaceType(nimCType: string): string =
   ## Replaces Nim Compat Types to C# Types
   nimCompatToCSharpTypeTbl.getOrDefault(nimCType, nimCType)
 
+func translateEnum(node: PNode): string =
+  let enumName = node.itemName
+  let enumValsParent = node[2]
+  var enumVals: seq[string]
+  for i in 1 ..< enumValsParent.safeLen:
+    let enumVal = enumValsParent[i].ident.s
+    let val =
+      &"""
+{enumVal.capitalizeAscii}"""
+    enumVals.add(val)
+  result =
+    &"""
+        public enum {enumName}
+        {{
+            {enumVals.join(",\n            ")}
+        }}"""
+
 func translateProc(node: PNode, dllName: string): string =
   let funcName = procName(node)
   let paramNode = procParamNode(node)
@@ -59,6 +76,8 @@ func translateProc(node: PNode, dllName: string): string =
 
 func translateApi(api: PNode, dllName: string): string =
   case api.kind
+  of nkTypeDef:
+    result = translateEnum(api)
   of nkProcDef, nkFuncDef, nkMethodDef:
     result = translateProc(api, dllName)
   else:

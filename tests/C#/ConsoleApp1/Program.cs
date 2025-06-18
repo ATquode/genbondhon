@@ -36,3 +36,5 @@ Nomuna.PrintStr("hello ñíℳ");
 string j = Nomuna.SayHello("ñíℳ");
 Console.WriteLine(j);
 Nomuna.Print2Str("Hello", "World!");
+Nomuna.Direction direction = Nomuna.Direction.South;
+Nomuna.PrintDirectionRawValue(direction);

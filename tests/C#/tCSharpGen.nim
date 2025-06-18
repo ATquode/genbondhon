@@ -23,8 +23,9 @@ nim
 hello ñíℳ
 Héllø ñíℳ
 Hello World!
+direction raw value: 2
 '''
-  disabled: true #unix
+  disabled: unix
 """
 #!fmt: on
 
