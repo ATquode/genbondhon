@@ -24,7 +24,7 @@ method translateEnum(self: CppLangGen, node: PNode): string =
     let enumVal = enumValsParent[i].ident.s
     let val =
       &"""
-    {enumVal.toUpperAscii}"""
+    {enumVal.capitalizeAscii}"""
     enumVals.add(val)
   result =
     &"""
