@@ -4,6 +4,14 @@
 
 import std/[strformat, tables]
 
+type ConvertDirection* {.pure.} = enum
+  fromC
+  toC
+
+type NamedTypeCategory* {.pure.} = enum
+  noneType
+  enumType
+
 const nimAndCompatTypeTbl* = {
   "int": "cint",
   "float": "cdouble",
@@ -58,7 +66,13 @@ const nimCompatAndSwiftTypeTbl* = {
   "Character": "CChar",
 }.toTable
 
-func convertNimAndSwiftType*(origType: string, code: string): string =
+func convertNimAndSwiftType*(
+    origType: string,
+    code: string,
+    convertDirection: ConvertDirection,
+    moduleName: string,
+    namedTypeCategory: NamedTypeCategory,
+): string =
   case origType
   of "cint", "cfloat", "cdouble", "bool", "Int", "Float", "Double":
     &"{nimCompatAndSwiftTypeTbl[origType]}({code})"
@@ -69,7 +83,14 @@ func convertNimAndSwiftType*(origType: string, code: string): string =
   of "Character":
     &"String({code}).utf8CString[0]"
   else:
-    code
+    case namedTypeCategory
+    of NamedTypeCategory.enumType:
+      if convertDirection == ConvertDirection.toC:
+        &"{moduleName}.{origType}({code}.rawValue)"
+      else:
+        &"{origType}(rawValue: {code})"
+    else:
+      code
 
 const nimCompatAndJNITypeTbl* = {
   "cint": "jint",

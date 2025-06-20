@@ -40,3 +40,5 @@ printStr(a: "hello ñíℳ")
 let j = sayHello(name: "ñíℳ")
 print(j)
 print2Str(str1: "Hello", str2: "World!")
+let direction = Direction.south
+printDirectionRawValue(direction: direction)

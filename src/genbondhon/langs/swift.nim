@@ -13,6 +13,7 @@ type SwiftLangGen = ref object of BaseLangGen
   wrapperFileName: Path
   headerFileName: string
   moduleMapName: Path
+  namedTypes: Table[string, NamedTypeCategory]
 
 proc newSwiftLangGen*(bindingDir: Path): SwiftLangGen =
   ## `SwiftLangGen` constructor
@@ -30,8 +31,26 @@ func replaceType(nimSwiftType: string): string =
   ## Replaces Nim Compat Types to Swift Types & vice versa
   nimCompatAndSwiftTypeTbl.getOrDefault(nimSwiftType, nimSwiftType)
 
-func convertType(code: string, origType: string): string =
-  convertNimAndSwiftType(origType, code)
+func convertType(
+    code: string,
+    origType: string,
+    convertDirection: ConvertDirection,
+    moduleName: string,
+    namedTypeCategory: NamedTypeCategory = NamedTypeCategory.noneType,
+): string =
+  convertNimAndSwiftType(
+    origType, code, convertDirection, moduleName, namedTypeCategory
+  )
+
+func typeCategory(self: SwiftLangGen, typeName: string): NamedTypeCategory =
+  self.namedTypes.getOrDefault(typeName, NamedTypeCategory.noneType)
+
+proc storeNamedType(
+    self: SwiftLangGen, typeName: string, typeCategory: NamedTypeCategory
+) =
+  if typeName in self.namedTypes:
+    return
+  self.namedTypes[typeName] = typeCategory
 
 func swiftCModuleDir(self: SwiftLangGen): Path =
   self.langDir / self.cModuleName.Path
@@ -60,7 +79,24 @@ proc generateModuleMap(self: SwiftLangGen) =
   let moduleMapFilePath = self.swiftCModuleDir / self.moduleMapName
   moduleMapFilePath.string.writeFile(content)
 
-func translateProc(node: PNode, libName: string): string =
+proc translateEnum(self: SwiftLangGen, node: PNode): string =
+  let enumName = node.itemName
+  self.storeNamedType(enumName, NamedTypeCategory.enumType)
+  let enumValsParent = node[2]
+  var enumVals: seq[string]
+  for i in 1 ..< enumValsParent.safeLen:
+    let enumVal = enumValsParent[i].ident.s
+    let val =
+      &"""
+case {enumVal.toLowerAscii}"""
+    enumVals.add(val)
+  result =
+    &"""
+enum {enumName}: CUnsignedInt {{
+    {enumVals.join("\n    ")}
+}}"""
+
+func translateProc(self: SwiftLangGen, node: PNode): string =
   let funcName = procName(node)
   let paramNode = procParamNode(node)
   var retType = ""
@@ -72,7 +108,12 @@ func translateProc(node: PNode, libName: string): string =
       let paramType = formalParamNode[i].paramType
       let trParam = &"{paramName}: {paramType.replaceType}"
       trParamList.add(trParam)
-      let callableParam = paramName.convertType(paramType.replaceType)
+      let callableParam = paramName.convertType(
+        paramType.replaceType,
+        ConvertDirection.toC,
+        self.cModuleName,
+        self.typeCategory(paramType),
+      )
       callableParamList.add(callableParam)
     if formalParamNode[0].kind != nkEmpty:
       retType = formalParamNode[0].ident.s
@@ -81,12 +122,13 @@ func translateProc(node: PNode, libName: string): string =
       ""
     else:
       &" -> {retType.replaceType}"
-  let procCallStmt = &"""{libName}.{funcName}({callableParamList.join(", ")})"""
+  let procCallStmt =
+    &"""{self.cModuleName}.{funcName}({callableParamList.join(", ")})"""
   var retBody =
     if retType == "":
       procCallStmt
     else:
-      &"return {procCallStmt.convertType(retType)}"
+      &"return {procCallStmt.convertType(retType, ConvertDirection.fromC, self.cModuleName, self.typeCategory(retType))}"
   if retType.replaceType == "String":
     retBody =
       &"""let temp = {procCallStmt}
@@ -94,36 +136,38 @@ func translateProc(node: PNode, libName: string): string =
         print("Error!! Failed to get string from {funcName}")
         return "Failed to get string from {funcName}"
     }}
-    return {"data".convertType(retType)}"""
+    return {"data".convertType(retType, ConvertDirection.fromC, self.cModuleName)}"""
   result =
     &"""
 func {funcName}({trParamList.join(", ")}){retTypePart} {{
     {retBody}
 }}"""
 
-func translateApi(api: PNode, libName: string): string =
+proc translateApi(self: SwiftLangGen, api: PNode): string =
   case api.kind
+  of nkTypeDef:
+    result = self.translateEnum(api)
   of nkProcDef, nkFuncDef, nkMethodDef:
-    result = translateProc(api, libName)
+    result = self.translateProc(api)
   else:
     result = "Cannot translate Api to Swift"
 
-func generateSwiftWrapperContent(
-    bindingAST: seq[PNode], modName: string, cModuleName: string
+proc generateSwiftWrapperContent(
+    self: SwiftLangGen, bindingAST: seq[PNode], modName: string
 ): string =
   var swiftApis: seq[string]
   for api in bindingAST:
-    let trApi = translateApi(api, cModuleName)
+    let trApi = self.translateApi(api)
     swiftApis.add(trApi)
   result =
     &"""
-import {cModuleName}
+import {self.cModuleName}
 
 {swiftApis.join("\n\n")}
 """
 
 proc generateSwiftWrapper(self: SwiftLangGen, bindingAST: seq[PNode]) =
-  let content = generateSwiftWrapperContent(bindingAST, moduleName, self.cModuleName)
+  let content = self.generateSwiftWrapperContent(bindingAST, moduleName)
   if showVerboseOutput:
     styledEcho fgGreen, "Swift Wrapper Content:"
     echo content
