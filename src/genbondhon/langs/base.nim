@@ -4,7 +4,7 @@
 
 import std/[dirs, paths, strformat]
 import compiler/ast
-import ../currentconfig
+import ../[currentconfig, util]
 
 type BaseLangGen* = ref object of RootObj
   langDir*: Path
@@ -15,6 +15,16 @@ proc initBaseLangGen*(self: BaseLangGen) =
 
 method generateBinding*(self: BaseLangGen, bindingAST: seq[PNode]) {.base.} =
   discard
+
+method translateEnum(self: BaseLangGen, node: PNode): string {.base.} =
+  discard
+
+method translateType*(self: BaseLangGen, node: PNode): string {.base.} =
+  case node.subType
+  of nkEnumTy:
+    result = self.translateEnum(node)
+  else:
+    result = "Cannot translate Api"
 
 method getReadMeContent*(self: BaseLangGen): string {.base.} =
   result =

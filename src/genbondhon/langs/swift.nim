@@ -79,7 +79,7 @@ proc generateModuleMap(self: SwiftLangGen) =
   let moduleMapFilePath = self.swiftCModuleDir / self.moduleMapName
   moduleMapFilePath.string.writeFile(content)
 
-proc translateEnum(self: SwiftLangGen, node: PNode): string =
+method translateEnum(self: SwiftLangGen, node: PNode): string =
   let enumName = node.itemName
   self.storeNamedType(enumName, NamedTypeCategory.enumType)
   let enumValsParent = node[2]
@@ -146,7 +146,7 @@ func {funcName}({trParamList.join(", ")}){retTypePart} {{
 proc translateApi(self: SwiftLangGen, api: PNode): string =
   case api.kind
   of nkTypeDef:
-    result = self.translateEnum(api)
+    result = self.translateType(api)
   of nkProcDef, nkFuncDef, nkMethodDef:
     result = self.translateProc(api)
   else:

@@ -24,7 +24,7 @@ func replaceType(nimCType: string): string =
   ## Replaces Nim Compat Types to C# Types
   nimCompatToCSharpTypeTbl.getOrDefault(nimCType, nimCType)
 
-func translateEnum(node: PNode): string =
+method translateEnum(self: CSharpLangGen, node: PNode): string =
   let enumName = node.itemName
   let enumValsParent = node[2]
   var enumVals: seq[string]
@@ -74,21 +74,21 @@ func translateProc(node: PNode, dllName: string): string =
         [return: MarshalAs(UnmanagedType.U1)]
 {result}"""
 
-func translateApi(api: PNode, dllName: string): string =
+func translateApi(self: CSharpLangGen, api: PNode): string =
   case api.kind
   of nkTypeDef:
-    result = translateEnum(api)
+    result = self.translateType(api)
   of nkProcDef, nkFuncDef, nkMethodDef:
-    result = translateProc(api, dllName)
+    result = translateProc(api, self.dllName)
   else:
     result = "Cannot translate Api to C#"
 
 func generateDllWrapperContent(
-    bindingAST: seq[PNode], modName: string, dllName: string
+    self: CSharpLangGen, bindingAST: seq[PNode], modName: string
 ): string =
   var cSharpApis: seq[string]
   for api in bindingAST:
-    let trApi = translateApi(api, dllName)
+    let trApi = self.translateApi(api)
     cSharpApis.add(trApi)
   result =
     &"""
@@ -104,7 +104,7 @@ namespace {modName.capitalizeAscii}Lib
 """
 
 proc generateCSharpDllWrapper(self: CSharpLangGen, bindingAST: seq[PNode]) =
-  let content = generateDllWrapperContent(bindingAST, moduleName, self.dllName)
+  let content = self.generateDllWrapperContent(bindingAST, moduleName)
   if showVerboseOutput:
     styledEcho fgGreen, "CSharp Dll Wrapper Content:"
     echo content
