@@ -27,6 +27,8 @@ class MainViewModel : ViewModel() {
         nomuna.printStr("nim")
         nomuna.printStr("hello ñíℳ")
         nomuna.print2Str("Hello", "World!")
+        val direction = Nomuna.Direction.SOUTH
+        nomuna.printDirectionRawValue(direction)
     }
 
     val retCardUiState =

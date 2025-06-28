@@ -20,6 +20,7 @@ type KotlinLangGen = ref object of BaseLangGen
   wrapperFileName: Path
   jvmPackageName: string
   headerFileName: Path
+  namedTypes: Table[string, NamedTypeCategory]
 
 proc newKotlinLangGen*(bindingDir: Path, jvmPkgName: string): KotlinLangGen =
   ## `KotlinLangGen` constructor
@@ -37,14 +38,28 @@ func replaceTypeJNI(nimJNIType: string): string =
   ## Replaces Nim Compat Types to JNI Types & vice versa
   nimCompatAndJNITypeTbl.getOrDefault(nimJNIType, nimJNIType)
 
-func convertTypeJNI(code: string, origType: string): string =
-  convertNimAndJNIType(origType, code)
+func convertTypeJNI(
+    code: string,
+    origType: string,
+    namedTypeCategory: NamedTypeCategory = NamedTypeCategory.noneType,
+): string =
+  convertNimAndJNIType(origType, code, namedTypeCategory)
+
+proc storeNamedType(
+    self: KotlinLangGen, typeName: string, typeCategory: NamedTypeCategory
+) =
+  if typeName in self.namedTypes:
+    return
+  self.namedTypes[typeName] = typeCategory
 
 proc copyCppHeader(self: KotlinLangGen) =
   ## Copies C++ Header from C++ Output
   let cppLangDirHeaderPath = self.cppLangDir / self.headerFileName
   self.ensureDir(self.cppModuleDir)
   cppLangDirHeaderPath.string.copyFileToDir(self.cppModuleDir.string)
+
+func typeCategory(self: KotlinLangGen, typeName: string): NamedTypeCategory =
+  self.namedTypes.getOrDefault(typeName, NamedTypeCategory.noneType)
 
 func startLowerCase(s: string): string =
   if s.len == 0:
@@ -58,38 +73,53 @@ func startLowerCase(s: string): string =
   let newString = lowerChar & s[1 ..^ 1]
   return newString
 
+func wrapperFuncName(funcName: string): string =
+  funcName.startLowerCase & "Val"
+
 func jniFuncName(jvmPkgName: string, className: string, origFuncName: string): string =
   &"""Java_{jvmPkgName.replace(".", "_")}_{className.capitalizeAscii}_{origFuncName.startLowerCase}"""
 
-func translateProcToJNI(node: PNode, jvmPkgName: string, className: string): string =
+func translateProcToJNI(self: KotlinLangGen, node: PNode, className: string): string =
   let funcName = procName(node)
+  var wrFuncName = funcName
   let paramNode = procParamNode(node)
   var retType = "void"
   var trParamList = @["JNIEnv *env", "jobject thiz"]
   var callableParamList: seq[string]
   var jstringTbl: Table[string, string]
+  var jenumTbl: Table[string, (string, string)]
   if paramNode.isSome:
     let formalParamNode = paramNode.get()
     for i in 1 ..< formalParamNode.safeLen:
       let paramName = formalParamNode[i].paramName
       let paramType = formalParamNode[i].paramType
-      let trParam = &"{paramType.replaceTypeJNI} {paramName}"
+      var trParamType = paramType.replaceTypeJNI
+      if self.typeCategory(paramType) == NamedTypeCategory.enumType:
+        trParamType = "jint" # Kotlin enum -> JNI jint
+        wrFuncName = funcName.wrapperFuncName
+      let trParam = &"{trParamType} {paramName}"
       trParamList.add(trParam)
 
-      if paramType.replaceTypeJNI == "jstring":
+      if trParamType == "jstring":
         jstringTbl[paramName] = "c_" & paramName
         callableParamList.add(jstringTbl[paramName])
+      elif self.typeCategory(paramType) == NamedTypeCategory.enumType:
+        jenumTbl[paramName] = ("c_" & paramName, paramType)
+        callableParamList.add(jenumTbl[paramName][0])
       else:
-        let callableParam = paramName.convertTypeJNI(paramType.replaceTypeJNI)
+        let callableParam = paramName.convertTypeJNI(trParamType)
         callableParamList.add(callableParam)
     if formalParamNode[0].kind != nkEmpty:
       retType = formalParamNode[0].ident.s
+  if not wrFuncName.contains("Val") and
+      self.typeCategory(retType) == NamedTypeCategory.enumType:
+    wrFuncName = funcName.wrapperFuncName
   let procCallStmt = &"""{funcName}({callableParamList.join(", ")})"""
   var retBody =
     if retType == "void":
       &"{procCallStmt};"
     else:
-      &"return {procCallStmt.convertTypeJNI(retType)};"
+      &"return {procCallStmt.convertTypeJNI(retType, self.typeCategory(retType))};"
   if jstringTbl.len > 0:
     var getStrings, releaseStrings: seq[string]
     for key, value in jstringTbl:
@@ -112,30 +142,43 @@ func translateProcToJNI(node: PNode, jvmPkgName: string, className: string): str
       retBody =
         &"""
 {retBody}
-    return {"data".convertTypeJNI(retType)};"""
+    return {"data".convertTypeJNI(retType, self.typeCategory(retType))};"""
+  if jenumTbl.len > 0:
+    var getEnums: seq[string]
+    for key, value in jenumTbl:
+      let getEnumCode =
+        &"""auto {value[0]} = static_cast<{value[1]}>({key.convertTypeJNI("jint")});"""
+      getEnums.add(getEnumCode)
+    retBody =
+      &"""
+{getEnums.join("\n    ")}
+    {retBody}"""
 
   result =
     &"""
 extern "C"
 JNIEXPORT {retType.replaceTypeJNI} JNICALL
-{jniFuncName(jvmPkgName, className, funcName)}({trParamList.join(", ")}) {{
+{jniFuncName(self.jvmPackageName, className, wrFuncName)}({trParamList.join(", ")}) {{
     {retBody}
 }}"""
 
-func translateApiToJNI(api: PNode, jvmPkgName: string, className: string): string =
+proc translateApiToJNI(self: KotlinLangGen, api: PNode, className: string): string =
   case api.kind
+  of nkTypeDef:
+    result = "" # C/C++ header has the definition
   of nkProcDef, nkFuncDef, nkMethodDef:
-    result = translateProcToJNI(api, jvmPkgName, className)
+    result = self.translateProcToJNI(api, className)
   else:
     result = "Cannot translate Api to JNI"
 
-func generateJNIWrapperContent(
+proc generateJNIWrapperContent(
     self: KotlinLangGen, bindingAST: seq[PNode], className: string
 ): string =
   var jniApis: seq[string]
   for api in bindingAST:
-    let trApi = translateApiToJNI(api, self.jvmPackageName, className)
-    jniApis.add(trApi)
+    let trApi = self.translateApiToJNI(api, className)
+    if trApi != "":
+      jniApis.add(trApi)
   result =
     &"""
 #include <jni.h>
@@ -190,18 +233,49 @@ func replaceType(nimCType: string): string =
   ## Replaces Nim Compat Types to Kotlin Types
   nimCompatToKotlinTypeTbl.getOrDefault(nimCType, nimCType)
 
-func translateProc(node: PNode): string =
+method translateEnum(self: KotlinLangGen, node: PNode): string =
+  let enumName = node.itemName
+  self.storeNamedType(enumName, NamedTypeCategory.enumType)
+  let enumValsParent = node[2]
+  var enumVals: seq[string]
+  for i in 1 ..< enumValsParent.safeLen:
+    let enumVal = enumValsParent[i].ident.s
+    let val =
+      &"""
+{enumVal.toUpperAscii}"""
+    enumVals.add(val)
+  result =
+    &"""
+    enum class {enumName} {{
+        {enumVals.join(",\n        ")}
+    }}"""
+
+func translateProc(self: KotlinLangGen, node: PNode): string =
+  var shouldWrap = false
   let funcName = procName(node)
   let paramNode = procParamNode(node)
   var retType = ""
-  var trParamList: seq[string]
+  var trParamList, wrParamList, callableParamList: seq[string]
   if paramNode.isSome:
     let formalParamNode = paramNode.get()
     for i in 1 ..< formalParamNode.safeLen:
       let paramName = formalParamNode[i].paramName
       let paramType = formalParamNode[i].paramType
       let trParam = &"{paramName}: {paramType.replaceType}"
+      var callableParam = paramName
+      if self.typeCategory(paramType) == NamedTypeCategory.enumType:
+        shouldWrap = true
+        if wrParamList.len == 0:
+          wrParamList = trParamList
+        let wrapType = "Int" # Kotlin enum -> Int for JNI
+        let wrParam = &"{paramName}: {wrapType}"
+        wrParamList.add(wrParam)
+        callableParam = &"{paramName}.ordinal"
+      elif shouldWrap:
+        let wrParam = trParam
+        wrParamList.add(wrParam)
       trParamList.add(trParam)
+      callableParamList.add(callableParam)
     if formalParamNode[0].kind != nkEmpty:
       retType = formalParamNode[0].ident.s
   let retTypePart =
@@ -209,14 +283,41 @@ func translateProc(node: PNode): string =
       ""
     else:
       &": {retType.replaceType}"
+  var wrRetType = retType
+  var wrRetTypePart = retTypePart
+  if self.typeCategory(retType) == NamedTypeCategory.enumType:
+    shouldWrap = true
+    wrRetType = "Int"
+    wrRetTypePart = &": {wrRetType}"
+  let trProc =
+    &"""fun {funcName.startLowerCase}({trParamList.join(", ")}){retTypePart}"""
+  let procCallStmt = &"""{funcName.wrapperFuncName}({callableParamList.join(", ")})"""
+  let retBody =
+    if wrRetType == "Int":
+      &"""
+        val data = {procCallStmt}
+        return {retType}.values()[data]"""
+    else:
+      &"""
+        {procCallStmt}"""
   result =
-    &"""
-    external fun {funcName.startLowerCase}({trParamList.join(", ")}){retTypePart}"""
+    if shouldWrap:
+      &"""
+    {trProc} {{
+{retBody}
+    }}
 
-func translateApi(api: PNode): string =
+    external fun {funcName.wrapperFuncName}({wrParamList.join(", ")}){wrRetTypePart}"""
+    else:
+      &"""
+    external {trProc}"""
+
+func translateApi(self: KotlinLangGen, api: PNode): string =
   case api.kind
+  of nkTypeDef:
+    result = self.translateType(api)
   of nkProcDef, nkFuncDef, nkMethodDef:
-    result = translateProc(api)
+    result = self.translateProc(api)
   else:
     result = "Cannot translate Api to Kotlin"
 
@@ -225,7 +326,7 @@ func generateKotlinWrapperContent(
 ): string =
   var kotlinApis: seq[string]
   for api in bindingAST:
-    let trApi = translateApi(api)
+    let trApi = self.translateApi(api)
     kotlinApis.add(trApi)
   result =
     &"""
@@ -249,6 +350,7 @@ proc generateKotlinWrapper(self: KotlinLangGen, bindingAST: seq[PNode]) =
     styledEcho fgGreen, "Kotlin wrapper content:"
     echo content
   let wrapperFilePath = self.langDir / self.wrapperFileName
+  self.ensureDir()
   wrapperFilePath.string.writeFile(content)
 
 func getNimCompilationCommands(
@@ -347,8 +449,8 @@ Not tested
 
 method generateBinding*(self: KotlinLangGen, bindingAST: seq[PNode]) =
   ## Generates binding & documentation for Kotlin
+  self.generateKotlinWrapper(bindingAST)
   self.copyCppHeader()
   self.generateJNIWrapper(bindingAST)
   self.generateCMakeLists()
-  self.generateKotlinWrapper(bindingAST)
   self.generateReadMe()

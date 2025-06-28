@@ -106,7 +106,9 @@ const nimCompatAndJNITypeTbl* = {
   "jboolean": "bool",
 }.toTable
 
-func convertNimAndJNIType*(origType: string, code: string): string =
+func convertNimAndJNIType*(
+    origType: string, code: string, namedTypeCategory: NamedTypeCategory
+): string =
   case origType
   of "cint", "cfloat", "cdouble", "cchar", "bool", "jint", "jfloat", "jdouble", "jchar",
       "jboolean":
@@ -114,7 +116,11 @@ func convertNimAndJNIType*(origType: string, code: string): string =
   of "cstring":
     &"env->NewStringUTF({code})"
   else:
-    code
+    case namedTypeCategory
+    of NamedTypeCategory.enumType:
+      &"static_cast<jint>({code})"
+    else:
+      code
 
 const nimCompatToKotlinTypeTbl* = {
   "cint": "Int",
