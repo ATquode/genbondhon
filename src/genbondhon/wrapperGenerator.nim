@@ -11,7 +11,9 @@ proc relativeModulePath(): string =
   let relModPath = relModFilePath.changeFileExt("")
   result = relModPath.string
 
-proc generateWrapperFileContent(wrappedApis: string, apiNames: seq[string]): string =
+proc generateWrapperFileContent(
+    wrappedApis: string, typeDefs, apiNames: seq[string]
+): string =
   let modulePath = relativeModulePath()
   let vccCondImport =
     if shouldUseVCCStr:
@@ -23,17 +25,58 @@ when defined(vcc):
     else:
       ""
   let exportedApiNames = &"""{{ {apiNames.join(", ")} }}"""
+  let q3 = "\"\"\""
   result =
     &"""
 import {modulePath}
 {vccCondImport}
 {wrappedApis}
 when defined(js):
-  {{.emit: "\nexport {exportedApiNames};".}}
+  {{.
+    emit: {q3}
+
+{typeDefs.join("\n")}
+
+export {exportedApiNames};
+{q3}
+  .}}
 """
 
+func translateEnum(node: PNode): string =
+  let enumName = node.itemName
+  let enumValsParent = node[2]
+  var enumVals: seq[string]
+  for i in 1 ..< enumValsParent.safeLen:
+    let enumVal = enumValsParent[i].ident.s
+    let val =
+      &"""
+{enumVal.capitalizeAscii}: {(i - 1)},"""
+    enumVals.add(val)
+  result =
+    &"""
+const {enumName} = {{
+  {enumVals.join("\n  ")}
+}};
+"""
+
+func translateType(node: PNode): string =
+  case node.subType
+  of nkEnumTy:
+    result = translateEnum(node)
+  else:
+    result = "Cannot translate Api"
+
+func typeDefinitions(apis: seq[PNode]): seq[string] =
+  for api in apis:
+    case api.kind
+    of nkTypeDef:
+      let typeDefin = translateType(api)
+      result.add(typeDefin)
+    else:
+      result.add("Cannot translate Api")
+
 proc generateWrapperFile*(
-    wrappedApis: string, wrapperName: string, publicAST: seq[PNode]
+    wrappedApis: string, wrapperName: string, wrappableAST, unwrappableAST: seq[PNode]
 ): Path =
   ## Generates wrapper file in `bindingDir` with `wrapperName`.
   ## Returns wrapper file path.
@@ -53,8 +96,9 @@ proc generateWrapperFile*(
 {nimMainStr}
 
 {wrappedApis}"""
-  let apiNames = publicAST.map(x => x.procName)
-  let fileContent = generateWrapperFileContent(wrapperApis, apiNames)
+  let typeDefs = unwrappableAST.typeDefinitions
+  let apiNames = concat(unwrappableAST, wrappableAST).map(x => x.itemName)
+  let fileContent = generateWrapperFileContent(wrapperApis, typeDefs, apiNames)
   if showVerboseOutput:
     styledEcho fgYellow, "Wrapper File Content:"
     echo fileContent

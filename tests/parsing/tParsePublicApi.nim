@@ -22,7 +22,8 @@ for i in 0 ..< expectedPublicNames.len:
 
 let (wrappedApis, wrappableAST, unwrappableAST) =
   publicApis.translateToCompatibleWrapperApi()
-let wrappedFile = wrappedApis.generateWrapperFile(wrappedFileName, wrappableAST)
+let wrappedFile =
+  wrappedApis.generateWrapperFile(wrappedFileName, wrappableAST, unwrappableAST)
 let bindingApis = wrappedFile.parsePublicAPIs()
 check bindingApis.len == publicApiCount + 1 - unwrappableAST.len
   # public APIs + NimMain() - Unwrappable APIs

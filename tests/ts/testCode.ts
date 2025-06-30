@@ -19,6 +19,8 @@ import {
   printStr,
   sayHello,
   print2Str,
+  Direction,
+  printDirectionRawValue,
 } from "./nomuna";
 
 noop();
@@ -50,3 +52,5 @@ printStr("hello ñíℳ"); // Unicode
 let k = sayHello("ñíℳ");
 console.log(k);
 print2Str("Hello", "World!");
+let direction = Direction.South;
+printDirectionRawValue(direction);

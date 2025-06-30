@@ -22,6 +22,22 @@ func replaceType(nimCType: string): string =
   ## Replaces Nim Compat Types to TypeScript Types
   nimCompatToTypeScriptTypeTbl.getOrDefault(nimCType, nimCType)
 
+method translateEnum(self: TypeScriptLangGen, node: PNode): string =
+  let enumName = node.itemName
+  let enumValsParent = node[2]
+  var enumVals: seq[string]
+  for i in 1 ..< enumValsParent.safeLen:
+    let enumVal = enumValsParent[i].ident.s
+    let val =
+      &"""
+{enumVal.capitalizeAscii},"""
+    enumVals.add(val)
+  result =
+    &"""
+export enum {enumName} {{
+  {enumVals.join("\n  ")}
+}}"""
+
 func translateProc(node: PNode): string =
   let funcName = procName(node)
   if funcName == "NimMain":
@@ -47,8 +63,10 @@ func translateProc(node: PNode): string =
     &"""
 export function {funcName}({trParamList.join(", ")}){retTypePart};"""
 
-func translateApi(api: PNode): string =
+func translateApi(self: TypeScriptLangGen, api: PNode): string =
   case api.kind
+  of nkTypeDef:
+    result = self.translateEnum(api)
   of nkProcDef, nkFuncDef, nkMethodDef:
     result = translateProc(api)
   else:
@@ -59,7 +77,7 @@ func generateTypeScriptWrapperContent(
 ): string =
   var typescriptApis: seq[string]
   for api in bindingAST:
-    let trApi = translateApi(api)
+    let trApi = self.translateApi(api)
     if trApi != "":
       typescriptApis.add(trApi)
   result =

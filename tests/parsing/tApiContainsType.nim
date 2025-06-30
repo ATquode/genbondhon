@@ -15,8 +15,10 @@ let wrappedFileName = "wrappedApi.nim"
 let publicApis = filePath.parsePublicAPIs()
 check publicApis.containsType("string")
 
-let (wrappedApis, wrappableAST, _) = publicApis.translateToCompatibleWrapperApi()
-let wrappedFile = wrappedApis.generateWrapperFile(wrappedFileName, wrappableAST)
+let (wrappedApis, wrappableAST, unwrappableAST) =
+  publicApis.translateToCompatibleWrapperApi()
+let wrappedFile =
+  wrappedApis.generateWrapperFile(wrappedFileName, wrappableAST, unwrappableAST)
 let bindingApis = wrappedFile.parsePublicAPIs()
 check bindingApis.containsType("bool")
 check bindingApis.containsType("cstring")
