@@ -23,7 +23,8 @@ nim
 hello ñíℳ
 Héllø ñíℳ
 Hello World!
-direction raw value: 2'''
+direction raw value: 2
+Game State: 102'''
 """
 #!fmt: on
 

@@ -15,6 +15,11 @@ type
     valueA
     valueB
 
+  GameState* {.pure.} = enum
+    playing = 100
+    pause
+    game_over
+
 proc noop*() =
   echo "No Operation"
 

@@ -24,6 +24,7 @@ hello ñíℳ
 Héllø ñíℳ
 Hello World!
 direction raw value: 2
+Game State: game_over, value: 102
 '''
   disabled: windows
   disabled: linux

@@ -50,5 +50,7 @@ int main() {
     print2Str("Hello", "World!");
     Direction direction = Direction::South;
     printDirectionRawValue(direction);
+    GameState gameState = GameState::Game_over;
+    cout << "Game State: " << static_cast<int>(gameState) << endl;
     return 0;
 }
