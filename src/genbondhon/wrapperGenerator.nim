@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MIT
 
-import std/[dirs, paths, sequtils, strformat, strutils, sugar, terminal]
+import std/[dirs, options, paths, sequtils, strformat, strutils, sugar, terminal]
 import compiler/ast
 import currentconfig, util
 
@@ -46,11 +46,22 @@ func translateEnum(node: PNode): string =
   let enumName = node.itemName
   let enumValsParent = node[2]
   var enumVals: seq[string]
+  var incVal = 0
   for i in 1 ..< enumValsParent.safeLen:
-    let enumVal = enumValsParent[i].ident.s
+    let (enumValName, enumValVal) = enumValsParent[i].enumNameValue
+    let enumValValue =
+      if enumValVal.isSome:
+        enumValVal.unsafeGet
+      else:
+        if i != 1:
+          incVal + 1
+        else:
+          i - 1
+    incVal = enumValValue
+
     let val =
       &"""
-{enumVal.capitalizeAscii}: {(i - 1)},"""
+{enumValName.capitalizeAscii}: {enumValValue},"""
     enumVals.add(val)
   result =
     &"""

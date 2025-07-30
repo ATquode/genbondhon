@@ -21,6 +21,17 @@ func itemName*(node: PNode): string =
     itemNode = itemNode[0]
   return itemNode.ident.s
 
+func enumNameValue*(node: PNode): (string, Option[int]) =
+  ## get enum item name & value pair
+  ## Note: node needs to be a non empty children of enum type (`nkEnumTy`)
+  case node.kind
+  of nkEnumFieldDef:
+    result = (node[0].ident.s, some(node[1].intVal.int))
+  of nkIdent:
+    result = (node.ident.s, none(int))
+  else:
+    result = ("error: unexpeceted node", none(int))
+
 func procName*(node: PNode): string {.deprecated: "use `itemName` instead".} =
   ## get proc/func/method name from node
   ## Note: node needs to be proc/func/method type node,

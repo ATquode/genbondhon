@@ -21,6 +21,7 @@ import {
   print2Str,
   Direction,
   printDirectionRawValue,
+  GameState,
 } from "./nomuna";
 
 noop();
@@ -54,3 +55,5 @@ console.log(k);
 print2Str("Hello", "World!");
 let direction = Direction.South;
 printDirectionRawValue(direction);
+let gameState = GameState.Game_over;
+console.log(`Game State: ${gameState}`);

@@ -85,10 +85,12 @@ method translateEnum(self: SwiftLangGen, node: PNode): string =
   let enumValsParent = node[2]
   var enumVals: seq[string]
   for i in 1 ..< enumValsParent.safeLen:
-    let enumVal = enumValsParent[i].ident.s
-    let val =
+    let (enumValName, enumValVal) = enumValsParent[i].enumNameValue
+    var val =
       &"""
-case {enumVal.toLowerAscii}"""
+case {enumValName.toLowerAscii}"""
+    if enumValVal.isSome:
+      val = &"{val} = {enumValVal.unsafeGet}"
     enumVals.add(val)
   result =
     &"""

@@ -4,6 +4,7 @@
 
 package com.example.myapplication1
 
+import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -29,6 +30,8 @@ class MainViewModel : ViewModel() {
         nomuna.print2Str("Hello", "World!")
         val direction = Nomuna.Direction.SOUTH
         nomuna.printDirectionRawValue(direction)
+        val gameState = Nomuna.GameState.GAME_OVER
+        Log.d("nomuna", "Game State: $gameState, value: ${gameState.intVal}")
     }
 
     val retCardUiState =

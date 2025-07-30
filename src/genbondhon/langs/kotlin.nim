@@ -21,6 +21,7 @@ type KotlinLangGen = ref object of BaseLangGen
   jvmPackageName: string
   headerFileName: Path
   namedTypes: Table[string, NamedTypeCategory]
+  enumValueTypes: Table[string, string]
 
 proc newKotlinLangGen*(bindingDir: Path, jvmPkgName: string): KotlinLangGen =
   ## `KotlinLangGen` constructor
@@ -234,16 +235,32 @@ func replaceType(nimCType: string): string =
   nimCompatToKotlinTypeTbl.getOrDefault(nimCType, nimCType)
 
 method translateEnum(self: KotlinLangGen, node: PNode): string =
-  let enumName = node.itemName
+  var enumName = node.itemName
   self.storeNamedType(enumName, NamedTypeCategory.enumType)
   let enumValsParent = node[2]
   var enumVals: seq[string]
+  var hasExplicitValue = false
+  var incVal = 0
   for i in 1 ..< enumValsParent.safeLen:
-    let enumVal = enumValsParent[i].ident.s
-    let val =
+    let (enumValName, enumValVal) = enumValsParent[i].enumNameValue
+    var val =
       &"""
-{enumVal.toUpperAscii}"""
+{enumValName.toUpperAscii}"""
+    if enumValVal.isSome:
+      let enumVal = enumValVal.unsafeGet
+      incVal = enumVal
+      val = &"{val}({enumVal})"
+      if not hasExplicitValue:
+        hasExplicitValue = true
+        self.enumValueTypes[enumName] = "int"
+        for j in 0 ..< enumVals.len:
+          enumVals[j] = &"{enumVals[j]}({enumVal-enumVals.len+j})"
+    elif hasExplicitValue:
+      incVal += 1
+      val = &"{val}({incVal})"
     enumVals.add(val)
+  if hasExplicitValue:
+    enumName = &"{enumName}(val intVal: Int)"
   result =
     &"""
     enum class {enumName} {{
@@ -270,7 +287,12 @@ func translateProc(self: KotlinLangGen, node: PNode): string =
         let wrapType = "Int" # Kotlin enum -> Int for JNI
         let wrParam = &"{paramName}: {wrapType}"
         wrParamList.add(wrParam)
-        callableParam = &"{paramName}.ordinal"
+        let valueType = self.enumValueTypes.getOrDefault(paramType, "ordinal")
+        case valueType
+        of "int":
+          callableParam = &"{paramName}.intValue"
+        else:
+          callableParam = &"{paramName}.ordinal"
       elif shouldWrap:
         let wrParam = trParam
         wrParamList.add(wrParam)

@@ -45,5 +45,7 @@ int main() {
     print2Str("Hello", "World!");
     Direction direction = SOUTH;
     printDirectionRawValue(direction);
+    GameState gameState = GAME_OVER;
+    printf("Game State: %d\n", gameState);
     return 0;
 }
