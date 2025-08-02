@@ -38,3 +38,5 @@ Console.WriteLine(j);
 Nomuna.Print2Str("Hello", "World!");
 Nomuna.Direction direction = Nomuna.Direction.South;
 Nomuna.PrintDirectionRawValue(direction);
+Nomuna.GameState gameState = Nomuna.GameState.Game_over;
+Console.WriteLine($"Game State: {gameState}, value: {((int)gameState)}");
