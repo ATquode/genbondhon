@@ -42,3 +42,5 @@ print(j)
 print2Str(str1: "Hello", str2: "World!")
 let direction = Direction.south
 printDirectionRawValue(direction: direction)
+let gameState = GameState.game_over
+print("Game State: \(gameState), value: \(gameState.rawValue)")
