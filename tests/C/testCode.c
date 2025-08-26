@@ -47,5 +47,7 @@ int main() {
     printDirectionRawValue(direction);
     GameState gameState = GAME_OVER;
     printf("Game State: %d\n", gameState);
+    direction = getOpposite(NORTH);
+    printf("Opposite of NORTH: expected %d, got %d", SOUTH, direction);
     return 0;
 }

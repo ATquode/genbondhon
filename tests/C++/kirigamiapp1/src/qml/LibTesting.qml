@@ -155,7 +155,14 @@ Kirigami.ScrollablePage {
                         text: DataManager.addFloatRes.toFixed(2)
                     }
                 }
+            }
+            header: Kirigami.Heading {
+                text: qsTr("Add")
+            }
+        }
 
+        Kirigami.Card {
+            contentItem: ColumnLayout {
                 RowLayout {
                     QQC2.Label {
                         text: qsTr("String:")
@@ -174,11 +181,34 @@ Kirigami.ScrollablePage {
                         text: DataManager.sayHelloOutput
                     }
                 }
+
+                RowLayout {
+                    QQC2.Label {
+                        text: qsTr("Direction:")
+                    }
+
+                    QQC2.ComboBox {
+                        id: dirComboBox
+
+                        model: directionModel
+                        textRole: directionModel.textRole
+                        valueRole: directionModel.valueRole
+                    }
+
+                    QQC2.Label {
+                        text: qsTr("Opposite: " + directionModel.oppositeDirection)
+                    }
+                }
             }
             header: Kirigami.Heading {
-                text: qsTr("Add")
+                text: qsTr("Input")
             }
         }
+    }
+
+    DirectionModel {
+        id: directionModel
+
     }
 
     Binding {
@@ -221,6 +251,12 @@ Kirigami.ScrollablePage {
         property: "sayHelloInput"
         target: DataManager
         value: strTextField.text
+    }
+
+    Binding {
+        property: "selectedDirection"
+        target: directionModel
+        value: dirComboBox.currentValue
     }
 
     component CommonTextField: Kirigami.ActionTextField {

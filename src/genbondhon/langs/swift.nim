@@ -139,6 +139,14 @@ func translateProc(self: SwiftLangGen, node: PNode): string =
         return "Failed to get string from {funcName}"
     }}
     return {"data".convertType(retType, ConvertDirection.fromC, self.cModuleName)}"""
+  elif self.typeCategory(retType) == NamedTypeCategory.enumType:
+    retBody =
+      &"""let cEnum = {procCallStmt}
+    let sEnum = {"cEnum".convertType(retType, ConvertDirection.fromC, self.cModuleName, self.typeCategory(retType))}
+    guard let data = sEnum else {{
+        fatalError("Error!! Failed to get enum {retType} from {funcName}")
+    }}
+    return data"""
   result =
     &"""
 func {funcName}({trParamList.join(", ")}){retTypePart} {{

@@ -10,6 +10,7 @@ import ../[convertutil, currentconfig, util]
 type CSharpLangGen = ref object of BaseLangGen
   wrapperFileName: Path
   dllName: string
+  namedTypes: Table[string, NamedTypeCategory]
 
 proc newCSharpLangGen*(bindingDir: Path): CSharpLangGen =
   ## `CSharpLangGen` constructor
@@ -24,8 +25,22 @@ func replaceType(nimCType: string): string =
   ## Replaces Nim Compat Types to C# Types
   nimCompatToCSharpTypeTbl.getOrDefault(nimCType, nimCType)
 
+proc storeNamedType(
+    self: CSharpLangGen, typeName: string, typeCategory: NamedTypeCategory
+) =
+  if typeName in self.namedTypes:
+    return
+  self.namedTypes[typeName] = typeCategory
+
+func typeCategory(self: CSharpLangGen, typeName: string): NamedTypeCategory =
+  self.namedTypes.getOrDefault(typeName, NamedTypeCategory.noneType)
+
+func wrapperFuncName(funcName: string): string =
+  funcName.capitalizeAscii & "Val"
+
 method translateEnum(self: CSharpLangGen, node: PNode): string =
   let enumName = node.itemName
+  self.storeNamedType(enumName, NamedTypeCategory.enumType)
   let enumValsParent = node[2]
   var enumVals: seq[string]
   for i in 1 ..< enumValsParent.safeLen:
@@ -38,33 +53,66 @@ method translateEnum(self: CSharpLangGen, node: PNode): string =
     enumVals.add(val)
   result =
     &"""
-        public enum {enumName}
+        public enum {enumName}: byte
         {{
             {enumVals.join(",\n            ")}
         }}"""
 
-func translateProc(node: PNode, dllName: string): string =
+func translateProc(self: CSharpLangGen, node: PNode): string =
+  var shouldWrap = false
   let funcName = procName(node)
   let paramNode = procParamNode(node)
   var retType = "void"
-  var trParamList: seq[string]
+  var trParamList, wrParamList, callableParamList: seq[string]
   if paramNode.isSome:
     let formalParamNode = paramNode.get()
     for i in 1 ..< formalParamNode.safeLen:
       let paramName = formalParamNode[i].paramName
       let paramType = formalParamNode[i].paramType
       var trParam = &"{paramType.replaceType} {paramName}"
+      var callableParam = paramName
+      if self.typeCategory(paramType) == NamedTypeCategory.enumType:
+        shouldWrap = true
+        if wrParamList.len == 0:
+          wrParamList = trParamList
+        let wrapType = "byte"
+          # should be enough, bigger values would need ushort, uint, ulong etc.
+        let wrParam = &"{wrapType} {paramName}"
+        wrParamList.add(wrParam)
+        callableParam = &"({wrapType}){paramName}"
+      elif shouldWrap:
+        let wrParam = trParam
+        wrParamList.add(wrParam)
       if paramType.replaceType == "string":
         trParam = &"[MarshalAs(UnmanagedType.LPUTF8Str)] {trParam}"
       elif paramType.replaceType == "bool":
         trParam = &"[MarshalAs(UnmanagedType.U1)] {trParam}"
       trParamList.add(trParam)
+      callableParamList.add(callableParam)
     if formalParamNode[0].kind != nkEmpty:
       retType = formalParamNode[0].ident.s
+  var wrRetType = retType.replaceType
+  if self.typeCategory(retType) == NamedTypeCategory.enumType:
+    shouldWrap = true
+    wrRetType = "byte"
+  let trProc =
+    &"""{retType.replaceType} {funcName.capitalizeAscii}({trParamList.join(", ")})"""
+  let wrProc = &"""{wrRetType} {funcName.wrapperFuncName}({wrParamList.join(", ")})"""
+  let procCallStmt = &"""{funcName.wrapperFuncName}({callableParamList.join(", ")})"""
+  let retBody =
+    if wrRetType == "byte":
+      &"""
+            var data = {procCallStmt};
+            return ({retType})data;"""
+    else:
+      &"""
+            {procCallStmt};"""
+  let externProc = if shouldWrap: wrProc else: trProc
+  let accessor = if shouldWrap: "private" else: "public"
   result =
     &"""
-        [DllImport("{dllName}", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode, EntryPoint = "{funcName}")]
-        public static extern {retType.replaceType} {funcName.capitalizeAscii}({trParamList.join(", ")});"""
+        [DllImport("{self.dllName}", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode, EntryPoint = "{funcName}")]
+        {accessor} static extern {externProc};"""
   if retType.replaceType == "string":
     result =
       &"""
@@ -75,13 +123,21 @@ func translateProc(node: PNode, dllName: string): string =
       &"""
         [return: MarshalAs(UnmanagedType.U1)]
 {result}"""
+  if shouldWrap:
+    result =
+      &"""
+        public static {trProc} {{
+{retBody}
+        }}
+
+{result}"""
 
 func translateApi(self: CSharpLangGen, api: PNode): string =
   case api.kind
   of nkTypeDef:
     result = self.translateType(api)
   of nkProcDef, nkFuncDef, nkMethodDef:
-    result = translateProc(api, self.dllName)
+    result = self.translateProc(api)
   else:
     result = "Cannot translate Api to C#"
 

@@ -22,6 +22,7 @@ import {
   Direction,
   printDirectionRawValue,
   GameState,
+  getOpposite,
 } from "./nomuna";
 
 noop();
@@ -57,3 +58,5 @@ let direction = Direction.South;
 printDirectionRawValue(direction);
 let gameState = GameState.Game_over;
 console.log(`Game State: ${gameState}`);
+direction = getOpposite(Direction.North);
+console.log(`Opposite of North: expected ${Direction.South}, got ${direction}`);

@@ -15,6 +15,7 @@ Game State: 102
 Hello World!
 Héllø ñíℳ
 No Operation
+Opposite of NORTH: expected 2, got 2
 a
 a
 direction raw value: 2

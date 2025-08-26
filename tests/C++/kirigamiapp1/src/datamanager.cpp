@@ -5,6 +5,8 @@
 #include "datamanager.h"
 #include "nomuna.hpp"
 
+#include <iostream>
+
 DataManager::DataManager(QObject *parent)
     : QObject(parent)
 {
@@ -24,6 +26,10 @@ DataManager::DataManager(QObject *parent)
     printStr("nim");
     printStr("hello ñíℳ");
     print2Str("Hello", "World!");
+    Direction direction = Direction::South;
+    printDirectionRawValue(direction);
+    GameState gameState = GameState::Game_over;
+    std::cout << "Game State: " << static_cast<int>(gameState) << std::endl;
 }
 
 DataManager *DataManager::getSingleton()

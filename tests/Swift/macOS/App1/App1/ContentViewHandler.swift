@@ -19,6 +19,7 @@ class ContentViewHandler: ObservableObject {
     @Published var addFloat1: Float?
     @Published var addFloat2: Float?
     @Published var sayHelloInput: String
+    @Published var direction: Direction
 
     var addIntRes: Int {
         let num1 = addInt1 ?? 0
@@ -42,13 +43,21 @@ class ContentViewHandler: ObservableObject {
         return sayHello(name: sayHelloInput)
     }
 
+    var oppositeDirection: Direction {
+        return getOpposite(direction: direction)
+    }
+
     init() {
         sayHelloInput = ""
+        direction = .south
         printCond(a: addIntRes == 0)
         printCond(a: addIntRes != 0)
         takeChar(a: "a")
         printStr(a: "nim")
         printStr(a: "hello ñíℳ")
         print2Str(str1: "Hello", str2: "World!")
+        printDirectionRawValue(direction: direction)
+        let gameState = GameState.game_over
+        print("Game State: \(gameState), value: \(gameState.rawValue)")
     }
 }

@@ -47,6 +47,14 @@ class MainViewModel : ViewModel() {
     private var _addCardUiState = MutableStateFlow(AddCardUiState())
     val addCardUiState: StateFlow<AddCardUiState> = _addCardUiState.asStateFlow()
 
+    private var _inputCardUiState =
+        MutableStateFlow(
+            InputCardUiState(
+                oppositeDirection = nomuna.getOpposite(Nomuna.Direction.entries.first()).name,
+            ),
+        )
+    val inputCardUiState: StateFlow<InputCardUiState> = _inputCardUiState.asStateFlow()
+
     inner class InputHolder : InputContainer {
         override var addInt1 by mutableStateOf("")
             private set
@@ -115,6 +123,10 @@ class MainViewModel : ViewModel() {
             sayHelloInput = str
             performSayHello()
         }
+
+        override fun updateSelectedDirection(direction: String) {
+            performDirectionSelection(direction)
+        }
     }
 
     private fun verifyIntOrEmpty(num: String): Boolean = num.toIntOrNull() != null || num.isEmpty()
@@ -153,8 +165,16 @@ class MainViewModel : ViewModel() {
     }
 
     private fun performSayHello() {
-        _addCardUiState.update { currentState ->
+        _inputCardUiState.update { currentState ->
             currentState.copy(sayHelloOutput = nomuna.sayHello(inputHolder.sayHelloInput))
+        }
+    }
+
+    private fun performDirectionSelection(direction: String) {
+        val selectedDirection = Nomuna.Direction.entries.first { it.name == direction }
+        val oppositeDirection = nomuna.getOpposite(selectedDirection)
+        _inputCardUiState.update { currentState ->
+            currentState.copy(oppositeDirection = oppositeDirection.name)
         }
     }
 }
@@ -187,4 +207,6 @@ interface InputContainer {
     val sayHelloInput: String
 
     fun updateStrInput(str: String)
+
+    fun updateSelectedDirection(direction: String)
 }

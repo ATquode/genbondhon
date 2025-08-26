@@ -24,7 +24,8 @@ hello ñíℳ
 Héllø ñíℳ
 Hello World!
 direction raw value: 2
-Game State: 102'''
+Game State: 102
+Opposite of North: expected 2, got 2'''
 """
 #!fmt: on
 

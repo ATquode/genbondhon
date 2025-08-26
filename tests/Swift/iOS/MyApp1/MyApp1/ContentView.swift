@@ -92,6 +92,13 @@ struct ContentView: View {
                         Text(String(handler.addFloatRes))
                             .frame(width: 100, alignment: .leading)
                     }
+                }
+            }
+
+            GridRow {
+                VStack(alignment: .leading) {
+                    Text("Input")
+                        .font(.largeTitle)
 
                     HStack {
                         Text("String:")
@@ -102,6 +109,19 @@ struct ContentView: View {
                             .frame(width: 10)
                         Text(handler.sayHelloOutput)
                             .frame(width: 160, alignment: .leading)
+                    }
+
+                    HStack {
+                        Text("Direction:")
+                            .frame(alignment: .leading)
+                        Picker("Direction", selection: $handler.direction) {
+                            Text("north").tag(Direction.north)
+                            Text("east").tag(Direction.east)
+                            Text("south").tag(Direction.south)
+                            Text("west").tag(Direction.west)
+                        }
+
+                        Text("Opposite: \(handler.oppositeDirection)")
                     }
                 }
             }

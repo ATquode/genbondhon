@@ -5,7 +5,17 @@
 import { mount } from "svelte";
 import "./app.css";
 import App from "./App.svelte";
-import { extraNoOp, noop, printCond, printStr, takeChar } from "./lib/nomuna";
+import {
+  Direction,
+  extraNoOp,
+  GameState,
+  noop,
+  print2Str,
+  printCond,
+  printDirectionRawValue,
+  printStr,
+  takeChar,
+} from "./lib/nomuna";
 
 noop();
 extraNoOp();
@@ -15,6 +25,11 @@ printCond(a !== 7);
 takeChar("a".charCodeAt(0).toString());
 printStr("nim");
 printStr("hello ñíℳ");
+print2Str("Hello", "World!");
+const direction = Direction.South;
+printDirectionRawValue(direction);
+const gameState = GameState.Game_over;
+console.log(`Game State: ${gameState}`);
 
 const app = mount(App, {
   target: document.getElementById("app")!,

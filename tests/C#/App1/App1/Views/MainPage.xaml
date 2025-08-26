@@ -13,6 +13,7 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*" />
@@ -71,6 +72,19 @@
                 AddNumRes="{x:Bind ViewModel.AddFloatRes, Mode=OneWay}"
                 Formatter="{x:Bind ViewModel.FloatFormatter}"
                 PerformAddCommand="{x:Bind ViewModel.PerformAddFloatCommand}" />
+        </StackPanel>
+
+        <StackPanel
+            x:Name="InputBlock"
+            Grid.Row="2"
+            Grid.RowSpan="1"
+            Grid.Column="0"
+            Grid.ColumnSpan="2"
+            Spacing="14">
+            <TextBlock
+                Padding="0,10"
+                FontSize="24"
+                Text="Input" />
 
             <StackPanel Orientation="Horizontal" Spacing="10">
                 <TextBlock FontSize="20" Text="String:" />
@@ -84,6 +98,15 @@
                 <TextBlock FontSize="20" Text=":" />
                 <TextBlock FontSize="20" Text="{x:Bind ViewModel.SayHelloOutput, Mode=OneWay}" />
             </StackPanel>
+
+            <StackPanel Orientation="Horizontal" Spacing="10">
+                <ComboBox
+                    Header="Direction"
+                    ItemsSource="{x:Bind ViewModel.Directions}"
+                    SelectedItem="{x:Bind ViewModel.SelectedDirection, Mode=TwoWay}" />
+                <TextBlock FontSize="14" Text="Opposite: " />
+                <TextBlock FontSize="14" Text="{x:Bind ViewModel.OppositeDirection, Mode=OneWay}" />
+            </StackPanel>
         </StackPanel>
 
         <VisualStateManager.VisualStateGroups>
@@ -94,12 +117,16 @@
                     </VisualState.StateTriggers>
                     <VisualState.Setters>
                         <Setter Target="ConstantBlock.(Grid.Column)" Value="0" />
-                        <Setter Target="ConstantBlock.(Grid.RowSpan)" Value="2" />
+                        <Setter Target="ConstantBlock.(Grid.RowSpan)" Value="1" />
                         <Setter Target="ConstantBlock.(Grid.ColumnSpan)" Value="1" />
                         <Setter Target="AddBlock.(Grid.Row)" Value="0" />
                         <Setter Target="AddBlock.(Grid.Column)" Value="1" />
-                        <Setter Target="AddBlock.(Grid.RowSpan)" Value="2" />
+                        <Setter Target="AddBlock.(Grid.RowSpan)" Value="1" />
                         <Setter Target="AddBlock.(Grid.ColumnSpan)" Value="1" />
+                        <Setter Target="InputBlock.(Grid.Row)" Value="1" />
+                        <Setter Target="InputBlock.(Grid.Column)" Value="0" />
+                        <Setter Target="InputBlock.(Grid.RowSpan)" Value="2" />
+                        <Setter Target="InputBlock.(Grid.ColumnSpan)" Value="2" />
                     </VisualState.Setters>
                 </VisualState>
             </VisualStateGroup>

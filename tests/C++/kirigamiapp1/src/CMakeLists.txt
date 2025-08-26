@@ -3,6 +3,10 @@
 
 add_subdirectory(settings)
 
+find_package(Qt6 REQUIRED COMPONENTS Core)
+find_package(Qt6 REQUIRED COMPONENTS Core)
+find_package(magic_enum CONFIG REQUIRED)
+
 qt_add_library(kirigamiapp1_static STATIC)
 ecm_add_qml_module(
   kirigamiapp1_static
@@ -23,8 +27,13 @@ ecm_add_qml_module(
 
 target_sources(
   kirigamiapp1_static
-  PUBLIC kirigamiapp1application.cpp kirigamiapp1application.h datamanager.h
-         datamanager.cpp nomuna.hpp)
+  PUBLIC kirigamiapp1application.cpp
+         kirigamiapp1application.h
+         datamanager.h
+         datamanager.cpp
+         directionmodel.h
+         directionmodel.cpp
+         nomuna.hpp)
 
 target_link_libraries(
   kirigamiapp1_static
@@ -47,6 +56,9 @@ if(ANDROID)
                                 applications-graphics)
 else()
   target_link_libraries(kirigamiapp1_static PUBLIC Qt::Widgets)
+  target_link_libraries(kirigamiapp1_static PRIVATE Qt6::Core)
+  target_link_libraries(kirigamiapp1_static PRIVATE Qt6::Core)
+  target_link_libraries(kirigamiapp1_static PRIVATE magic_enum::magic_enum)
 endif()
 
 kconfig_add_kcfg_files(kirigamiapp1_static GENERATE_MOC

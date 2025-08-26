@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-using System.Diagnostics;
+using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using NomunaLib;
@@ -63,6 +63,23 @@ public partial class MainViewModel : ObservableRecipient
     [ObservableProperty]
     private string sayHelloOutput;
 
+    [ObservableProperty]
+    private ObservableCollection<Nomuna.Direction> directions = new(
+        Enum.GetValues<Nomuna.Direction>()
+    );
+
+    [ObservableProperty]
+    private Nomuna.Direction selectedDirection;
+
+    public string OppositeDirection
+    {
+        get
+        {
+            var oppositeDir = Nomuna.GetOpposite(selectedDirection);
+            return oppositeDir.ToString();
+        }
+    }
+
     private readonly Lazy<DecimalFormatter> _intFormatter =
         new(() =>
         {
@@ -114,12 +131,17 @@ public partial class MainViewModel : ObservableRecipient
             sayHelloOutput =
                 "";
         addIntRes = addDoubleRes = addFloatRes = "0";
+        selectedDirection = Nomuna.Direction.North;
         Nomuna.PrintCond(addIntRes == "0");
         Nomuna.PrintCond(addIntRes != "0");
         Nomuna.TakeChar('a');
         Nomuna.PrintStr("nim");
         Nomuna.PrintStr("hello ñíℳ");
         Nomuna.Print2Str("Hello", "World!");
+        Nomuna.Direction direction = Nomuna.Direction.South;
+        Nomuna.PrintDirectionRawValue(direction);
+        Nomuna.GameState gameState = Nomuna.GameState.Game_over;
+        Console.WriteLine($"Game State: {gameState}, value: {((int)gameState)}");
     }
 
     [RelayCommand]
@@ -157,5 +179,10 @@ public partial class MainViewModel : ObservableRecipient
     private void PerformSayHello()
     {
         SayHelloOutput = Nomuna.SayHello(SayHelloInput);
+    }
+
+    partial void OnSelectedDirectionChanged(Nomuna.Direction value)
+    {
+        OnPropertyChanged(nameof(OppositeDirection));
     }
 }

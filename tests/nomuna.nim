@@ -81,3 +81,14 @@ proc print2Str*(str1: string, str2: string) =
 
 proc printDirectionRawValue*(direction: Direction) =
   echo "direction raw value: ", ord(direction)
+
+func getOpposite*(direction: Direction): Direction =
+  case direction
+  of Direction.north:
+    return Direction.south
+  of Direction.east:
+    return Direction.west
+  of Direction.south:
+    return Direction.north
+  of Direction.west:
+    return Direction.east

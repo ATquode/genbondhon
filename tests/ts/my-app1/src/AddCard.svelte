@@ -6,7 +6,6 @@ SPDX-License-Identifier: MIT
 
 <script lang="ts">
   import AddRow from "./AddRow.svelte";
-  import AddStringRow from "./AddStringRow.svelte";
   import { isInt, isDecimal } from "validator";
   import { addDouble, addFloat, addIntNum } from "./lib/nomuna";
 
@@ -33,6 +32,5 @@ SPDX-License-Identifier: MIT
       addFunc={addDouble}
     />
     <AddRow label="Float" validationFunc={floatValidator} addFunc={addFloat} />
-    <AddStringRow label="String" />
   </div>
 </div>

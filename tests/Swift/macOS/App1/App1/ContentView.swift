@@ -19,7 +19,7 @@ struct ContentView: View {
     }
 
     var body: some View {
-        Grid(horizontalSpacing: 100) {
+        Grid(horizontalSpacing: 100, verticalSpacing: 20) {
             GridRow(alignment: .top) {
                 VStack(alignment: .leading) {
                     Text("Constant Returns")
@@ -90,19 +90,34 @@ struct ContentView: View {
                         Text(String(handler.addFloatRes))
                             .frame(width: 100, alignment: .leading)
                     }
-
-                    HStack {
-                        Text("String:")
-                            .frame(width: 50, alignment: .leading)
-                        TextField("Name", text: $handler.sayHelloInput)
-                            .frame(width: 140)
-                        Text(":")
-                            .frame(width: 10)
-                        Text(handler.sayHelloOutput)
-                            .frame(width: 200, alignment: .leading)
-                    }
                 }
             }
+
+            VStack(alignment: .leading) {
+                Text("Input").font(.largeTitle)
+
+                HStack {
+                    Text("String:")
+                        .frame(width: 50, alignment: .leading)
+                    TextField("Name", text: $handler.sayHelloInput)
+                        .frame(width: 140)
+                    Text(":")
+                        .frame(width: 10)
+                    Text(handler.sayHelloOutput)
+                        .frame(width: 200, alignment: .leading)
+                }
+
+                HStack {
+                    Picker("Direction:", selection: $handler.direction) {
+                        Text("north").tag(Direction.north)
+                        Text("east").tag(Direction.east)
+                        Text("south").tag(Direction.south)
+                        Text("west").tag(Direction.west)
+                    }.frame(width: 200)
+
+                    Text("Opposite: \(handler.oppositeDirection)")
+                }
+            }.padding([.bottom], 10)
         }
         .padding(10)
     }

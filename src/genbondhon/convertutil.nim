@@ -88,7 +88,7 @@ func convertNimAndSwiftType*(
       if convertDirection == ConvertDirection.toC:
         &"{moduleName}.{origType}({code}.rawValue)"
       else:
-        &"{origType}(rawValue: {code})"
+        &"{origType}(rawValue: {code}.rawValue)"
     else:
       code
 

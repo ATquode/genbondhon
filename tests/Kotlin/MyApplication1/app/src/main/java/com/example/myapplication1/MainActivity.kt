@@ -9,6 +9,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -18,6 +19,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Card
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -25,6 +30,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
@@ -33,6 +41,8 @@ import androidx.compose.ui.tooling.preview.Wallpapers
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.myapplication1.ui.theme.MyApplication1Theme
+
+private val directionPickerOptions = Nomuna.Direction.entries.map { it.name }
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -47,9 +57,11 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun MainView(mainViewModel: MainViewModel = viewModel<MainViewModel>()) {
     val addCardUiState by mainViewModel.addCardUiState.collectAsState()
+    val inputCardUiState by mainViewModel.inputCardUiState.collectAsState()
     MainContent(
         mainViewModel.retCardUiState,
         addCardUiState,
+        inputCardUiState,
         mainViewModel.inputHolder,
     )
 }
@@ -58,6 +70,7 @@ fun MainView(mainViewModel: MainViewModel = viewModel<MainViewModel>()) {
 fun MainContent(
     returnCardUiState: ReturnCardUiState,
     addCardUiState: AddCardUiState,
+    inputCardUiState: InputCardUiState,
     inputVars: InputContainer,
 ) {
     MyApplication1Theme {
@@ -81,6 +94,14 @@ fun MainContent(
                             .padding(10.dp)
                             .fillMaxWidth(),
                     uiState = addCardUiState,
+                    inputVars = inputVars,
+                )
+                InputListCard(
+                    modifier =
+                        Modifier
+                            .padding(10.dp)
+                            .fillMaxWidth(),
+                    uiState = inputCardUiState,
                     inputVars = inputVars,
                 )
             }
@@ -136,11 +157,52 @@ fun AddListCard(
             addNum2 = inputVars.addFloat2,
             updateNum2 = inputVars::updateFloatNum2,
         )
+    }
+}
+
+@Composable
+fun InputListCard(
+    modifier: Modifier,
+    uiState: InputCardUiState,
+    inputVars: InputContainer,
+) {
+    CardView(modifier) {
+        Text(text = "Input", style = MaterialTheme.typography.titleLarge)
         SayHelloRow(
             outputStr = uiState.sayHelloOutput,
             inputStr = inputVars.sayHelloInput,
             updateInputStr = inputVars::updateStrInput,
         )
+        Row(
+            modifier = Modifier.padding(10.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(text = "Direction:")
+            DirectionDropDownMenuBox(inputVars::updateSelectedDirection)
+        }
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            Text(text = "Opposite:")
+            Text(text = uiState.oppositeDirection)
+        }
+    }
+}
+
+@Composable
+fun CardView(
+    modifier: Modifier,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    Card(
+        modifier = modifier,
+    ) {
+        Column(
+            modifier = Modifier.padding(10.dp),
+        ) {
+            content()
+        }
     }
 }
 
@@ -207,15 +269,33 @@ fun SayHelloRow(
 }
 
 @Composable
-fun CardView(
-    modifier: Modifier,
-    content: @Composable ColumnScope.() -> Unit,
-) {
-    Card(
-        modifier = modifier,
-    ) {
-        Column(modifier = Modifier.padding(10.dp)) {
-            content()
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
+fun DirectionDropDownMenuBox(updateSelection: (String) -> Unit) {
+    var isExpanded by remember { mutableStateOf(false) }
+    var selectedValue by remember { mutableStateOf(directionPickerOptions[0]) }
+    ExposedDropdownMenuBox(expanded = isExpanded, onExpandedChange = {
+        isExpanded = !isExpanded
+    }) {
+        OutlinedTextField(
+            value = selectedValue,
+            onValueChange = { },
+            readOnly = true,
+            trailingIcon = {
+                ExposedDropdownMenuDefaults.TrailingIcon(expanded = isExpanded)
+            },
+            modifier = Modifier.menuAnchor().fillMaxWidth(),
+        )
+        ExposedDropdownMenu(expanded = isExpanded, onDismissRequest = { isExpanded = false }) {
+            directionPickerOptions.forEach { option ->
+                DropdownMenuItem(
+                    text = { Text(option) },
+                    onClick = {
+                        isExpanded = false
+                        selectedValue = option
+                        updateSelection(selectedValue)
+                    },
+                )
+            }
         }
     }
 }
@@ -236,6 +316,7 @@ fun GreetingPreview() {
     MainContent(
         ReturnCardUiState(2, false, 2.0, 'A', "str", "fe"),
         AddCardUiState(),
+        InputCardUiState("", Nomuna.Direction.SOUTH.name),
         InputVars("", "", "", "", "", "", ""),
     )
 }
@@ -262,4 +343,6 @@ data class InputVars(
     override fun updateFloatNum2(num: String) { /* no-op */ }
 
     override fun updateStrInput(str: String) { /* no-op */ }
+
+    override fun updateSelectedDirection(direction: String) { /* no-op */ }
 }

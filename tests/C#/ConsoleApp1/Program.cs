@@ -40,3 +40,5 @@ Nomuna.Direction direction = Nomuna.Direction.South;
 Nomuna.PrintDirectionRawValue(direction);
 Nomuna.GameState gameState = Nomuna.GameState.Game_over;
 Console.WriteLine($"Game State: {gameState}, value: {((int)gameState)}");
+direction = Nomuna.GetOpposite(Nomuna.Direction.North);
+Console.WriteLine($"Opposite of North: expected {Nomuna.Direction.South}, got {direction}");

@@ -25,6 +25,7 @@ Héllø ñíℳ
 Hello World!
 direction raw value: 2
 Game State: game_over, value: 102
+Opposite of north: expected south, got south
 '''
   disabled: windows
   disabled: linux

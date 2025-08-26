@@ -112,9 +112,10 @@ func translateProcToJNI(self: KotlinLangGen, node: PNode, className: string): st
         callableParamList.add(callableParam)
     if formalParamNode[0].kind != nkEmpty:
       retType = formalParamNode[0].ident.s
-  if not wrFuncName.contains("Val") and
-      self.typeCategory(retType) == NamedTypeCategory.enumType:
-    wrFuncName = funcName.wrapperFuncName
+  if self.typeCategory(retType) == NamedTypeCategory.enumType:
+    retType = "cint" # Kotlin enum -> nim cint -> JNI jint
+    if not wrFuncName.contains("Val"):
+      wrFuncName = funcName.wrapperFuncName
   let procCallStmt = &"""{funcName}({callableParamList.join(", ")})"""
   var retBody =
     if retType == "void":

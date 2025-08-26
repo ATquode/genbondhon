@@ -7,6 +7,7 @@ SPDX-License-Identifier: MIT
 <script lang="ts">
   import AddCard from "./AddCard.svelte";
   import ConstRetCard from "./ConstRetCard.svelte";
+  import InputCard from "./InputCard.svelte";
   import DefaultView from "./DefaultView.svelte";
 </script>
 
@@ -14,6 +15,7 @@ SPDX-License-Identifier: MIT
   <div class="flex flex-wrap gap-4">
     <ConstRetCard />
     <AddCard />
+    <InputCard />
   </div>
   <DefaultView />
 </main>

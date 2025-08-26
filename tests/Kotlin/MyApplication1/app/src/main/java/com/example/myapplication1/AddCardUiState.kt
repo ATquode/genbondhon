@@ -8,5 +8,4 @@ data class AddCardUiState(
     val addIntRes: String = 0.toString(),
     val addDoubleRes: String = 0.toString(),
     val addFloatRes: String = 0.toString(),
-    val sayHelloOutput: String = "",
 )
