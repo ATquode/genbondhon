@@ -14,13 +14,13 @@ const xamlstyler = "XamlStyler"
 
 # format commands
 const nphFormatCmd = "nph ."
-const csharpierFormatCmd = "dotnet csharpier ."
+const csharpierFormatCmd = "dotnet csharpier format ."
 const xamlstylerFormatCmd = "dotnet xstyler -r -d ."
 
 # lint commands
 const reuseLintCmd = "reuse lint"
 const nphLintCmd = "nph --check ."
-const csharpierLintCmd = "dotnet csharpier --check ."
+const csharpierLintCmd = "dotnet csharpier check ."
 const xamlstylerLintCmd = "dotnet xstyler -p -r -d ."
 
 proc runCmd(cmdName: string, cmdType: string, cmd: string): bool =
