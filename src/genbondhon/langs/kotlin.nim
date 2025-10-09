@@ -330,7 +330,7 @@ func translateProc(self: KotlinLangGen, node: PNode): string =
 {retBody}
     }}
 
-    external fun {funcName.wrapperFuncName}({wrParamList.join(", ")}){wrRetTypePart}"""
+    private external fun {funcName.wrapperFuncName}({wrParamList.join(", ")}){wrRetTypePart}"""
     else:
       &"""
     external {trProc}"""
