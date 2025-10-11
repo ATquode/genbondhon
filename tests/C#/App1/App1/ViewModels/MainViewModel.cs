@@ -142,6 +142,8 @@ public partial class MainViewModel : ObservableRecipient
         Nomuna.PrintDirectionRawValue(direction);
         Nomuna.GameState gameState = Nomuna.GameState.Game_over;
         Console.WriteLine($"Game State: {gameState}, value: {((int)gameState)}");
+        Nomuna.GameState newGameState = Nomuna.TogglePause(gameState);
+        Console.WriteLine($"Game State: {newGameState}, value: {((int)newGameState)}");
     }
 
     [RelayCommand]

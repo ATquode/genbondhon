@@ -291,7 +291,7 @@ func translateProc(self: KotlinLangGen, node: PNode): string =
         let valueType = self.enumValueTypes.getOrDefault(paramType, "ordinal")
         case valueType
         of "int":
-          callableParam = &"{paramName}.intValue"
+          callableParam = &"{paramName}.intVal"
         else:
           callableParam = &"{paramName}.ordinal"
       elif shouldWrap:
@@ -315,14 +315,20 @@ func translateProc(self: KotlinLangGen, node: PNode): string =
   let trProc =
     &"""fun {funcName.startLowerCase}({trParamList.join(", ")}){retTypePart}"""
   let procCallStmt = &"""{funcName.wrapperFuncName}({callableParamList.join(", ")})"""
-  let retBody =
-    if wrRetType == "Int":
+  var retBody =
+    &"""
+        {procCallStmt}"""
+  if wrRetType == "Int":
+    let valueType = self.enumValueTypes.getOrDefault(retType.replaceType, "ordinal")
+    let retTypeAccess =
+      if valueType == "int":
+        &"{retType}.entries.first {{ it.intVal == data }}"
+      else:
+        &"{retType}.entries[data]"
+    retBody =
       &"""
         val data = {procCallStmt}
-        return {retType}.values()[data]"""
-    else:
-      &"""
-        {procCallStmt}"""
+        return {retTypeAccess}"""
   result =
     if shouldWrap:
       &"""

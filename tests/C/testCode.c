@@ -45,9 +45,11 @@ int main() {
     print2Str("Hello", "World!");
     Direction direction = SOUTH;
     printDirectionRawValue(direction);
+    direction = getOpposite(NORTH);
+    printf("Opposite of NORTH: expected %d, got %d\n", SOUTH, direction);
     GameState gameState = GAME_OVER;
     printf("Game State: %d\n", gameState);
-    direction = getOpposite(NORTH);
-    printf("Opposite of NORTH: expected %d, got %d", SOUTH, direction);
+    GameState newGameState = togglePause(gameState);
+    printf("Game State: %d\n", newGameState);
     return 0;
 }

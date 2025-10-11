@@ -32,6 +32,8 @@ class MainViewModel : ViewModel() {
         nomuna.printDirectionRawValue(direction)
         val gameState = Nomuna.GameState.GAME_OVER
         Log.d("nomuna", "Game State: $gameState, value: ${gameState.intVal}")
+        val newGameState = nomuna.togglePause(gameState)
+        Log.d("nomuna", "Game State: $newGameState, value: ${newGameState.intVal}")
     }
 
     val retCardUiState =

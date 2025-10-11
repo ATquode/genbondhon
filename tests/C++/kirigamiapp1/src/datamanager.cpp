@@ -30,6 +30,8 @@ DataManager::DataManager(QObject *parent)
     printDirectionRawValue(direction);
     GameState gameState = GameState::Game_over;
     std::cout << "Game State: " << static_cast<int>(gameState) << std::endl;
+    GameState newGameState = togglePause(gameState);
+    std::cout << "Game State: " << static_cast<int>(newGameState) << std::endl;
 }
 
 DataManager *DataManager::getSingleton()

@@ -42,7 +42,9 @@ print(j)
 print2Str(str1: "Hello", str2: "World!")
 var direction = Direction.south
 printDirectionRawValue(direction: direction)
-let gameState = GameState.game_over
-print("Game State: \(gameState), value: \(gameState.rawValue)")
 direction = getOpposite(direction: Direction.north)
 print("Opposite of north: expected \(Direction.south), got \(direction)")
+let gameState = GameState.game_over
+print("Game State: \(gameState), value: \(gameState.rawValue)")
+let newGameState = togglePause(curState: gameState)
+print("Game State: \(newGameState), value: \(newGameState.rawValue)")

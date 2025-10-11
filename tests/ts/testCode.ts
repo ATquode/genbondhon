@@ -23,6 +23,7 @@ import {
   printDirectionRawValue,
   GameState,
   getOpposite,
+  togglePause,
 } from "./nomuna";
 
 noop();
@@ -56,7 +57,9 @@ console.log(k);
 print2Str("Hello", "World!");
 let direction = Direction.South;
 printDirectionRawValue(direction);
-let gameState = GameState.Game_over;
-console.log(`Game State: ${gameState}`);
 direction = getOpposite(Direction.North);
 console.log(`Opposite of North: expected ${Direction.South}, got ${direction}`);
+let gameState = GameState.Game_over;
+console.log(`Game State: ${gameState}`);
+let newGameState = togglePause(gameState);
+console.log(`Game State: ${newGameState}`);

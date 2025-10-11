@@ -12,6 +12,7 @@ discard """
 8.080000
 8.800000
 Game State: 102
+Game State: 102
 Hello World!
 Héllø ñíℳ
 No Operation

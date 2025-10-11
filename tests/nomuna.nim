@@ -92,3 +92,12 @@ func getOpposite*(direction: Direction): Direction =
     return Direction.north
   of Direction.west:
     return Direction.east
+
+func togglePause*(curState: GameState): GameState =
+  case curState
+  of GameState.playing:
+    return GameState.pause
+  of GameState.pause:
+    return GameState.playing
+  else:
+    return curState

@@ -8,7 +8,7 @@ import
     [currentconfig, parseutil, wrapperTranslator, wrapperGenerator, util]
 
 let filePath = "tests/nomuna.nim".Path # Testament starts from parent of `tests` dir
-let publicApiCount = 20
+let publicApiCount = 21
 origFile = filePath
 moduleName = filePath.lastPathPart.splitFile.name.string
 bindingDirPath = "bindingTest".Path
