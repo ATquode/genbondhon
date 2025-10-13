@@ -140,6 +140,8 @@ public partial class MainViewModel : ObservableRecipient
         Nomuna.Print2Str("Hello", "World!");
         Nomuna.Direction direction = Nomuna.Direction.South;
         Nomuna.PrintDirectionRawValue(direction);
+        direction = Nomuna.GetDirection("south");
+        Console.WriteLine($"Direction: {direction}, value: {(int)direction}");
         Nomuna.GameState gameState = Nomuna.GameState.Game_over;
         Console.WriteLine($"Game State: {gameState}, value: {((int)gameState)}");
         Nomuna.GameState newGameState = Nomuna.TogglePause(gameState);

@@ -24,6 +24,7 @@ import {
   GameState,
   getOpposite,
   togglePause,
+  getDirection,
 } from "./nomuna";
 
 noop();
@@ -59,6 +60,8 @@ let direction = Direction.South;
 printDirectionRawValue(direction);
 direction = getOpposite(Direction.North);
 console.log(`Opposite of North: expected ${Direction.South}, got ${direction}`);
+direction = getDirection("south");
+console.log(`Direction: ${direction}`);
 let gameState = GameState.Game_over;
 console.log(`Game State: ${gameState}`);
 let newGameState = togglePause(gameState);

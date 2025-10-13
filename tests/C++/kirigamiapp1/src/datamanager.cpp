@@ -28,6 +28,8 @@ DataManager::DataManager(QObject *parent)
     print2Str("Hello", "World!");
     Direction direction = Direction::South;
     printDirectionRawValue(direction);
+    direction = getDirection("south");
+    std::cout << "Direction: " << static_cast<int>(direction) << std::endl;
     GameState gameState = GameState::Game_over;
     std::cout << "Game State: " << static_cast<int>(gameState) << std::endl;
     GameState newGameState = togglePause(gameState);

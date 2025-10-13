@@ -56,8 +56,10 @@ class ContentViewHandler: ObservableObject {
         printStr(a: "nim")
         printStr(a: "hello ñíℳ")
         print2Str(str1: "Hello", str2: "World!")
-        let direction = Direction.south
+        var direction = Direction.south
         printDirectionRawValue(direction: direction)
+        direction = getDirection(hint: "south")
+        print("Direction: \(direction), value: \(direction.rawValue)")
         let gameState = GameState.game_over
         print("Game State: \(gameState), value: \(gameState.rawValue)")
         let newGameState = togglePause(curState: gameState)

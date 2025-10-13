@@ -64,6 +64,7 @@ func translateProc(self: CSharpLangGen, node: PNode): string =
   let paramNode = procParamNode(node)
   var retType = "void"
   var trParamList, wrParamList, callableParamList: seq[string]
+  var marshalledIndexList: seq[int]
   if paramNode.isSome:
     let formalParamNode = paramNode.get()
     for i in 1 ..< formalParamNode.safeLen:
@@ -85,15 +86,30 @@ func translateProc(self: CSharpLangGen, node: PNode): string =
         wrParamList.add(wrParam)
       if paramType.replaceType == "string":
         trParam = &"[MarshalAs(UnmanagedType.LPUTF8Str)] {trParam}"
+        marshalledIndexList.add(i - 1)
       elif paramType.replaceType == "bool":
         trParam = &"[MarshalAs(UnmanagedType.U1)] {trParam}"
+        marshalledIndexList.add(i - 1)
       trParamList.add(trParam)
       callableParamList.add(callableParam)
+    if shouldWrap:
+      for i in marshalledIndexList:
+        let marshalPartEnd = trParamList[i].find("] ")
+        let marshalPart = trParamList[i][0 .. marshalPartEnd]
+        let nonMarshalPart = trParamList[i][marshalPartEnd + 2 ..^ 1]
+        trParamList[i] = nonMarshalPart
+        wrParamList[i] = &"{marshalPart} {nonMarshalPart}"
     if formalParamNode[0].kind != nkEmpty:
       retType = formalParamNode[0].ident.s
   var wrRetType = retType.replaceType
   if self.typeCategory(retType) == NamedTypeCategory.enumType:
     shouldWrap = true
+    if wrParamList.len == 0:
+      wrParamList = trParamList
+      for i in marshalledIndexList:
+        let marshalPartEnd = trParamList[i].find("] ")
+        let nonMarshalPart = trParamList[i][marshalPartEnd + 2 ..^ 1]
+        trParamList[i] = nonMarshalPart
     wrRetType = "byte"
   let trProc =
     &"""{retType.replaceType} {funcName.capitalizeAscii}({trParamList.join(", ")})"""

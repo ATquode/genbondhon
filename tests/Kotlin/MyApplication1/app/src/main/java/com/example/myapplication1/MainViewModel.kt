@@ -28,8 +28,10 @@ class MainViewModel : ViewModel() {
         nomuna.printStr("nim")
         nomuna.printStr("hello ñíℳ")
         nomuna.print2Str("Hello", "World!")
-        val direction = Nomuna.Direction.SOUTH
+        var direction = Nomuna.Direction.SOUTH
         nomuna.printDirectionRawValue(direction)
+        direction = nomuna.getDirection("south")
+        Log.d("nomuna", "Direction: $direction, value: ${direction.ordinal}")
         val gameState = Nomuna.GameState.GAME_OVER
         Log.d("nomuna", "Game State: $gameState, value: ${gameState.intVal}")
         val newGameState = nomuna.togglePause(gameState)

@@ -11,6 +11,7 @@ discard """
 8
 8.080000
 8.800000
+Direction: 2
 Game State: 102
 Game State: 102
 Hello World!

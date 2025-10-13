@@ -310,6 +310,8 @@ func translateProc(self: KotlinLangGen, node: PNode): string =
   var wrRetTypePart = retTypePart
   if self.typeCategory(retType) == NamedTypeCategory.enumType:
     shouldWrap = true
+    if wrParamList.len == 0:
+      wrParamList = trParamList
     wrRetType = "Int"
     wrRetTypePart = &": {wrRetType}"
   let trProc =

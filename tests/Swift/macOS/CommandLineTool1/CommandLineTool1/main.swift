@@ -44,6 +44,8 @@ var direction = Direction.south
 printDirectionRawValue(direction: direction)
 direction = getOpposite(direction: Direction.north)
 print("Opposite of north: expected \(Direction.south), got \(direction)")
+direction = getDirection(hint: "south")
+print("Direction: \(direction), value: \(direction.rawValue)")
 let gameState = GameState.game_over
 print("Game State: \(gameState), value: \(gameState.rawValue)")
 let newGameState = togglePause(curState: gameState)

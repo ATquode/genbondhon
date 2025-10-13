@@ -52,6 +52,8 @@ int main() {
     printDirectionRawValue(direction);
     direction = getOpposite(Direction::North);
     cout << "Opposite of North: expected " << static_cast<int>(Direction::South) << ", got " << static_cast<int>(direction) << endl;
+    direction = getDirection("south");
+    cout << "Direction: " << static_cast<int>(direction) << endl;
     GameState gameState = GameState::Game_over;
     cout << "Game State: " << static_cast<int>(gameState) << endl;
     GameState newGameState = togglePause(gameState);

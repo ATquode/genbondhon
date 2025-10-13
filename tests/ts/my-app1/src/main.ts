@@ -9,12 +9,14 @@ import {
   Direction,
   extraNoOp,
   GameState,
+  getDirection,
   noop,
   print2Str,
   printCond,
   printDirectionRawValue,
   printStr,
   takeChar,
+  togglePause,
 } from "./lib/nomuna";
 
 noop();
@@ -26,10 +28,14 @@ takeChar("a".charCodeAt(0).toString());
 printStr("nim");
 printStr("hello ñíℳ");
 print2Str("Hello", "World!");
-const direction = Direction.South;
+let direction = Direction.South;
 printDirectionRawValue(direction);
+direction = getDirection("south");
+console.log(`Direction: ${direction}`);
 const gameState = GameState.Game_over;
 console.log(`Game State: ${gameState}`);
+const newGameState = togglePause(gameState);
+console.log(`Game State: ${newGameState}`);
 
 const app = mount(App, {
   target: document.getElementById("app")!,

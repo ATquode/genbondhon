@@ -82,6 +82,9 @@ proc print2Str*(str1: string, str2: string) =
 proc printDirectionRawValue*(direction: Direction) =
   echo "direction raw value: ", ord(direction)
 
+func getDirection*(hint: string): Direction =
+  if hint == "south": Direction.south else: Direction.east
+
 func getOpposite*(direction: Direction): Direction =
   case direction
   of Direction.north:
