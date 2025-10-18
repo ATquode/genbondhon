@@ -20,6 +20,21 @@ type
     pause
     game_over
 
+  HttpStatusCode* {.pure.} = enum
+    ok = 200
+    created
+    no_content = 204
+    moved_permanently = 301
+    found
+    not_modified = 304
+    bad_request = 400
+    unauthorized
+    forbidden = 403
+    not_found
+    internal_server_error = 500
+    bad_gateway = 502
+    service_unavailable
+
 proc noop*() =
   echo "No Operation"
 
@@ -104,3 +119,17 @@ func togglePause*(curState: GameState): GameState =
     return GameState.playing
   else:
     return curState
+
+func authenticate*(username: string): HttpStatusCode =
+  if username in ["admin", "user"]:
+    return HttpStatusCode.ok
+  else:
+    return HttpStatusCode.unauthorized
+
+func setGameState*(username: string, state: GameState): HttpStatusCode =
+  let authResult = username.authenticate
+  if authResult == HttpStatusCode.unauthorized:
+    return HttpStatusCode.forbidden
+  if state == GameState.game_over:
+    return HttpStatusCode.bad_request
+  return HttpStatusCode.ok

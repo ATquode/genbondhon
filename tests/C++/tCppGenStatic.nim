@@ -27,7 +27,9 @@ direction raw value: 2
 Opposite of North: expected 2, got 2
 Direction: 2
 Game State: 102
-Game State: 102'''
+Game State: 102
+Status code: 401
+set Game State result: 400'''
 """
 #!fmt: on
 

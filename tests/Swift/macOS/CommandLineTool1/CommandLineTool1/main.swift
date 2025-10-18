@@ -50,3 +50,7 @@ let gameState = GameState.game_over
 print("Game State: \(gameState), value: \(gameState.rawValue)")
 let newGameState = togglePause(curState: gameState)
 print("Game State: \(newGameState), value: \(newGameState.rawValue)")
+var statusCode = authenticate(username: "user1")
+print("Status code: \(statusCode), value: \(statusCode.rawValue)")
+statusCode = setGameState(username: "user", state: GameState.game_over)
+print("set Game State result: \(statusCode), value: \(statusCode.rawValue)")

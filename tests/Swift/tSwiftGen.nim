@@ -27,7 +27,9 @@ direction raw value: 2
 Opposite of north: expected south, got south
 Direction: south, value: 2
 Game State: game_over, value: 102
-Game State: game_over, value: 102'''
+Game State: game_over, value: 102
+Status code: unauthorized, value: 401
+set Game State result: bad_request, value: 400'''
   disabled: windows
   disabled: linux
 """

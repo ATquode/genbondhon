@@ -36,6 +36,10 @@ class MainViewModel : ViewModel() {
         Log.d("nomuna", "Game State: $gameState, value: ${gameState.intVal}")
         val newGameState = nomuna.togglePause(gameState)
         Log.d("nomuna", "Game State: $newGameState, value: ${newGameState.intVal}")
+        var statusCode = nomuna.authenticate("user1");
+        Log.d("nomuna", "Status code: $statusCode, value: ${statusCode.intVal}")
+        statusCode = nomuna.setGameState("user", Nomuna.GameState.GAME_OVER);
+        Log.d("nomuna", "set Game State result: $statusCode, value: ${statusCode.intVal}")
     }
 
     val retCardUiState =

@@ -25,6 +25,8 @@ import {
   getOpposite,
   togglePause,
   getDirection,
+  authenticate,
+  setGameState,
 } from "./nomuna";
 
 noop();
@@ -66,3 +68,7 @@ let gameState = GameState.Game_over;
 console.log(`Game State: ${gameState}`);
 let newGameState = togglePause(gameState);
 console.log(`Game State: ${newGameState}`);
+let statusCode = authenticate("user1");
+console.log(`Status code: ${statusCode}`);
+statusCode = setGameState("user", GameState.Game_over);
+console.log(`set Game State result: ${statusCode}`);

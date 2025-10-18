@@ -6,6 +6,7 @@ import { mount } from "svelte";
 import "./app.css";
 import App from "./App.svelte";
 import {
+  authenticate,
   Direction,
   extraNoOp,
   GameState,
@@ -15,6 +16,7 @@ import {
   printCond,
   printDirectionRawValue,
   printStr,
+  setGameState,
   takeChar,
   togglePause,
 } from "./lib/nomuna";
@@ -36,6 +38,10 @@ const gameState = GameState.Game_over;
 console.log(`Game State: ${gameState}`);
 const newGameState = togglePause(gameState);
 console.log(`Game State: ${newGameState}`);
+let statusCode = authenticate("user1");
+console.log(`Status code: ${statusCode}`);
+statusCode = setGameState("user", GameState.Game_over);
+console.log(`set Game State result: ${statusCode}`);
 
 const app = mount(App, {
   target: document.getElementById("app")!,

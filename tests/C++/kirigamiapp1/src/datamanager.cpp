@@ -34,6 +34,10 @@ DataManager::DataManager(QObject *parent)
     std::cout << "Game State: " << static_cast<int>(gameState) << std::endl;
     GameState newGameState = togglePause(gameState);
     std::cout << "Game State: " << static_cast<int>(newGameState) << std::endl;
+    HttpStatusCode statusCode = authenticate("user1");
+    std::cout << "Status code: " << static_cast<int>(statusCode) << std::endl;
+    statusCode = setGameState("user", GameState::Game_over);
+    std::cout << "set Game State result: " << static_cast<int>(statusCode) << std::endl;
 }
 
 DataManager *DataManager::getSingleton()

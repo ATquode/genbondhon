@@ -18,6 +18,7 @@ Hello World!
 Héllø ñíℳ
 No Operation
 Opposite of North: expected 2, got 2
+Status code: 401
 a
 a
 direction raw value: 2
@@ -25,6 +26,7 @@ extra: No Op.
 failure
 hello ñíℳ
 nim
+set Game State result: 400
 success
 what
 প্রোগ্রামিং'''

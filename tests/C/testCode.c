@@ -53,5 +53,9 @@ int main() {
     printf("Game State: %d\n", gameState);
     GameState newGameState = togglePause(gameState);
     printf("Game State: %d\n", newGameState);
+    HttpStatusCode statusCode = authenticate("user1");
+    printf("Status code: %d\n", statusCode);
+    statusCode = setGameState("user", GAME_OVER);
+    printf("set Game State result: %d\n", statusCode);
     return 0;
 }

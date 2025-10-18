@@ -58,5 +58,9 @@ int main() {
     cout << "Game State: " << static_cast<int>(gameState) << endl;
     GameState newGameState = togglePause(gameState);
     cout << "Game State: " << static_cast<int>(newGameState) << endl;
+    HttpStatusCode statusCode = authenticate("user1");
+    cout << "Status code: " << static_cast<int>(statusCode) << endl;
+    statusCode = setGameState("user", GameState::Game_over);
+    cout << "set Game State result: " << static_cast<int>(statusCode) << endl;
     return 0;
 }

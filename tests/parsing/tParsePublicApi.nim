@@ -8,7 +8,7 @@ import
     [currentconfig, parseutil, wrapperTranslator, wrapperGenerator, util]
 
 let filePath = "tests/nomuna.nim".Path # Testament starts from parent of `tests` dir
-let publicApiCount = 22
+let publicApiCount = 25
 origFile = filePath
 moduleName = filePath.lastPathPart.splitFile.name.string
 bindingDirPath = "bindingTest".Path
@@ -16,7 +16,8 @@ let wrappedFileName = "wrappedApi.nim"
 let publicApis = filePath.parsePublicAPIs()
 check publicApis.len == publicApiCount
 
-const expectedPublicNames = ["Direction", "GameState", "noop", "extraNoOp"]
+const expectedPublicNames =
+  ["Direction", "GameState", "HttpStatusCode", "noop", "extraNoOp"]
 for i in 0 ..< expectedPublicNames.len:
   check publicApis[i].itemName == expectedPublicNames[i]
 
@@ -30,7 +31,7 @@ check bindingApis.len == publicApiCount + 1 - unwrappableAST.len
 
 var expectedWrapperProcs = @["NimMain"]
 expectedWrapperProcs.add(
-  expectedPublicNames.toOpenArray(2, expectedPublicNames.len - 1)
+  expectedPublicNames.toOpenArray(3, expectedPublicNames.len - 1)
     # Drop Unwrappable APIs from `expectedPublicNames` - Direction, GameState etc.
 )
 
