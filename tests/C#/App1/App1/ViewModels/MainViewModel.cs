@@ -146,6 +146,10 @@ public partial class MainViewModel : ObservableRecipient
         Console.WriteLine($"Game State: {gameState}, value: {((int)gameState)}");
         Nomuna.GameState newGameState = Nomuna.TogglePause(gameState);
         Console.WriteLine($"Game State: {newGameState}, value: {((int)newGameState)}");
+        Nomuna.HttpStatusCode statusCode = Nomuna.Authenticate("user1");
+        Console.WriteLine($"Status code: {statusCode}, value: {(int)statusCode}");
+        statusCode = Nomuna.SetGameState("user", Nomuna.GameState.Game_over);
+        Console.WriteLine($"set Game State result: {statusCode}, value: {(int)statusCode}");
     }
 
     [RelayCommand]

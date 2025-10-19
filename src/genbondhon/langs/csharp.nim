@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MIT
 
-import std/[options, paths, strformat, strutils, tables, terminal]
+import std/[math, options, paths, strformat, strutils, tables, terminal]
 import compiler/ast
 import base
 import ../[convertutil, currentconfig, util]
@@ -11,6 +11,7 @@ type CSharpLangGen = ref object of BaseLangGen
   wrapperFileName: Path
   dllName: string
   namedTypes: Table[string, NamedTypeCategory]
+  enumDataTypes: Table[string, string]
 
 proc newCSharpLangGen*(bindingDir: Path): CSharpLangGen =
   ## `CSharpLangGen` constructor
@@ -43,17 +44,31 @@ method translateEnum(self: CSharpLangGen, node: PNode): string =
   self.storeNamedType(enumName, NamedTypeCategory.enumType)
   let enumValsParent = node[2]
   var enumVals: seq[string]
+  var maxEnumVal = 0
   for i in 1 ..< enumValsParent.safeLen:
     let (enumValName, enumValVal) = enumValsParent[i].enumNameValue
+    if enumValVal.get(0) > maxEnumVal:
+      maxEnumVal = enumValVal.get(0)
     var val =
       &"""
 {enumValName.capitalizeAscii}"""
     if enumValVal.isSome:
       val = &"{val} = {enumValVal.unsafeGet}"
     enumVals.add(val)
+
+  var enumDataType = "byte" # For upto value 255
+  if maxEnumVal > 2 ^ 32 - 1:
+    enumDataType = "ulong"
+  elif maxEnumVal > 2 ^ 16 - 1:
+    enumDataType = "uint"
+  elif maxEnumVal > 255:
+    enumDataType = "ushort"
+
+  self.enumDataTypes[enumName] = enumDataType
+
   result =
     &"""
-        public enum {enumName}: byte
+        public enum {enumName}: {enumDataType}
         {{
             {enumVals.join(",\n            ")}
         }}"""
@@ -76,8 +91,7 @@ func translateProc(self: CSharpLangGen, node: PNode): string =
         shouldWrap = true
         if wrParamList.len == 0:
           wrParamList = trParamList
-        let wrapType = "byte"
-          # should be enough, bigger values would need ushort, uint, ulong etc.
+        let wrapType = self.enumDataTypes[paramType]
         let wrParam = &"{wrapType} {paramName}"
         wrParamList.add(wrParam)
         callableParam = &"({wrapType}){paramName}"
@@ -110,19 +124,19 @@ func translateProc(self: CSharpLangGen, node: PNode): string =
         let marshalPartEnd = trParamList[i].find("] ")
         let nonMarshalPart = trParamList[i][marshalPartEnd + 2 ..^ 1]
         trParamList[i] = nonMarshalPart
-    wrRetType = "byte"
+    wrRetType = self.enumDataTypes[retType]
   let trProc =
     &"""{retType.replaceType} {funcName.capitalizeAscii}({trParamList.join(", ")})"""
   let wrProc = &"""{wrRetType} {funcName.wrapperFuncName}({wrParamList.join(", ")})"""
   let procCallStmt = &"""{funcName.wrapperFuncName}({callableParamList.join(", ")})"""
   let retBody =
-    if wrRetType == "byte":
+    if wrRetType == "void":
+      &"""
+            {procCallStmt};"""
+    else:
       &"""
             var data = {procCallStmt};
             return ({retType})data;"""
-    else:
-      &"""
-            {procCallStmt};"""
   let externProc = if shouldWrap: wrProc else: trProc
   let accessor = if shouldWrap: "private" else: "public"
   result =

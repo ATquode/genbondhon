@@ -46,3 +46,7 @@ Nomuna.GameState gameState = Nomuna.GameState.Game_over;
 Console.WriteLine($"Game State: {gameState}, value: {(int)gameState}");
 Nomuna.GameState newGameStete = Nomuna.TogglePause(gameState);
 Console.WriteLine($"Game State: {newGameStete}, value: {(int)newGameStete}");
+Nomuna.HttpStatusCode statusCode = Nomuna.Authenticate("user1");
+Console.WriteLine($"Status code: {statusCode}, value: {(int)statusCode}");
+statusCode = Nomuna.SetGameState("user", Nomuna.GameState.Game_over);
+Console.WriteLine($"set Game State result: {statusCode}, value: {(int)statusCode}");
