@@ -81,7 +81,7 @@ func jniFuncName(jvmPkgName: string, className: string, origFuncName: string): s
   &"""Java_{jvmPkgName.replace(".", "_")}_{className.capitalizeAscii}_{origFuncName.startLowerCase}"""
 
 func translateProcToJNI(self: KotlinLangGen, node: PNode, className: string): string =
-  let funcName = procName(node)
+  let funcName = node.itemName
   var wrFuncName = funcName
   let paramNode = procParamNode(node)
   var retType = "void"
@@ -270,7 +270,7 @@ method translateEnum(self: KotlinLangGen, node: PNode): string =
 
 func translateProc(self: KotlinLangGen, node: PNode): string =
   var shouldWrap = false
-  let funcName = procName(node)
+  let funcName = node.itemName
   let paramNode = procParamNode(node)
   var retType = ""
   var trParamList, wrParamList, callableParamList: seq[string]

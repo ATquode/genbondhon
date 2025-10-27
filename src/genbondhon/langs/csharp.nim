@@ -75,7 +75,7 @@ method translateEnum(self: CSharpLangGen, node: PNode): string =
 
 func translateProc(self: CSharpLangGen, node: PNode): string =
   var shouldWrap = false
-  let funcName = procName(node)
+  let funcName = node.itemName
   let paramNode = procParamNode(node)
   var retType = "void"
   var trParamList, wrParamList, callableParamList: seq[string]

@@ -42,7 +42,7 @@ export enum {enumName} {{
 }}"""
 
 func translateProc(node: PNode): string =
-  let funcName = procName(node)
+  let funcName = node.itemName
   if funcName == "NimMain":
     return ""
   let paramNode = procParamNode(node)

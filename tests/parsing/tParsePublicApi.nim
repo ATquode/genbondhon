@@ -36,6 +36,6 @@ expectedWrapperProcs.add(
 )
 
 for i in 0 ..< expectedWrapperProcs.len:
-  check bindingApis[i].procName == expectedWrapperProcs[i]
+  check bindingApis[i].itemName == expectedWrapperProcs[i]
 
 dirs.removeDir(bindingDirPath)

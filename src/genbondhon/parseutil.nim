@@ -2,8 +2,8 @@
 #
 # SPDX-License-Identifier: MIT
 
-import std/[paths, terminal]
-import compiler/[ast, astalgo, idents, parser, wordrecg]
+import std/paths
+import compiler/[ast, idents, parser, wordrecg]
 import currentconfig
 
 proc parseFile(file: Path): PNode =

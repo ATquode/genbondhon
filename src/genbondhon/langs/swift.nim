@@ -99,7 +99,7 @@ enum {enumName}: CUnsignedInt {{
 }}"""
 
 func translateProc(self: SwiftLangGen, node: PNode): string =
-  let funcName = procName(node)
+  let funcName = node.itemName
   let paramNode = procParamNode(node)
   var retType = ""
   var trParamList, callableParamList: seq[string]

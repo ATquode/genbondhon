@@ -13,7 +13,7 @@ func convertType(code: string, origType: string): string =
   convertNimAndCompatType(origType, code)
 
 proc translateProc(node: PNode): string =
-  let procName = procName(node)
+  let procName = node.itemName
   let paramNode = procParamNode(node)
   if paramNode.isNone:
     styledEcho fgRed, "Error!!! FormalParamNode missing!"

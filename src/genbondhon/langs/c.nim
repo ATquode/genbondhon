@@ -40,7 +40,7 @@ typedef enum {{
 }} {enumName};"""
 
 func translateProc(node: PNode): string =
-  let funcName = procName(node)
+  let funcName = node.itemName
   let paramNode = procParamNode(node)
   var retType = "void"
   var trParamList: seq[string]

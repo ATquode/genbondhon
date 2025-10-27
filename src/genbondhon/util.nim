@@ -32,12 +32,6 @@ func enumNameValue*(node: PNode): (string, Option[int]) =
   else:
     result = ("error: unexpeceted node", none(int))
 
-func procName*(node: PNode): string {.deprecated: "use `itemName` instead".} =
-  ## get proc/func/method name from node
-  ## Note: node needs to be proc/func/method type node,
-  ## proc needs to be **public**
-  node[0][1].ident.s
-
 func procParamNode*(node: PNode): Option[PNode] =
   ## get `nkFormalParams` node from `node`
   for i in countdown(node.safeLen - 1, 0):
