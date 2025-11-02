@@ -454,7 +454,6 @@ e.g. `cpp` folder should be in `$YourApp/app/src/main/cpp` and
 `{self.wrapperFileName.string}` should be in `$YourApp/app/src/main/java/com/yourcompany/yourapp/{self.wrapperFileName.string}`
 
 Open your Android Studio project and add the following to your `build.gradle.kts(:app)` file.
-Since we are building only for ARM64, ABI filter is being set as such.
 
     ...
     android {{
