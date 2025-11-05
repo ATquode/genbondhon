@@ -7,8 +7,8 @@
 
 ### Project ###
 build/
-libnomuna.a
-nomuna.hpp
+*.a
+!src/libnomuna.a
 *.bak
 
 ### Qt ###
@@ -16,7 +16,7 @@ nomuna.hpp
 *.slo
 *.lo
 *.o
-*.a
+# *.a # moved up
 *.la
 *.lai
 *.so

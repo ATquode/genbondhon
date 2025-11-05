@@ -31,14 +31,8 @@ aCppDyn.exe
 aCppDyn.out
 aCppStat.exe
 aCppStat.out
-nomuna.dll
 Cnomuna.dll
 Cppnomuna.dll
-libnomuna.a
-libnomuna-x64.a
-libnomuna-arm64.a
-nomuna.d.ts
-nomuna.mjs
 androidCache*
 iosCache
 cache*
@@ -59,15 +53,18 @@ tests/C++/*
 !tests/C++/tCppGenDynamic.nim
 !tests/C++/kirigamiapp1
 tests/C#/nomuna.cs
+tests/C#/nomuna.dll
 tests/C#/tCSharpGen
 tests/C#/tCSharpGen.exe
 tests/Kotlin/tKotlinGen
 tests/Kotlin/tKotlinGen.exe
+tests/Swift/CNomuna
 tests/Swift/tIosGen
 tests/Swift/tSwiftGen
+tests/ts/nomuna.d.ts
+tests/ts/nomuna.mjs
 tests/ts/tTypeScriptGen
 tests/ts/tTypeScriptGen.exe
-CNomuna
 
 ### Linux ###
 *~
