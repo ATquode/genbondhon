@@ -36,6 +36,8 @@ Cppnomuna.dll
 androidCache*
 iosCache
 cache*
+/iOS/
+/iOSSimulator/
 testresults.html
 tests/common
 tests/common.exe
@@ -61,6 +63,7 @@ tests/Kotlin/tKotlinGen.exe
 tests/Swift/CNomuna
 tests/Swift/tIosGen
 tests/Swift/tSwiftGen
+tests/Swift/iOS/MyApp1/MyApp1/CNomuna/libnomuna.a
 tests/ts/nomuna.d.ts
 tests/ts/nomuna.mjs
 tests/ts/tTypeScriptGen

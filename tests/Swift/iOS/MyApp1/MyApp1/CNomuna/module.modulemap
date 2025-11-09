@@ -1,0 +1,5 @@
+module CNomuna {
+  header "nomuna.h"
+  link "nomuna"
+  export *
+}
