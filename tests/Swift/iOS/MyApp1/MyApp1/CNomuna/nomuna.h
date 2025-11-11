@@ -1,3 +1,9 @@
+/*
+ * SPDX-FileCopyrightText: 2025 Rifat Hasan <atunutemp1@gmail.com>
+ *
+ * SPDX-License-Identifier: MIT
+ */
+
 #ifndef NOMUNA_H
 #define NOMUNA_H
 
