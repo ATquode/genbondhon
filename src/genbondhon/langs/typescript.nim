@@ -69,7 +69,7 @@ export function {funcName}({trParamList.join(", ")}){retTypePart};"""
 func translateApi(self: TypeScriptLangGen, api: PNode): string =
   case api.kind
   of nkTypeDef:
-    result = self.translateEnum(api)
+    result = self.translateType(api)
   of nkProcDef, nkFuncDef, nkMethodDef:
     result = translateProc(api)
   else:
