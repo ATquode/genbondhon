@@ -135,9 +135,13 @@ _hello.d.ts_
 
 ### Development
 
+#### Setup
+
 This project requires atlas 0.9.0, which is shipped with nim 2.2.4. It is possible to use the updated atlas to install the dependencies, and use any other nim 2 version.
 
 To setup the project, doing `atlas install genbondhon.nimble` should suffice.
+
+#### Build & Run
 
 This project uses nim tasks defined in config.nims for development.
 Tasks can be called from command line from the root directory.
@@ -154,9 +158,17 @@ Add flags after the filepath if needed, e.g.
 
     nim dev tests/nomuna.nim --verbose
 
+#### Live Reload
+
 You can use [monit](https://github.com/jiro4989/monit) for live reload. Install, and then use the following to build and run debug build with live reload.
 
     monit run
+
+#### Debugging
+
+Use `CodeLLDB` for debugging. Task & Debug configs exist in .vscode directory, taken from [official nim extension](https://github.com/nim-lang/vscode-nim?tab=readme-ov-file#debugging).
+
+#### Format, Lint
 
 To check formatting & linting, run
 
@@ -164,11 +176,15 @@ To check formatting & linting, run
 
 Or, on macOS & linux, you can just run `./check.nim`.
 
+#### Tests
+
 To run tests, use
 
     nim test
 
 Tests may expect cli programs in path.
+
+#### Cleanup
 
 To cleanup generated files, use
 
