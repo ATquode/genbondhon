@@ -72,10 +72,13 @@ func translateApi*(self: CLangGen, api: PNode): (string, string) =
 func convertEnumToEnumFlag(enumBody: string): string =
   let enumBodyLines = enumBody.splitLines
   let itemLines = enumBodyLines[1 ..^ 2]
-  let flagEnumVals = itemLines.calcFlagEnumValues()
-  var flagLines: seq[string]
-  for i in 0 ..< flagEnumVals.len:
-    let enumVal = flagEnumVals[i]
+  # add NONE enum item
+  let spaceCount =
+    itemLines[0].len - itemLines[0].strip(trailing = false, chars = {' '}).len
+  let noneLine = " ".repeat(spaceCount) & "NONE = 0,"
+  var flagLines: seq[string] = @[noneLine]
+  for i in 0 ..< itemLines.len:
+    let enumVal = &"1 << {i}"
     var item = itemLines[i]
     if i == itemLines.len - 1:
       item.add(&" = {enumVal}")

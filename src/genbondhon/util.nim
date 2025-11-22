@@ -2,30 +2,8 @@
 #
 # SPDX-License-Identifier: MIT
 
-import std/[math, sequtils, strutils, sugar, options]
+import std/[math, sequtils, sugar, options]
 import compiler/ast
-
-func flagDigitLen(flagItemLines: seq[string]): int =
-  let maxEnumVal =
-    if flagItemLines.len - 2 >= 0:
-      2 ^ (flagItemLines.len - 2)
-    else:
-      0
-  var divRes = maxEnumVal
-  result = 2
-  while divRes > 255:
-    divRes = divRes div 256
-    result += 2
-
-proc calcFlagEnumValues*(itemLines: seq[string]): seq[string] =
-  let digitLen = itemLines.flagDigitLen
-  for i in 0 ..< itemLines.len:
-    let enumVal =
-      if i == 0:
-        "0x" & "0".repeat(digitLen)
-      else:
-        "0x" & (2 ^ (i - 1)).toHex(digitLen)
-    result.add(enumVal)
 
 func subType*(node: PNode): TNodeKind =
   ## get actual type from TypeDef node
