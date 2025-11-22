@@ -2,13 +2,15 @@
 #
 # SPDX-License-Identifier: MIT
 
-import std/[dirs, paths, strformat]
+import std/[dirs, paths, strformat, tables]
 import compiler/ast
-import ../[currentconfig, util]
+import ../[convertutil, currentconfig, util]
 
 type BaseLangGen* = ref object of RootObj
   langDir*: Path
   bindingModuleFile*: Path
+  namedTypes: Table[string, NamedTypeCategory]
+  flagEnums*: seq[string]
 
 proc initBaseLangGen*(self: BaseLangGen) =
   self.bindingModuleFile = bindingDirPath / moduleName.Path.addFileExt("nim")
@@ -16,15 +18,43 @@ proc initBaseLangGen*(self: BaseLangGen) =
 method generateBinding*(self: BaseLangGen, bindingAST: seq[PNode]) {.base.} =
   discard
 
-method translateEnum(self: BaseLangGen, node: PNode): string {.base.} =
+proc storeNamedType*(
+    self: BaseLangGen, typeName: string, typeCategory: NamedTypeCategory
+) =
+  if typeName in self.namedTypes:
+    return
+  self.namedTypes[typeName] = typeCategory
+
+func typeCategory*(self: BaseLangGen, typeName: string): NamedTypeCategory =
+  self.namedTypes.getOrDefault(typeName, NamedTypeCategory.noneType)
+
+method translateEnum(self: BaseLangGen, node: PNode): (string, string) {.base.} =
   discard
 
-method translateType*(self: BaseLangGen, node: PNode): string {.base.} =
+proc markEnumFlag(self: BaseLangGen, enumType: string) =
+  self.flagEnums.add(enumType)
+
+proc translateContainer(self: BaseLangGen, node: PNode): (string, string) =
+  let containerType = node[0].ident.s
+  let memberType = node[1].ident.s
+  case containerType
+  of "set":
+    if memberType in self.namedTypes:
+      self.markEnumFlag(memberType)
+      result = (node.itemName, "")
+    else:
+      result = (node.itemName, "Api not supported: set")
+  else:
+    result = (node.itemName, "Cannot translate Api")
+
+proc translateType*(self: BaseLangGen, node: PNode): (string, string) =
   case node.subType
   of nkEnumTy:
     result = self.translateEnum(node)
+  of nkBracketExpr:
+    result = self.translateContainer(node[2])
   else:
-    result = "Cannot translate Api"
+    result = (node.itemName, "Cannot translate Api")
 
 method getReadMeContent*(self: BaseLangGen): string {.base.} =
   result =
@@ -32,7 +62,7 @@ method getReadMeContent*(self: BaseLangGen): string {.base.} =
 ### Build
 Compile `{self.bindingModuleFile.string}` instead of `{origFile.string}`."""
 
-method generateReadMe*(self: BaseLangGen) {.base.} =
+proc generateReadMe*(self: BaseLangGen) =
   let content = self.getReadMeContent()
   let readMeFile = self.langDir / "ReadMe.md".Path
   readMeFile.string.writeFile(content)

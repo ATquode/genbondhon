@@ -2,10 +2,10 @@
 #
 # SPDX-License-Identifier: MIT
 
-import std/[options, paths, strformat, strutils, terminal]
+import std/[options, paths, sequtils, strformat, strutils, sugar, tables, terminal]
 import compiler/ast
 import base, c
-import ../[currentconfig, util]
+import ../[convertutil, currentconfig, util]
 
 type CppLangGen = ref object of CLangGen
 
@@ -16,8 +16,9 @@ proc newCppLangGen*(bindingDir: Path): CppLangGen =
   )
   initBaseLangGen(result)
 
-method translateEnum(self: CppLangGen, node: PNode): string =
+method translateEnum(self: CppLangGen, node: PNode): (string, string) =
   let enumName = node.itemName
+  self.storeNamedType(enumName, NamedTypeCategory.enumType)
   let enumValsParent = node[2]
   var enumVals: seq[string]
   for i in 1 ..< enumValsParent.safeLen:
@@ -28,29 +29,34 @@ method translateEnum(self: CppLangGen, node: PNode): string =
     if enumValVal.isSome:
       val = &"{val} = {enumValVal.unsafeGet}"
     enumVals.add(val)
-  result =
+  var trResult =
     &"""
 enum class {enumName} {{
     {enumVals.join(",\n    ")}
 }};"""
-  let lastLineIndex = result.rfind("\n")
-  result.insert("    ", lastLineIndex + 1)
+  let lastLineIndex = trResult.rfind("\n")
+  trResult.insert("    ", lastLineIndex + 1)
+  result = (enumName, trResult)
 
 func generateCppHeaderContent(
     self: CppLangGen, headerName: string, bindingAST: seq[PNode]
 ): string =
   let headerGuard = headerName.toUpperAscii & "_HPP"
-  var cApis: seq[string]
+  var cApis: OrderedTable[string, string]
   for api in bindingAST:
-    let trApi = self.translateApi(api)
-    cApis.add(trApi)
+    let (apiId, trApi) = self.translateApi(api)
+    cApis[apiId] = trApi
+  cApis = collect(initOrderedTable):
+    for k, v in cApis.pairs:
+      if v != "":
+        {k: v}
   result =
     &"""
 #ifndef {headerGuard}
 #define {headerGuard}
 
 extern "C" {{
-    {cApis.join("\n\n    ")}
+    {cApis.values.toseq.join("\n\n    ")}
 }}
 
 #endif /* {headerGuard} */

@@ -35,6 +35,14 @@ type
     bad_gateway = 502
     service_unavailable
 
+  # enum flag
+  FilePermission* {.size: sizeof(cint), pure.} = enum
+    read
+    write
+    execute
+
+  FilePermissions* = set[FilePermission]
+
 proc noop*() =
   echo "No Operation"
 

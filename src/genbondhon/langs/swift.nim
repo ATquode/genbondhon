@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MIT
 
-import std/[options, os, paths, strformat, strutils, tables, terminal]
+import std/[options, os, paths, sequtils, strformat, strutils, sugar, tables, terminal]
 import compiler/ast
 import base
 import ../[convertutil, currentconfig, util]
@@ -13,7 +13,6 @@ type SwiftLangGen = ref object of BaseLangGen
   wrapperFileName: Path
   headerFileName: string
   moduleMapName: Path
-  namedTypes: Table[string, NamedTypeCategory]
 
 proc newSwiftLangGen*(bindingDir: Path): SwiftLangGen =
   ## `SwiftLangGen` constructor
@@ -42,16 +41,6 @@ func convertType(
     origType, code, convertDirection, moduleName, namedTypeCategory
   )
 
-func typeCategory(self: SwiftLangGen, typeName: string): NamedTypeCategory =
-  self.namedTypes.getOrDefault(typeName, NamedTypeCategory.noneType)
-
-proc storeNamedType(
-    self: SwiftLangGen, typeName: string, typeCategory: NamedTypeCategory
-) =
-  if typeName in self.namedTypes:
-    return
-  self.namedTypes[typeName] = typeCategory
-
 func swiftCModuleDir(self: SwiftLangGen): Path =
   self.langDir / self.cModuleName.Path
 
@@ -79,7 +68,7 @@ proc generateModuleMap(self: SwiftLangGen) =
   let moduleMapFilePath = self.swiftCModuleDir / self.moduleMapName
   moduleMapFilePath.string.writeFile(content)
 
-method translateEnum(self: SwiftLangGen, node: PNode): string =
+method translateEnum(self: SwiftLangGen, node: PNode): (string, string) =
   let enumName = node.itemName
   self.storeNamedType(enumName, NamedTypeCategory.enumType)
   let enumValsParent = node[2]
@@ -92,13 +81,14 @@ case {enumValName.toLowerAscii}"""
     if enumValVal.isSome:
       val = &"{val} = {enumValVal.unsafeGet}"
     enumVals.add(val)
-  result =
+  let trResult =
     &"""
 enum {enumName}: CUnsignedInt {{
     {enumVals.join("\n    ")}
 }}"""
+  result = (enumName, trResult)
 
-func translateProc(self: SwiftLangGen, node: PNode): string =
+func translateProc(self: SwiftLangGen, node: PNode): (string, string) =
   let funcName = node.itemName
   let paramNode = procParamNode(node)
   var retType = ""
@@ -147,33 +137,38 @@ func translateProc(self: SwiftLangGen, node: PNode): string =
         fatalError("Error!! Failed to get enum {retType} from {funcName}")
     }}
     return data"""
-  result =
+  let trResult =
     &"""
 func {funcName}({trParamList.join(", ")}){retTypePart} {{
     {retBody}
 }}"""
+  result = (funcName, trResult)
 
-proc translateApi(self: SwiftLangGen, api: PNode): string =
+proc translateApi(self: SwiftLangGen, api: PNode): (string, string) =
   case api.kind
   of nkTypeDef:
     result = self.translateType(api)
   of nkProcDef, nkFuncDef, nkMethodDef:
     result = self.translateProc(api)
   else:
-    result = "Cannot translate Api to Swift"
+    result = (&"fail-{$api.kind}", "Cannot translate Api to Swift")
 
 proc generateSwiftWrapperContent(
     self: SwiftLangGen, bindingAST: seq[PNode], modName: string
 ): string =
-  var swiftApis: seq[string]
+  var swiftApis: OrderedTable[string, string]
   for api in bindingAST:
-    let trApi = self.translateApi(api)
-    swiftApis.add(trApi)
+    let (apiId, trApi) = self.translateApi(api)
+    swiftApis[apiId] = trApi
+  swiftApis = collect(initOrderedTable):
+    for k, v in swiftApis.pairs:
+      if v != "":
+        {k: v}
   result =
     &"""
 import {self.cModuleName}
 
-{swiftApis.join("\n\n")}
+{swiftApis.values.toseq.join("\n\n")}
 """
 
 proc generateSwiftWrapper(self: SwiftLangGen, bindingAST: seq[PNode]) =

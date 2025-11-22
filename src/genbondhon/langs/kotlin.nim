@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MIT
 
-import std/[options, os, paths, strformat, strutils, tables, terminal]
+import std/[options, os, paths, sequtils, strformat, strutils, sugar, tables, terminal]
 import base
 import compiler/ast
 import ../[convertutil, currentconfig, util]
@@ -20,7 +20,6 @@ type KotlinLangGen = ref object of BaseLangGen
   wrapperFileName: Path
   jvmPackageName: string
   headerFileName: Path
-  namedTypes: Table[string, NamedTypeCategory]
   enumValueTypes: Table[string, string]
 
 proc newKotlinLangGen*(bindingDir: Path, jvmPkgName: string): KotlinLangGen =
@@ -46,21 +45,11 @@ func convertTypeJNI(
 ): string =
   convertNimAndJNIType(origType, code, namedTypeCategory)
 
-proc storeNamedType(
-    self: KotlinLangGen, typeName: string, typeCategory: NamedTypeCategory
-) =
-  if typeName in self.namedTypes:
-    return
-  self.namedTypes[typeName] = typeCategory
-
 proc copyCppHeader(self: KotlinLangGen) =
   ## Copies C++ Header from C++ Output
   let cppLangDirHeaderPath = self.cppLangDir / self.headerFileName
   self.ensureDir(self.cppModuleDir)
   cppLangDirHeaderPath.string.copyFileToDir(self.cppModuleDir.string)
-
-func typeCategory(self: KotlinLangGen, typeName: string): NamedTypeCategory =
-  self.namedTypes.getOrDefault(typeName, NamedTypeCategory.noneType)
 
 func startLowerCase(s: string): string =
   if s.len == 0:
@@ -235,7 +224,7 @@ func replaceType(nimCType: string): string =
   ## Replaces Nim Compat Types to Kotlin Types
   nimCompatToKotlinTypeTbl.getOrDefault(nimCType, nimCType)
 
-method translateEnum(self: KotlinLangGen, node: PNode): string =
+method translateEnum(self: KotlinLangGen, node: PNode): (string, string) =
   var enumName = node.itemName
   self.storeNamedType(enumName, NamedTypeCategory.enumType)
   let enumValsParent = node[2]
@@ -262,13 +251,14 @@ method translateEnum(self: KotlinLangGen, node: PNode): string =
     enumVals.add(val)
   if hasExplicitValue:
     enumName = &"{enumName}(val intVal: Int)"
-  result =
+  let trResult =
     &"""
     enum class {enumName} {{
         {enumVals.join(",\n        ")}
     }}"""
+  result = (enumName, trResult)
 
-func translateProc(self: KotlinLangGen, node: PNode): string =
+func translateProc(self: KotlinLangGen, node: PNode): (string, string) =
   var shouldWrap = false
   let funcName = node.itemName
   let paramNode = procParamNode(node)
@@ -331,7 +321,7 @@ func translateProc(self: KotlinLangGen, node: PNode): string =
       &"""
         val data = {procCallStmt}
         return {retTypeAccess}"""
-  result =
+  let trResult =
     if shouldWrap:
       &"""
     {trProc} {{
@@ -342,29 +332,34 @@ func translateProc(self: KotlinLangGen, node: PNode): string =
     else:
       &"""
     external {trProc}"""
+  result = (funcName, trResult)
 
-func translateApi(self: KotlinLangGen, api: PNode): string =
+func translateApi(self: KotlinLangGen, api: PNode): (string, string) =
   case api.kind
   of nkTypeDef:
     result = self.translateType(api)
   of nkProcDef, nkFuncDef, nkMethodDef:
     result = self.translateProc(api)
   else:
-    result = "Cannot translate Api to Kotlin"
+    result = (&"fail-{$api.kind}", "Cannot translate Api to Kotlin")
 
 func generateKotlinWrapperContent(
     self: KotlinLangGen, bindingAST: seq[PNode], modName: string, libName: string
 ): string =
-  var kotlinApis: seq[string]
+  var kotlinApis: OrderedTable[string, string]
   for api in bindingAST:
-    let trApi = self.translateApi(api)
-    kotlinApis.add(trApi)
+    let (apiId, trApi) = self.translateApi(api)
+    kotlinApis[apiId] = trApi
+  kotlinApis = collect(initOrderedTable):
+    for k, v in kotlinApis.pairs:
+      if v != "":
+        {k: v}
   result =
     &"""
 package {self.jvmPackageName}
 
 class {modName.className} {{
-{kotlinApis.join("\n\n")}
+{kotlinApis.values.toseq.join("\n\n")}
 
     companion object {{
         init {{

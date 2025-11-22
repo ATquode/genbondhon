@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MIT
 
-import std/[options, paths, strformat, strutils, tables, terminal]
+import std/[options, paths, sequtils, strformat, strutils, sugar, tables, terminal]
 import compiler/ast
 import base
 import ../[convertutil, currentconfig, util]
@@ -21,8 +21,9 @@ func replaceType(nimCType: string): string =
   ## Replaces Nim Compat Types to C Types
   nimCompatToCTypeTbl.getOrDefault(nimCType, nimCType)
 
-method translateEnum(self: CLangGen, node: PNode): string =
+method translateEnum(self: CLangGen, node: PNode): (string, string) =
   let enumName = node.itemName
+  self.storeNamedType(enumName, NamedTypeCategory.enumType)
   let enumValsParent = node[2]
   var enumVals: seq[string]
   for i in 1 ..< enumValsParent.safeLen:
@@ -33,13 +34,14 @@ method translateEnum(self: CLangGen, node: PNode): string =
     if enumValVal.isSome:
       val = &"{val} = {enumValVal.unsafeGet}"
     enumVals.add(val)
-  result =
+  let trResult =
     &"""
 typedef enum {{
 {enumVals.join(",\n")}
 }} {enumName};"""
+  result = (enumName, trResult)
 
-func translateProc(node: PNode): string =
+func translateProc(node: PNode): (string, string) =
   let funcName = node.itemName
   let paramNode = procParamNode(node)
   var retType = "void"
@@ -53,18 +55,48 @@ func translateProc(node: PNode): string =
       trParamList.add(trParam)
     if formalParamNode[0].kind != nkEmpty:
       retType = formalParamNode[0].ident.s
-  result =
+  let trResult =
     &"""
 {retType.replaceType} {funcName}({trParamList.join(", ")});"""
+  result = (funcName, trResult)
 
-func translateApi*(self: CLangGen, api: PNode): string =
+func translateApi*(self: CLangGen, api: PNode): (string, string) =
   case api.kind
   of nkTypeDef:
     result = self.translateType(api)
   of nkProcDef, nkFuncDef, nkMethodDef:
     result = translateProc(api)
   else:
-    result = "Cannot translate Api to C"
+    result = (&"fail-{$api.kind}", "Cannot translate Api to C")
+
+func convertEnumToEnumFlag(enumBody: string): string =
+  let enumBodyLines = enumBody.splitLines
+  let itemLines = enumBodyLines[1 ..^ 2]
+  let flagEnumVals = itemLines.calcFlagEnumValues()
+  var flagLines: seq[string]
+  for i in 0 ..< flagEnumVals.len:
+    let enumVal = flagEnumVals[i]
+    var item = itemLines[i]
+    if i == itemLines.len - 1:
+      item.add(&" = {enumVal}")
+    else:
+      item.insert(&" = {enumVal}", item.len - 1)
+    flagLines.add(item)
+  result = concat(@[enumBodyLines[0]], flagLines, @[enumBodyLines[^1]]).join("\n")
+
+func handleEnumFlags(
+    self: CLangGen, apis: OrderedTable[string, string]
+): OrderedTable[string, string] =
+  if self.flagEnums.len == 0:
+    return apis
+
+  result = apis
+  for flagEnum in self.flagEnums:
+    if flagEnum notin apis:
+      # echo &"Error!!! {flagEnum} not found in Api keys"
+      continue
+    let flagEnumBody = result[flagEnum].convertEnumToEnumFlag()
+    result[flagEnum] = flagEnumBody
 
 func containsBool(apis: seq[PNode]): bool =
   apis.containsType("bool")
@@ -81,16 +113,21 @@ func generateCHeaderContent(
 """
     else:
       ""
-  var cApis: seq[string]
+  var cApis: OrderedTable[string, string]
   for api in bindingAST:
-    let trApi = self.translateApi(api)
-    cApis.add(trApi)
+    let (apiId, trApi) = self.translateApi(api)
+    cApis[apiId] = trApi
+  cApis = self.handleEnumFlags(cApis)
+  cApis = collect(initOrderedTable):
+    for k, v in cApis.pairs:
+      if v != "":
+        {k: v}
   result =
     &"""
 #ifndef {headerGuard}
 #define {headerGuard}
 {optionalStdBoolH}
-{cApis.join("\n\n")}
+{cApis.values.toseq.join("\n\n")}
 
 #endif /* {headerGuard} */
 """

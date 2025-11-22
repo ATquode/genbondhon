@@ -2,7 +2,8 @@
 #
 # SPDX-License-Identifier: MIT
 
-import std/[math, options, paths, strformat, strutils, tables, terminal]
+import
+  std/[math, options, paths, sequtils, strformat, strutils, sugar, tables, terminal]
 import compiler/ast
 import base
 import ../[convertutil, currentconfig, util]
@@ -10,7 +11,6 @@ import ../[convertutil, currentconfig, util]
 type CSharpLangGen = ref object of BaseLangGen
   wrapperFileName: Path
   dllName: string
-  namedTypes: Table[string, NamedTypeCategory]
   enumDataTypes: Table[string, string]
 
 proc newCSharpLangGen*(bindingDir: Path): CSharpLangGen =
@@ -26,20 +26,10 @@ func replaceType(nimCType: string): string =
   ## Replaces Nim Compat Types to C# Types
   nimCompatToCSharpTypeTbl.getOrDefault(nimCType, nimCType)
 
-proc storeNamedType(
-    self: CSharpLangGen, typeName: string, typeCategory: NamedTypeCategory
-) =
-  if typeName in self.namedTypes:
-    return
-  self.namedTypes[typeName] = typeCategory
-
-func typeCategory(self: CSharpLangGen, typeName: string): NamedTypeCategory =
-  self.namedTypes.getOrDefault(typeName, NamedTypeCategory.noneType)
-
 func wrapperFuncName(funcName: string): string =
   funcName.capitalizeAscii & "Val"
 
-method translateEnum(self: CSharpLangGen, node: PNode): string =
+method translateEnum(self: CSharpLangGen, node: PNode): (string, string) =
   let enumName = node.itemName
   self.storeNamedType(enumName, NamedTypeCategory.enumType)
   let enumValsParent = node[2]
@@ -66,14 +56,15 @@ method translateEnum(self: CSharpLangGen, node: PNode): string =
 
   self.enumDataTypes[enumName] = enumDataType
 
-  result =
+  let trResult =
     &"""
         public enum {enumName}: {enumDataType}
         {{
             {enumVals.join(",\n            ")}
         }}"""
+  result = (enumName, trResult)
 
-func translateProc(self: CSharpLangGen, node: PNode): string =
+func translateProc(self: CSharpLangGen, node: PNode): (string, string) =
   var shouldWrap = false
   let funcName = node.itemName
   let paramNode = procParamNode(node)
@@ -139,45 +130,50 @@ func translateProc(self: CSharpLangGen, node: PNode): string =
             return ({retType})data;"""
   let externProc = if shouldWrap: wrProc else: trProc
   let accessor = if shouldWrap: "private" else: "public"
-  result =
+  var trResult =
     &"""
         [DllImport("{self.dllName}", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode, EntryPoint = "{funcName}")]
         {accessor} static extern {externProc};"""
   if retType.replaceType == "string":
-    result =
+    trResult =
       &"""
         [return: MarshalAs(UnmanagedType.LPUTF8Str)]
-{result}"""
+{trResult}"""
   elif retType.replaceType in ["bool", "char"]: # C char is 1 byte
-    result =
+    trResult =
       &"""
         [return: MarshalAs(UnmanagedType.U1)]
-{result}"""
+{trResult}"""
   if shouldWrap:
-    result =
+    trResult =
       &"""
         public static {trProc} {{
 {retBody}
         }}
 
-{result}"""
+{trResult}"""
+  result = (funcName, trResult)
 
-func translateApi(self: CSharpLangGen, api: PNode): string =
+func translateApi(self: CSharpLangGen, api: PNode): (string, string) =
   case api.kind
   of nkTypeDef:
     result = self.translateType(api)
   of nkProcDef, nkFuncDef, nkMethodDef:
     result = self.translateProc(api)
   else:
-    result = "Cannot translate Api to C#"
+    result = (&"fail-{$api.kind}", "Cannot translate Api to C#")
 
 func generateDllWrapperContent(
     self: CSharpLangGen, bindingAST: seq[PNode], modName: string
 ): string =
-  var cSharpApis: seq[string]
+  var cSharpApis: OrderedTable[string, string]
   for api in bindingAST:
-    let trApi = self.translateApi(api)
-    cSharpApis.add(trApi)
+    let (apiId, trApi) = self.translateApi(api)
+    cSharpApis[apiId] = trApi
+  cSharpApis = collect(initOrderedTable):
+    for k, v in cSharpApis.pairs:
+      if v != "":
+        {k: v}
   result =
     &"""
 using System.Runtime.InteropServices;
@@ -186,7 +182,7 @@ namespace {modName.capitalizeAscii}Lib
 {{
     public class {modName.capitalizeAscii}
     {{
-{cSharpApis.join("\n\n")}
+{cSharpApis.values.toseq.join("\n\n")}
     }}
 }}
 """

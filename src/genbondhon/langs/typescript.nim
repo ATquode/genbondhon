@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MIT
 
-import std/[options, paths, strformat, strutils, tables, terminal]
+import std/[options, paths, sequtils, strformat, strutils, sugar, tables, terminal]
 import base
 import compiler/ast
 import ../[convertutil, currentconfig, util]
@@ -22,8 +22,9 @@ func replaceType(nimCType: string): string =
   ## Replaces Nim Compat Types to TypeScript Types
   nimCompatToTypeScriptTypeTbl.getOrDefault(nimCType, nimCType)
 
-method translateEnum(self: TypeScriptLangGen, node: PNode): string =
+method translateEnum(self: TypeScriptLangGen, node: PNode): (string, string) =
   let enumName = node.itemName
+  self.storeNamedType(enumName, NamedTypeCategory.enumType)
   let enumValsParent = node[2]
   var enumVals: seq[string]
   for i in 1 ..< enumValsParent.safeLen:
@@ -35,16 +36,17 @@ method translateEnum(self: TypeScriptLangGen, node: PNode): string =
       val = &"{val} = {enumValVal.unsafeGet}"
     val = &"{val},"
     enumVals.add(val)
-  result =
+  let trResult =
     &"""
 export enum {enumName} {{
   {enumVals.join("\n  ")}
 }}"""
+  result = (enumName, trResult)
 
-func translateProc(node: PNode): string =
+func translateProc(node: PNode): (string, string) =
   let funcName = node.itemName
   if funcName == "NimMain":
-    return ""
+    return (funcName, "")
   let paramNode = procParamNode(node)
   var retType = ""
   var trParamList: seq[string]
@@ -62,30 +64,34 @@ func translateProc(node: PNode): string =
       ""
     else:
       &": {retType.replaceType}"
-  result =
+  let trResult =
     &"""
 export function {funcName}({trParamList.join(", ")}){retTypePart};"""
+  result = (funcName, trResult)
 
-func translateApi(self: TypeScriptLangGen, api: PNode): string =
+func translateApi(self: TypeScriptLangGen, api: PNode): (string, string) =
   case api.kind
   of nkTypeDef:
     result = self.translateType(api)
   of nkProcDef, nkFuncDef, nkMethodDef:
     result = translateProc(api)
   else:
-    result = "Cannot translate Api to TypeScript"
+    result = (&"fail-{$api.kind}", "Cannot translate Api to TypeScript")
 
 func generateTypeScriptWrapperContent(
     self: TypeScriptLangGen, bindingAST: seq[PNode]
 ): string =
-  var typescriptApis: seq[string]
+  var typescriptApis: OrderedTable[string, string]
   for api in bindingAST:
-    let trApi = self.translateApi(api)
-    if trApi != "":
-      typescriptApis.add(trApi)
+    let (apiId, trApi) = self.translateApi(api)
+    typescriptApis[apiId] = trApi
+  typescriptApis = collect(initOrderedTable):
+    for k, v in typescriptApis.pairs:
+      if v != "":
+        {k: v}
   result =
     &"""
-{typescriptApis.join("\n\n")}
+{typescriptApis.values.toseq.join("\n\n")}
 """
 
 proc generateTypeScriptDeclaration(self: TypeScriptLangGen, bindingAST: seq[PNode]) =
