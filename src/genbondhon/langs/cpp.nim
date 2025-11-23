@@ -38,16 +38,39 @@ enum class {enumName} {{
   trResult.insert("    ", lastLineIndex + 1)
   result = (enumName, trResult)
 
+method convertEnumToEnumFlag(self: CppLangGen, enumBody: string): string =
+  let enumBodyLines = enumBody.splitLines
+  let itemLines = enumBodyLines[1 ..^ 2]
+  let startPart =
+    &"""// Use [magic_enum](https://github.com/Neargye/magic_enum),
+    // or [bitwise-enum](https://github.com/jonesinator/bitwise-enum) to use bitwise operators
+    {enumBodyLines[0]}"""
+  # add NONE enum item
+  let spaceCount =
+    itemLines[0].len - itemLines[0].strip(trailing = false, chars = {' '}).len
+  let noneLine = " ".repeat(spaceCount) & "None = 0,"
+  var flagLines: seq[string] = @[noneLine]
+  for i in 0 ..< itemLines.len:
+    let enumVal = &"1 << {i}"
+    var item = itemLines[i]
+    if i == itemLines.len - 1:
+      item.add(&" = {enumVal}")
+    else:
+      item.insert(&" = {enumVal}", item.len - 1)
+    flagLines.add(item)
+  result = concat(@[startPart], flagLines, @[enumBodyLines[^1]]).join("\n")
+
 func generateCppHeaderContent(
     self: CppLangGen, headerName: string, bindingAST: seq[PNode]
 ): string =
   let headerGuard = headerName.toUpperAscii & "_HPP"
-  var cApis: OrderedTable[string, string]
+  var cppApis: OrderedTable[string, string]
   for api in bindingAST:
     let (apiId, trApi) = self.translateApi(api)
-    cApis[apiId] = trApi
-  cApis = collect(initOrderedTable):
-    for k, v in cApis.pairs:
+    cppApis[apiId] = trApi
+  cppApis = self.handleEnumFlags(cppApis)
+  cppApis = collect(initOrderedTable):
+    for k, v in cppApis.pairs:
       if v != "":
         {k: v}
   result =
@@ -56,7 +79,7 @@ func generateCppHeaderContent(
 #define {headerGuard}
 
 extern "C" {{
-    {cApis.values.toseq.join("\n\n    ")}
+    {cppApis.values.toseq.join("\n\n    ")}
 }}
 
 #endif /* {headerGuard} */

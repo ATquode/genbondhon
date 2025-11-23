@@ -69,7 +69,7 @@ func translateApi*(self: CLangGen, api: PNode): (string, string) =
   else:
     result = (api.itemName, "Cannot translate Api to C")
 
-func convertEnumToEnumFlag(enumBody: string): string =
+method convertEnumToEnumFlag(self: CLangGen, enumBody: string): string {.base.} =
   let enumBodyLines = enumBody.splitLines
   let itemLines = enumBodyLines[1 ..^ 2]
   # add NONE enum item
@@ -87,7 +87,7 @@ func convertEnumToEnumFlag(enumBody: string): string =
     flagLines.add(item)
   result = concat(@[enumBodyLines[0]], flagLines, @[enumBodyLines[^1]]).join("\n")
 
-func handleEnumFlags(
+func handleEnumFlags*(
     self: CLangGen, apis: OrderedTable[string, string]
 ): OrderedTable[string, string] =
   if self.flagEnums.len == 0:
@@ -98,7 +98,7 @@ func handleEnumFlags(
     if flagEnum notin apis:
       # echo &"Error!!! {flagEnum} not found in Api keys"
       continue
-    let flagEnumBody = result[flagEnum].convertEnumToEnumFlag()
+    let flagEnumBody = self.convertEnumToEnumFlag(result[flagEnum])
     result[flagEnum] = flagEnumBody
 
 func containsBool(apis: seq[PNode]): bool =
