@@ -67,7 +67,7 @@ func translateApi*(self: CLangGen, api: PNode): (string, string) =
   of nkProcDef, nkFuncDef, nkMethodDef:
     result = translateProc(api)
   else:
-    result = (&"fail-{$api.kind}", "Cannot translate Api to C")
+    result = (api.itemName, "Cannot translate Api to C")
 
 func convertEnumToEnumFlag(enumBody: string): string =
   let enumBodyLines = enumBody.splitLines

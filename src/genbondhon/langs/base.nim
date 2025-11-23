@@ -11,6 +11,7 @@ type BaseLangGen* = ref object of RootObj
   bindingModuleFile*: Path
   namedTypes: Table[string, NamedTypeCategory]
   flagEnums*: seq[string]
+  ignoreApiList*: seq[string]
 
 proc initBaseLangGen*(self: BaseLangGen) =
   self.bindingModuleFile = bindingDirPath / moduleName.Path.addFileExt("nim")
@@ -34,9 +35,9 @@ method translateEnum(self: BaseLangGen, node: PNode): (string, string) {.base.} 
 proc markEnumFlag(self: BaseLangGen, enumType: string) =
   self.flagEnums.add(enumType)
 
-proc translateContainer(self: BaseLangGen, node: PNode): (string, string) =
-  let containerType = node[0].ident.s
-  let memberType = node[1].ident.s
+proc translateContainer*(self: BaseLangGen, node: PNode): (string, string) =
+  let containerType = node[2][0].ident.s
+  let memberType = node[2][1].ident.s
   case containerType
   of "set":
     if memberType in self.namedTypes:
@@ -52,7 +53,7 @@ proc translateType*(self: BaseLangGen, node: PNode): (string, string) =
   of nkEnumTy:
     result = self.translateEnum(node)
   of nkBracketExpr:
-    result = self.translateContainer(node[2])
+    result = self.translateContainer(node)
   else:
     result = (node.itemName, "Cannot translate Api")
 

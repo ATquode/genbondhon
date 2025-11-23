@@ -2,9 +2,10 @@
 #
 # SPDX-License-Identifier: MIT
 
-import std/[dirs, options, paths, sequtils, strformat, strutils, sugar, terminal]
+import
+  std/[dirs, options, paths, sequtils, strformat, strutils, sugar, tables, terminal]
 import compiler/ast
-import currentconfig, util
+import convertutil, currentconfig, util, langs/base
 
 proc relativeModulePath(): string =
   let relModFilePath = origFile.relativePath(bindingDirPath, '/')
@@ -35,15 +36,16 @@ when defined(js):
   {{.
     emit: {q3}
 
-{typeDefs.join("\n")}
+{typeDefs.join("\n\n")}
 
 export {exportedApiNames};
 {q3}
   .}}
 """
 
-func translateEnum(node: PNode): string =
+func translateEnum(jsLangGen: BaseLangGen, node: PNode): (BaseLangGen, string) =
   let enumName = node.itemName
+  jsLangGen.storeNamedType(enumName, NamedTypeCategory.enumType)
   let enumValsParent = node[2]
   var enumVals: seq[string]
   var incVal = 0
@@ -63,28 +65,83 @@ func translateEnum(node: PNode): string =
       &"""
 {enumValName.capitalizeAscii}: {enumValValue},"""
     enumVals.add(val)
-  result =
+  let trResult =
     &"""
 const {enumName} = {{
   {enumVals.join("\n  ")}
-}};
-"""
+}};"""
+  result = (jsLangGen, trResult)
 
-func translateType(node: PNode): string =
+func translateContainer(jsLangGen: BaseLangGen, node: PNode): (BaseLangGen, string) =
+  let containerType = node[2][0].ident.s
+  let memberType = node[2][1].ident.s
+  case containerType
+  of "set":
+    jsLangGen.ignoreApiList.add(node.itemName)
+    if jsLangGen.typeCategory(memberType) == NamedTypeCategory.enumType:
+      jsLangGen.flagEnums.add(memberType)
+      result = (jsLangGen, "")
+    else:
+      result = (jsLangGen, "Api not supported: set")
+  else:
+    result = (jsLangGen, "Cannot translate Api")
+
+func translateType(jsLangGen: BaseLangGen, node: PNode): (BaseLangGen, string) =
   case node.subType
   of nkEnumTy:
-    result = translateEnum(node)
+    result = jsLangGen.translateEnum(node)
+  of nkBracketExpr:
+    result = jsLangGen.translateContainer(node)
   else:
-    result = "Cannot translate Api"
+    result = (jsLangGen, "Cannot translate Api")
 
-func typeDefinitions(apis: seq[PNode]): seq[string] =
+func convertEnumToEnumFlag(enumBody: string): string =
+  let enumBodyLines = enumBody.splitLines
+  let itemLines = enumBodyLines[1 .. ^2]
+  # add NONE enum item
+  let spaceCount =
+    itemLines[0].len - itemLines[0].strip(trailing = false, chars = {' '}).len
+  let noneLine = " ".repeat(spaceCount) & "None: 0,"
+  var flagLines: seq[string] = @[noneLine]
+  for i in 0 ..< itemLines.len:
+    let enumVal = &"1 << {i},"
+    var item = itemLines[i]
+    item = item[0 .. item.rfind(" ")] & enumVal
+    flagLines.add(item)
+  result = concat(@[enumBodyLines[0]], flagLines, @[enumBodyLines[^1]]).join("\n")
+
+func handleEnumFlags(
+    jsLangGen: BaseLangGen, jsTypes: OrderedTable[string, string]
+): OrderedTable[string, string] =
+  if jsLangGen.flagEnums.len == 0:
+    return jsTypes
+
+  result = jsTypes
+  for flagEnum in jsLangGen.flagEnums:
+    if flagEnum notin jsTypes:
+      # echo &"Error!!! {flagEnum} not found in JS Api keys"
+      continue
+    let flagEnumBody = result[flagEnum].convertEnumToEnumFlag()
+    result[flagEnum] = flagEnumBody
+
+func typeDefinitions(jsBaseLangGen: BaseLangGen, apis: seq[PNode]): seq[string] =
+  var jsLangGen = jsBaseLangGen
+  var jsTypes: OrderedTable[string, string]
+  var typeDefin = ""
   for api in apis:
+    let typeName = api.itemName
     case api.kind
     of nkTypeDef:
-      let typeDefin = translateType(api)
-      result.add(typeDefin)
+      (jsLangGen, typeDefin) = jsLangGen.translateType(api)
+      jsTypes[typeName] = typeDefin
     else:
-      result.add("Cannot translate Api")
+      jsTypes[typeName] = "Cannot translate Api"
+  jsTypes = jsLangGen.handleEnumFlags(jsTypes)
+  jsTypes = collect(initOrderedTable):
+    for k, v in jsTypes.pairs:
+      if v != "":
+        {k: v}
+  result = jsTypes.values.toseq
 
 proc generateWrapperFile*(
     wrappedApis: string, wrapperName: string, wrappableAST, unwrappableAST: seq[PNode]
@@ -107,8 +164,11 @@ proc generateWrapperFile*(
 {nimMainStr}
 
 {wrappedApis}"""
-  let typeDefs = unwrappableAST.typeDefinitions
-  let apiNames = concat(unwrappableAST, wrappableAST).map(x => x.itemName)
+  let jsLangGen = BaseLangGen()
+  let typeDefs = jsLangGen.typeDefinitions(unwrappableAST)
+  let apiNames = concat(unwrappableAST, wrappableAST).map(x => x.itemName).filter(
+      x => x notin jsLangGen.ignoreApiList
+    )
   let fileContent = generateWrapperFileContent(wrapperApis, typeDefs, apiNames)
   if showVerboseOutput:
     styledEcho fgYellow, "Wrapper File Content:"
