@@ -57,6 +57,23 @@ proc translateType*(self: BaseLangGen, node: PNode): (string, string) =
   else:
     result = (node.itemName, "Cannot translate Api")
 
+method convertEnumToEnumFlag(self: BaseLangGen, enumBody: string): string {.base.} =
+  discard
+
+func handleEnumFlags*(
+    self: BaseLangGen, apis: OrderedTable[string, string]
+): OrderedTable[string, string] =
+  if self.flagEnums.len == 0:
+    return apis
+
+  result = apis
+  for flagEnum in self.flagEnums:
+    if flagEnum notin apis:
+      # echo &"Error!!! {flagEnum} not found in Api keys"
+      continue
+    let flagEnumBody = self.convertEnumToEnumFlag(result[flagEnum])
+    result[flagEnum] = flagEnumBody
+
 method getReadMeContent*(self: BaseLangGen): string {.base.} =
   result =
     &"""

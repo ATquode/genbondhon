@@ -161,7 +161,34 @@ func translateApi(self: CSharpLangGen, api: PNode): (string, string) =
   of nkProcDef, nkFuncDef, nkMethodDef:
     result = self.translateProc(api)
   else:
-    result = (&"fail-{$api.kind}", "Cannot translate Api to C#")
+    result = (api.itemName, "Cannot translate Api to C#")
+
+method convertEnumToEnumFlag(self: CSharpLangGen, enumBody: string): string =
+  let enumBodyLines = enumBody.splitLines
+  let itemLines = enumBodyLines[2 ..^ 2]
+  # add Flags attribute
+  var spaceCount =
+    enumBodyLines[0].len - enumBodyLines[0].strip(trailing = false, chars = {' '}).len
+  let flagAttributeLine = " ".repeat(spaceCount) & "[Flags]"
+  # add NONE enum item
+  spaceCount =
+    itemLines[0].len - itemLines[0].strip(trailing = false, chars = {' '}).len
+  let noneLine = " ".repeat(spaceCount) & "None = 0,"
+  var flagLines: seq[string] = @[noneLine]
+  for i in 0 ..< itemLines.len:
+    let enumVal = &"1 << {i}"
+    var item = itemLines[i]
+    if i == itemLines.len - 1:
+      item.add(&" = {enumVal}")
+    else:
+      item.insert(&" = {enumVal}", item.len - 1)
+    flagLines.add(item)
+  result = concat(
+      @[flagAttributeLine, enumBodyLines[0], enumBodyLines[1]],
+      flagLines,
+      @[enumBodyLines[^1]],
+    )
+    .join("\n")
 
 func generateDllWrapperContent(
     self: CSharpLangGen, bindingAST: seq[PNode], modName: string
@@ -170,6 +197,7 @@ func generateDllWrapperContent(
   for api in bindingAST:
     let (apiId, trApi) = self.translateApi(api)
     cSharpApis[apiId] = trApi
+  cSharpApis = self.handleEnumFlags(cSharpApis)
   cSharpApis = collect(initOrderedTable):
     for k, v in cSharpApis.pairs:
       if v != "":
