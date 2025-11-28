@@ -29,6 +29,22 @@ func replaceType(nimCType: string): string =
 func wrapperFuncName(funcName: string): string =
   funcName.capitalizeAscii & "Val"
 
+func getEnumDataType(enumMaxVal: int, enumItemCount: int = 0): string =
+  ## Returns underlying data type of enum based on the provided maximum value.
+  ## If the provided value is 0 (no explicit value in enum), then provide item count of the enum.
+  ## Based on item count, data type will be calculated and returned.
+  var maxEnumVal = enumMaxVal
+  if maxEnumVal == 0:
+    maxEnumVal = enumItemCount - 1
+
+  result = "byte" # For upto value 255
+  if maxEnumVal > 2 ^ 32 - 1:
+    result = "ulong"
+  elif maxEnumVal > 2 ^ 16 - 1:
+    result = "uint"
+  elif maxEnumVal > 255:
+    result = "ushort"
+
 method translateEnum(self: CSharpLangGen, node: PNode): (string, string) =
   let enumName = node.itemName
   self.storeNamedType(enumName, NamedTypeCategory.enumType)
@@ -46,14 +62,7 @@ method translateEnum(self: CSharpLangGen, node: PNode): (string, string) =
       val = &"{val} = {enumValVal.unsafeGet}"
     enumVals.add(val)
 
-  var enumDataType = "byte" # For upto value 255
-  if maxEnumVal > 2 ^ 32 - 1:
-    enumDataType = "ulong"
-  elif maxEnumVal > 2 ^ 16 - 1:
-    enumDataType = "uint"
-  elif maxEnumVal > 255:
-    enumDataType = "ushort"
-
+  let enumDataType = getEnumDataType(maxEnumVal, enumVals.len)
   self.enumDataTypes[enumName] = enumDataType
 
   let trResult =
@@ -183,8 +192,12 @@ method convertEnumToEnumFlag(self: CSharpLangGen, enumBody: string): string =
     else:
       item.insert(&" = {enumVal}", item.len - 1)
     flagLines.add(item)
+  let enumNameDeclaration = enumBodyLines[0].split(": ")[0]
+  let maxEnumVal = 1 shl (itemLines.len - 1)
+  let enumDataType = getEnumDataType(maxEnumVal)
+  let enumDeclaration = enumNameDeclaration & ": " & enumDataType
   result = concat(
-      @[flagAttributeLine, enumBodyLines[0], enumBodyLines[1]],
+      @[flagAttributeLine, enumDeclaration, enumBodyLines[1]],
       flagLines,
       @[enumBodyLines[^1]],
     )
