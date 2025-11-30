@@ -151,7 +151,26 @@ proc translateApi(self: SwiftLangGen, api: PNode): (string, string) =
   of nkProcDef, nkFuncDef, nkMethodDef:
     result = self.translateProc(api)
   else:
-    result = (&"fail-{$api.kind}", "Cannot translate Api to Swift")
+    result = (api.itemName, "Cannot translate Api to Swift")
+
+method convertEnumToEnumFlag(self: SwiftLangGen, enumBody: string): string =
+  let enumBodyLines = enumBody.splitLines
+  let itemLines = enumBodyLines[1 ..^ 2]
+  let enumName = enumBodyLines[0].split(": ")[0].split(' ')[^1]
+  var flagLines: seq[string]
+  for i in 0 ..< itemLines.len:
+    let enumVal = &"1 << {i}"
+    let itemParts = itemLines[i].split("case ")
+    let item =
+      itemParts[0] & &"static let {itemParts[^1]} = {enumName}(rawValue: {enumVal})"
+    flagLines.add(item)
+  result =
+    &"""struct {enumName}: OptionSet {{
+    let rawValue: Int
+
+{flagLines.join("\n")}
+}}
+"""
 
 proc generateSwiftWrapperContent(
     self: SwiftLangGen, bindingAST: seq[PNode], modName: string
@@ -160,6 +179,7 @@ proc generateSwiftWrapperContent(
   for api in bindingAST:
     let (apiId, trApi) = self.translateApi(api)
     swiftApis[apiId] = trApi
+  swiftApis = self.handleEnumFlags(swiftApis)
   swiftApis = collect(initOrderedTable):
     for k, v in swiftApis.pairs:
       if v != "":
