@@ -78,6 +78,21 @@ func translateApi(self: TypeScriptLangGen, api: PNode): (string, string) =
   else:
     result = (&"fail-{$api.kind}", "Cannot translate Api to TypeScript")
 
+method convertEnumToEnumFlag(self: TypeScriptLangGen, enumBody: string): string =
+  let enumBodyLines = enumBody.splitLines
+  let itemLines = enumBodyLines[1 ..^ 2]
+  # add NONE enum item
+  let spaceCount =
+    itemLines[0].len - itemLines[0].strip(trailing = false, chars = {' '}).len
+  let noneLine = " ".repeat(spaceCount) & "None = 0,"
+  var flagLines: seq[string] = @[noneLine]
+  for i in 0 ..< itemLines.len:
+    let enumVal = &"1 << {i}"
+    var item = itemLines[i]
+    item.insert(&" = {enumVal}", item.len - 1)
+    flagLines.add(item)
+  result = concat(@[enumBodyLines[0]], flagLines, @[enumBodyLines[^1]]).join("\n")
+
 func generateTypeScriptWrapperContent(
     self: TypeScriptLangGen, bindingAST: seq[PNode]
 ): string =
@@ -85,6 +100,7 @@ func generateTypeScriptWrapperContent(
   for api in bindingAST:
     let (apiId, trApi) = self.translateApi(api)
     typescriptApis[apiId] = trApi
+  typescriptApis = self.handleEnumFlags(typescriptApis)
   typescriptApis = collect(initOrderedTable):
     for k, v in typescriptApis.pairs:
       if v != "":
