@@ -343,6 +343,16 @@ func translateApi(self: KotlinLangGen, api: PNode): (string, string) =
   else:
     result = (&"fail-{$api.kind}", "Cannot translate Api to Kotlin")
 
+method convertEnumToEnumFlag(self: KotlinLangGen, enumBody: string): string =
+  let enumBodyLines = enumBody.splitLines
+  let spaceCount =
+    enumBodyLines[0].len - enumBodyLines[0].strip(trailing = false, chars = {' '}).len
+  # TODO: Replace with EnumSet variable after Set support is implemented.
+  # Using comment for now. Later, a Set variable has to be replaced with EnumSet.
+  let commentInstruction = "// Use EnumSet from `java.util` for enum flags"
+  let startPart = " ".repeat(spaceCount) & commentInstruction
+  result = startPart & "\n" & enumBody
+
 func generateKotlinWrapperContent(
     self: KotlinLangGen, bindingAST: seq[PNode], modName: string, libName: string
 ): string =
@@ -350,6 +360,7 @@ func generateKotlinWrapperContent(
   for api in bindingAST:
     let (apiId, trApi) = self.translateApi(api)
     kotlinApis[apiId] = trApi
+  kotlinApis = self.handleEnumFlags(kotlinApis)
   kotlinApis = collect(initOrderedTable):
     for k, v in kotlinApis.pairs:
       if v != "":
