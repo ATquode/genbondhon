@@ -5,7 +5,7 @@
 import std/[options, paths, sequtils, strformat, strutils, sugar, tables, terminal]
 import compiler/ast
 import base, c
-import ../[convertutil, currentconfig, util]
+import ../[convertutil, currentconfig, store, util]
 
 type CppLangGen = ref object of CLangGen
 
@@ -61,12 +61,15 @@ method convertEnumToEnumFlag(self: CppLangGen, enumBody: string): string =
   result = concat(@[startPart], flagLines, @[enumBodyLines[^1]]).join("\n")
 
 func generateCppHeaderContent(
-    self: CppLangGen, headerName: string, bindingAST: seq[PNode]
+    self: CppLangGen,
+    headerName: string,
+    bindingAST: seq[PNode],
+    flagLookupTbl: Table[string, Table[string, string]],
 ): string =
   let headerGuard = headerName.toUpperAscii & "_HPP"
   var cppApis: OrderedTable[string, string]
   for api in bindingAST:
-    let (apiId, trApi) = self.translateApi(api)
+    let (apiId, trApi) = self.translateApi(api, flagLookupTbl)
     cppApis[apiId] = trApi
   cppApis = self.handleEnumFlags(cppApis)
   cppApis = collect(initOrderedTable):
@@ -86,7 +89,8 @@ extern "C" {{
 """
 
 proc generateCppHeader(self: CppLangGen, bindingAST: seq[PNode]) =
-  let content = self.generateCppHeaderContent(moduleName, bindingAST)
+  let content =
+    self.generateCppHeaderContent(moduleName, bindingAST, flagEnumRevrsLookupTbl)
   if showVerboseOutput:
     styledEcho fgGreen, "Cpp Header Content:"
     echo content

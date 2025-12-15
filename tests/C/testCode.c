@@ -57,5 +57,7 @@ int main() {
     printf("Status code: %d\n", statusCode);
     statusCode = setGameState("user", GAME_OVER);
     printf("set Game State result: %d\n", statusCode);
+    const char* newUser = requestPermission(WRITE);
+    printf("%s has permission value: %#04x\n", newUser, WRITE);
     return 0;
 }

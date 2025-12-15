@@ -5,7 +5,7 @@
 import std/[options, os, paths, sequtils, strformat, strutils, sugar, tables, terminal]
 import compiler/ast
 import base
-import ../[convertutil, currentconfig, util]
+import ../[convertutil, currentconfig, store, util]
 
 type SwiftLangGen = ref object of BaseLangGen
   cModuleName: string
@@ -88,8 +88,11 @@ enum {enumName}: CUnsignedInt {{
 }}"""
   result = (enumName, trResult)
 
-func translateProc(self: SwiftLangGen, node: PNode): (string, string) =
+func translateProc(
+    self: SwiftLangGen, node: PNode, flagLookupTbl: Table[string, Table[string, string]]
+): (string, string) =
   let funcName = node.itemName
+  let hasFlagEnum = flagLookupTbl.contains(funcName)
   let paramNode = procParamNode(node)
   var retType = ""
   var trParamList, callableParamList: seq[string]
@@ -98,13 +101,18 @@ func translateProc(self: SwiftLangGen, node: PNode): (string, string) =
     for i in 1 ..< formalParamNode.safeLen:
       let paramName = formalParamNode[i].paramName
       let paramType = formalParamNode[i].paramType
-      let trParam = &"{paramName}: {paramType.replaceType}"
+      let origParamType =
+        if hasFlagEnum:
+          checkRestoreFlagEnumType(paramName, paramType, flagLookupTbl[funcName])
+        else:
+          paramType
+      let trParam = &"{paramName}: {origParamType.replaceType}"
       trParamList.add(trParam)
       let callableParam = paramName.convertType(
-        paramType.replaceType,
+        origParamType.replaceType,
         ConvertDirection.toC,
         self.cModuleName,
-        self.typeCategory(paramType),
+        self.typeCategory(origParamType),
       )
       callableParamList.add(callableParam)
     if formalParamNode[0].kind != nkEmpty:
@@ -144,12 +152,14 @@ func {funcName}({trParamList.join(", ")}){retTypePart} {{
 }}"""
   result = (funcName, trResult)
 
-proc translateApi(self: SwiftLangGen, api: PNode): (string, string) =
+func translateApi(
+    self: SwiftLangGen, api: PNode, flagTbl: Table[string, Table[string, string]]
+): (string, string) =
   case api.kind
   of nkTypeDef:
     result = self.translateType(api)
   of nkProcDef, nkFuncDef, nkMethodDef:
-    result = self.translateProc(api)
+    result = self.translateProc(api, flagTbl)
   else:
     result = (api.itemName, "Cannot translate Api to Swift")
 
@@ -166,7 +176,7 @@ method convertEnumToEnumFlag(self: SwiftLangGen, enumBody: string): string =
     flagLines.add(item)
   result =
     &"""struct {enumName}: OptionSet {{
-    let rawValue: Int
+    let rawValue: CUnsignedInt
 
 {flagLines.join("\n")}
 }}
@@ -177,7 +187,7 @@ proc generateSwiftWrapperContent(
 ): string =
   var swiftApis: OrderedTable[string, string]
   for api in bindingAST:
-    let (apiId, trApi) = self.translateApi(api)
+    let (apiId, trApi) = self.translateApi(api, flagEnumRevrsLookupTbl)
     swiftApis[apiId] = trApi
   swiftApis = self.handleEnumFlags(swiftApis)
   swiftApis = collect(initOrderedTable):

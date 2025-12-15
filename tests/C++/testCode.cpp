@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: MIT
 
 #include <iostream>
+#include <iomanip>
 #ifdef __WIN32__
 #include <windows.h>
 #endif /* __WIN32__ */
@@ -62,5 +63,8 @@ int main() {
     cout << "Status code: " << static_cast<int>(statusCode) << endl;
     statusCode = setGameState("user", GameState::Game_over);
     cout << "set Game State result: " << static_cast<int>(statusCode) << endl;
+    const char* newUser = requestPermission(FilePermission::Write);
+    string nUser = newUser;
+    cout << nUser << " has permission value: " << std::hex << std::showbase << std::internal << std::setw(4) << std::setfill('0') << static_cast<int>(FilePermission::Write) << endl;
     return 0;
 }

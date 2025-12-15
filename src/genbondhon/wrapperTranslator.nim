@@ -4,13 +4,23 @@
 
 import std/[options, strformat, strutils, tables, terminal]
 import compiler/[ast, astalgo]
-import convertutil, currentconfig, util
+import convertutil, currentconfig, store, util
 
 func replaceType(nimType: string): string =
   nimAndCompatTypeTbl.getOrDefault(nimType, nimType)
 
-func convertType(code: string, origType: string): string =
-  convertNimAndCompatType(origType, code)
+proc convertType(
+    code: string,
+    origType: string,
+    convertDirection: ConvertDirection,
+    isFlagEnum: bool = false,
+): string =
+  let oType =
+    if isFlagEnum:
+      flagEnumSets[origType]
+    else:
+      origType
+  convertNimAndCompatType(oType, code, isFlagEnum, convertDirection)
 
 proc translateProc(node: PNode): string =
   let procName = node.itemName
@@ -18,19 +28,39 @@ proc translateProc(node: PNode): string =
   if paramNode.isNone:
     styledEcho fgRed, "Error!!! FormalParamNode missing!"
   let formalParamNode = paramNode.get()
-  var trParamList, callableParamList = newSeq[string]()
+  var trParamList, callableParamList, callableParamListJs, flagNameListJs =
+    newSeq[string]()
+  var hasFlagEnum = false
   for i in 1 ..< formalParamNode.safeLen:
     let paramName = formalParamNode[i].paramName
     let paramType = formalParamNode[i].paramType
-    let trParam = &"{paramName}: {paramType.replaceType}"
+    var trParamType = paramType.replaceType
+    if flagEnums.contains(paramType):
+      hasFlagEnum = true
+      trParamType = "cint"
+      var procTable = flagEnumRevrsLookupTbl.mgetOrPut(procName)
+      procTable[paramName] = paramType
+      flagEnumRevrsLookupTbl[procName] = procTable
+    let trParam = &"{paramName}: {trParamType}"
     trParamList.add(trParam)
-    let callableParam = &"{paramName.convertType(paramType.replaceType)}"
+    if hasFlagEnum:
+      if callableParamListJs.len == 0:
+        callableParamListJs = callableParamList
+      let callableParamJs = paramName & "Flag"
+      flagNameListJs.add(callableParamJs)
+      callableParamListJs.add(callableParamJs)
+    let callableParam =
+      &"{paramName.convertType(paramType.replaceType, ConvertDirection.fromC, flagEnums.contains(paramType))}"
     callableParamList.add(callableParam)
-  let retType =
+  let origRetType =
     if formalParamNode[0].kind != nkEmpty:
       formalParamNode[0].ident.s
     else:
       ""
+  var retType = origRetType
+  if flagEnums.contains(origRetType):
+    hasFlagEnum = true
+    retType = "int"
   let retTypePart =
     if retType == "":
       ""
@@ -41,7 +71,7 @@ proc translateProc(node: PNode): string =
     if retType == "":
       procCallStmt
     else:
-      &"return {procCallStmt.convertType(retType)}"
+      &"return {procCallStmt.convertType(origRetType, ConvertDirection.toC, flagEnums.contains(origRetType))}"
   if shouldUseVCCStr and retType == "string":
     retBody =
       &"""when defined(vcc):
@@ -51,6 +81,26 @@ proc translateProc(node: PNode): string =
     return cstr
   else:
     {retBody}"""
+  if hasFlagEnum:
+    var flagLines: seq[string]
+    for flag in flagNameListJs:
+      var paramName = flag
+      paramName.removeSuffix("Flag")
+      let paramType = flagEnumRevrsLookupTbl[procName][paramName]
+      let flagConvLine =
+        &"""
+    let {flag} = {paramName}.int.fastLog2.{paramType}"""
+      flagLines.add(flagConvLine)
+    var retLineJs = &"""{moduleName}.{procName}({callableParamListJs.join(", ")})"""
+    if retType != "":
+      retLineJs = &"return {retLineJs}"
+    let jsBody =
+      &"""{flagLines.join("\n")}
+    {retLineJs}"""
+    retBody =
+      &"""when defined(js):
+{jsBody}
+  {retBody}"""
   result =
     &"""
 proc {procName}*({trParamList.join(", ")}){retTypePart} {{.raises:[], exportc, cdecl, dynlib.}} =
@@ -73,12 +123,29 @@ proc generateWrapperApi(wrappableAST: seq[PNode]): string =
 {trApis.join("\n\n")}
 """
 
+proc preprocessTypes(node: PNode) =
+  case node.subType
+  of nkEnumTy:
+    namedTypes[node.itemName] = NamedTypeCategory.enumType
+  of nkBracketExpr:
+    let containerType = node[2][0].ident.s
+    let memberType = node[2][1].ident.s
+    if containerType == "set":
+      namedTypes[node.itemName] = NamedTypeCategory.setType
+      if namedTypes.getOrDefault(memberType, NamedTypeCategory.noneType) ==
+          NamedTypeCategory.enumType:
+        flagEnums.add(memberType)
+        flagEnumSets[memberType] = node.itemName
+  else:
+    discard
+
 proc separateWrappableAST(publicAST: seq[PNode]): (seq[PNode], seq[PNode]) =
   ## separate public AST into wrappable and unwrappable ASTs
   var wrappableAST, unwrappableAST: seq[PNode]
   for node in publicAST:
     case node.kind
     of nkTypeDef:
+      node.preprocessTypes()
       unwrappableAST.add(node)
     of nkProcDef, nkFuncDef, nkMethodDef:
       wrappableAST.add(node)

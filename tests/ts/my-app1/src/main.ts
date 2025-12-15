@@ -9,6 +9,7 @@ import {
   authenticate,
   Direction,
   extraNoOp,
+  FilePermission,
   GameState,
   getDirection,
   noop,
@@ -16,6 +17,7 @@ import {
   printCond,
   printDirectionRawValue,
   printStr,
+  requestPermission,
   setGameState,
   takeChar,
   togglePause,
@@ -42,6 +44,12 @@ let statusCode = authenticate("user1");
 console.log(`Status code: ${statusCode}`);
 statusCode = setGameState("user", GameState.Game_over);
 console.log(`set Game State result: ${statusCode}`);
+const newUser = requestPermission(FilePermission.Write);
+console.log(
+  `${newUser} has permission value: 0x${FilePermission.Write.toString(
+    16,
+  ).padStart(2, "0")}`,
+);
 
 const app = mount(App, {
   target: document.getElementById("app")!,

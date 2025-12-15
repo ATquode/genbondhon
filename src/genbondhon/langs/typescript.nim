@@ -5,7 +5,7 @@
 import std/[options, paths, sequtils, strformat, strutils, sugar, tables, terminal]
 import base
 import compiler/ast
-import ../[convertutil, currentconfig, util]
+import ../[convertutil, currentconfig, store, util]
 
 type TypeScriptLangGen = ref object of BaseLangGen
   declarationFileName: Path
@@ -43,10 +43,13 @@ export enum {enumName} {{
 }}"""
   result = (enumName, trResult)
 
-func translateProc(node: PNode): (string, string) =
+func translateProc(
+    node: PNode, flagLookupTbl: Table[string, Table[string, string]]
+): (string, string) =
   let funcName = node.itemName
   if funcName == "NimMain":
     return (funcName, "")
+  let hasFlagEnum = flagLookupTbl.contains(funcName)
   let paramNode = procParamNode(node)
   var retType = ""
   var trParamList: seq[string]
@@ -55,7 +58,12 @@ func translateProc(node: PNode): (string, string) =
     for i in 1 ..< formalParamNode.safeLen:
       let paramName = formalParamNode[i].paramName
       let paramType = formalParamNode[i].paramType
-      let trParam = &"{paramName}: {paramType.replaceType}"
+      let origParamType =
+        if hasFlagEnum:
+          checkRestoreFlagEnumType(paramName, paramType, flagLookupTbl[funcName])
+        else:
+          paramType
+      let trParam = &"{paramName}: {origParamType.replaceType}"
       trParamList.add(trParam)
     if formalParamNode[0].kind != nkEmpty:
       retType = formalParamNode[0].ident.s
@@ -69,12 +77,14 @@ func translateProc(node: PNode): (string, string) =
 export function {funcName}({trParamList.join(", ")}){retTypePart};"""
   result = (funcName, trResult)
 
-func translateApi(self: TypeScriptLangGen, api: PNode): (string, string) =
+func translateApi(
+    self: TypeScriptLangGen, api: PNode, flagTbl: Table[string, Table[string, string]]
+): (string, string) =
   case api.kind
   of nkTypeDef:
     result = self.translateType(api)
   of nkProcDef, nkFuncDef, nkMethodDef:
-    result = translateProc(api)
+    result = translateProc(api, flagTbl)
   else:
     result = (&"fail-{$api.kind}", "Cannot translate Api to TypeScript")
 
@@ -94,11 +104,13 @@ method convertEnumToEnumFlag(self: TypeScriptLangGen, enumBody: string): string 
   result = concat(@[enumBodyLines[0]], flagLines, @[enumBodyLines[^1]]).join("\n")
 
 func generateTypeScriptWrapperContent(
-    self: TypeScriptLangGen, bindingAST: seq[PNode]
+    self: TypeScriptLangGen,
+    bindingAST: seq[PNode],
+    flagLookupTbl: Table[string, Table[string, string]],
 ): string =
   var typescriptApis: OrderedTable[string, string]
   for api in bindingAST:
-    let (apiId, trApi) = self.translateApi(api)
+    let (apiId, trApi) = self.translateApi(api, flagLookupTbl)
     typescriptApis[apiId] = trApi
   typescriptApis = self.handleEnumFlags(typescriptApis)
   typescriptApis = collect(initOrderedTable):
@@ -111,7 +123,8 @@ func generateTypeScriptWrapperContent(
 """
 
 proc generateTypeScriptDeclaration(self: TypeScriptLangGen, bindingAST: seq[PNode]) =
-  let content = self.generateTypeScriptWrapperContent(bindingAST)
+  let content =
+    self.generateTypeScriptWrapperContent(bindingAST, flagEnumRevrsLookupTbl)
   if showVerboseOutput:
     styledEcho fgGreen, "TypeScript Declaration file content:"
     echo content

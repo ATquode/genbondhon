@@ -5,7 +5,7 @@
 import std/[options, paths, sequtils, strformat, strutils, sugar, tables, terminal]
 import compiler/ast
 import base
-import ../[convertutil, currentconfig, util]
+import ../[convertutil, currentconfig, store, util]
 
 type CLangGen* = ref object of BaseLangGen
   headerFileName*: Path
@@ -41,8 +41,11 @@ typedef enum {{
 }} {enumName};"""
   result = (enumName, trResult)
 
-func translateProc(node: PNode): (string, string) =
+func translateProc(
+    node: PNode, flagLookupTbl: Table[string, Table[string, string]]
+): (string, string) =
   let funcName = node.itemName
+  let hasFlagEnum = flagLookupTbl.contains(funcName)
   let paramNode = procParamNode(node)
   var retType = "void"
   var trParamList: seq[string]
@@ -51,7 +54,12 @@ func translateProc(node: PNode): (string, string) =
     for i in 1 ..< formalParamNode.safeLen:
       let paramName = formalParamNode[i].paramName
       let paramType = formalParamNode[i].paramType
-      let trParam = &"{paramType.replaceType} {paramName}"
+      let origParamType =
+        if hasFlagEnum:
+          checkRestoreFlagEnumType(paramName, paramType, flagLookupTbl[funcName])
+        else:
+          paramType
+      let trParam = &"{origParamType.replaceType} {paramName}"
       trParamList.add(trParam)
     if formalParamNode[0].kind != nkEmpty:
       retType = formalParamNode[0].ident.s
@@ -60,12 +68,14 @@ func translateProc(node: PNode): (string, string) =
 {retType.replaceType} {funcName}({trParamList.join(", ")});"""
   result = (funcName, trResult)
 
-func translateApi*(self: CLangGen, api: PNode): (string, string) =
+func translateApi*(
+    self: CLangGen, api: PNode, flagTbl: Table[string, Table[string, string]]
+): (string, string) =
   case api.kind
   of nkTypeDef:
     result = self.translateType(api)
   of nkProcDef, nkFuncDef, nkMethodDef:
-    result = translateProc(api)
+    result = translateProc(api, flagTbl)
   else:
     result = (api.itemName, "Cannot translate Api to C")
 
@@ -91,7 +101,10 @@ func containsBool(apis: seq[PNode]): bool =
   apis.containsType("bool")
 
 func generateCHeaderContent(
-    self: CLangGen, headerName: string, bindingAST: seq[PNode]
+    self: CLangGen,
+    headerName: string,
+    bindingAST: seq[PNode],
+    flagLookupTbl: Table[string, Table[string, string]],
 ): string =
   let headerGuard = headerName.toUpperAscii & "_H"
   let optionalStdBoolH =
@@ -104,7 +117,7 @@ func generateCHeaderContent(
       ""
   var cApis: OrderedTable[string, string]
   for api in bindingAST:
-    let (apiId, trApi) = self.translateApi(api)
+    let (apiId, trApi) = self.translateApi(api, flagLookupTbl)
     cApis[apiId] = trApi
   cApis = self.handleEnumFlags(cApis)
   cApis = collect(initOrderedTable):
@@ -122,7 +135,8 @@ func generateCHeaderContent(
 """
 
 proc generateCHeader(self: CLangGen, bindingAST: seq[PNode]) =
-  let content = self.generateCHeaderContent(moduleName, bindingAST)
+  let content =
+    self.generateCHeaderContent(moduleName, bindingAST, flagEnumRevrsLookupTbl)
   if showVerboseOutput:
     styledEcho fgGreen, "C Header Content:"
     echo content

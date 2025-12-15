@@ -141,3 +141,12 @@ func setGameState*(username: string, state: GameState): HttpStatusCode =
   if state == GameState.game_over:
     return HttpStatusCode.bad_request
   return HttpStatusCode.ok
+
+func requestPermission*(permission: FilePermission): string =
+  case permission
+  of FilePermission.read:
+    result = "user"
+  of FilePermission.write:
+    result = "admin"
+  of FilePermission.execute:
+    result = "guest"

@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MIT
 
-import std/[math, sequtils, sugar, options]
+import std/[math, options, sequtils, sugar, tables]
 import compiler/ast
 
 func subType*(node: PNode): TNodeKind =
@@ -70,3 +70,8 @@ func containsType*(apis: seq[PNode], reqType: string): bool =
     if paramList.paramListContainsType(reqType):
       return true
   return false
+
+func checkRestoreFlagEnumType*(
+    paramName: string, paramType: string, flagLookupTbl: Table[string, string]
+): string =
+  flagLookupTbl.getOrDefault(paramName, paramType)

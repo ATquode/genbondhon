@@ -29,7 +29,8 @@ Direction: south, value: 2
 Game State: game_over, value: 102
 Game State: game_over, value: 102
 Status code: unauthorized, value: 401
-set Game State result: bad_request, value: 400'''
+set Game State result: bad_request, value: 400
+admin has permission value: 0x02'''
   disabled: windows
   disabled: linux
 """

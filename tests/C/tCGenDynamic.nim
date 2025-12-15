@@ -21,6 +21,7 @@ Opposite of NORTH: expected 2, got 2
 Status code: 401
 a
 a
+admin has permission value: 0x02
 direction raw value: 2
 extra: No Op.
 failure

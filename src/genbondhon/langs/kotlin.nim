@@ -5,7 +5,7 @@
 import std/[options, os, paths, sequtils, strformat, strutils, sugar, tables, terminal]
 import base
 import compiler/ast
-import ../[convertutil, currentconfig, util]
+import ../[convertutil, currentconfig, store, util]
 
 const androidAbiArchArray = [
   (arch: "arm64", abi: "arm64-v8a", target: "aarch64"),
@@ -69,8 +69,14 @@ func wrapperFuncName(funcName: string): string =
 func jniFuncName(jvmPkgName: string, className: string, origFuncName: string): string =
   &"""Java_{jvmPkgName.replace(".", "_")}_{className.capitalizeAscii}_{origFuncName.startLowerCase}"""
 
-func translateProcToJNI(self: KotlinLangGen, node: PNode, className: string): string =
+func translateProcToJNI(
+    self: KotlinLangGen,
+    node: PNode,
+    className: string,
+    flagLookupTbl: Table[string, Table[string, string]],
+): string =
   let funcName = node.itemName
+  let hasFlagEnum = flagLookupTbl.contains(funcName)
   var wrFuncName = funcName
   let paramNode = procParamNode(node)
   var retType = "void"
@@ -83,8 +89,13 @@ func translateProcToJNI(self: KotlinLangGen, node: PNode, className: string): st
     for i in 1 ..< formalParamNode.safeLen:
       let paramName = formalParamNode[i].paramName
       let paramType = formalParamNode[i].paramType
-      var trParamType = paramType.replaceTypeJNI
-      if self.typeCategory(paramType) == NamedTypeCategory.enumType:
+      let origParamType =
+        if hasFlagEnum:
+          checkRestoreFlagEnumType(paramName, paramType, flagLookupTbl[funcName])
+        else:
+          paramType
+      var trParamType = origParamType.replaceTypeJNI
+      if self.typeCategory(origParamType) == NamedTypeCategory.enumType:
         trParamType = "jint" # Kotlin enum -> JNI jint
         wrFuncName = funcName.wrapperFuncName
       let trParam = &"{trParamType} {paramName}"
@@ -93,8 +104,8 @@ func translateProcToJNI(self: KotlinLangGen, node: PNode, className: string): st
       if trParamType == "jstring":
         jstringTbl[paramName] = "c_" & paramName
         callableParamList.add(jstringTbl[paramName])
-      elif self.typeCategory(paramType) == NamedTypeCategory.enumType:
-        jenumTbl[paramName] = ("c_" & paramName, paramType)
+      elif self.typeCategory(origParamType) == NamedTypeCategory.enumType:
+        jenumTbl[paramName] = ("c_" & paramName, origParamType)
         callableParamList.add(jenumTbl[paramName][0])
       else:
         let callableParam = paramName.convertTypeJNI(trParamType)
@@ -153,12 +164,17 @@ JNIEXPORT {retType.replaceTypeJNI} JNICALL
     {retBody}
 }}"""
 
-proc translateApiToJNI(self: KotlinLangGen, api: PNode, className: string): string =
+proc translateApiToJNI(
+    self: KotlinLangGen,
+    api: PNode,
+    className: string,
+    flagTbl: Table[string, Table[string, string]],
+): string =
   case api.kind
   of nkTypeDef:
     result = "" # C/C++ header has the definition
   of nkProcDef, nkFuncDef, nkMethodDef:
-    result = self.translateProcToJNI(api, className)
+    result = self.translateProcToJNI(api, className, flagTbl)
   else:
     result = "Cannot translate Api to JNI"
 
@@ -167,7 +183,7 @@ proc generateJNIWrapperContent(
 ): string =
   var jniApis: seq[string]
   for api in bindingAST:
-    let trApi = self.translateApiToJNI(api, className)
+    let trApi = self.translateApiToJNI(api, className, flagEnumRevrsLookupTbl)
     if trApi != "":
       jniApis.add(trApi)
   result =
@@ -258,9 +274,14 @@ method translateEnum(self: KotlinLangGen, node: PNode): (string, string) =
     }}"""
   result = (enumName, trResult)
 
-func translateProc(self: KotlinLangGen, node: PNode): (string, string) =
+func translateProc(
+    self: KotlinLangGen,
+    node: PNode,
+    flagLookupTbl: Table[string, Table[string, string]],
+): (string, string) =
   var shouldWrap = false
   let funcName = node.itemName
+  let hasFlagEnum = flagLookupTbl.contains(funcName)
   let paramNode = procParamNode(node)
   var retType = ""
   var trParamList, wrParamList, callableParamList: seq[string]
@@ -269,9 +290,14 @@ func translateProc(self: KotlinLangGen, node: PNode): (string, string) =
     for i in 1 ..< formalParamNode.safeLen:
       let paramName = formalParamNode[i].paramName
       let paramType = formalParamNode[i].paramType
-      let trParam = &"{paramName}: {paramType.replaceType}"
+      let origParamType =
+        if hasFlagEnum:
+          checkRestoreFlagEnumType(paramName, paramType, flagLookupTbl[funcName])
+        else:
+          paramType
+      let trParam = &"{paramName}: {origParamType.replaceType}"
       var callableParam = paramName
-      if self.typeCategory(paramType) == NamedTypeCategory.enumType:
+      if self.typeCategory(origParamType) == NamedTypeCategory.enumType:
         shouldWrap = true
         if wrParamList.len == 0:
           wrParamList = trParamList
@@ -307,9 +333,7 @@ func translateProc(self: KotlinLangGen, node: PNode): (string, string) =
   let trProc =
     &"""fun {funcName.startLowerCase}({trParamList.join(", ")}){retTypePart}"""
   let procCallStmt = &"""{funcName.wrapperFuncName}({callableParamList.join(", ")})"""
-  var retBody =
-    &"""
-        {procCallStmt}"""
+  var retBody = procCallStmt
   if wrRetType == "Int":
     let valueType = self.enumValueTypes.getOrDefault(retType.replaceType, "ordinal")
     let retTypeAccess =
@@ -321,6 +345,14 @@ func translateProc(self: KotlinLangGen, node: PNode): (string, string) =
       &"""
         val data = {procCallStmt}
         return {retTypeAccess}"""
+  elif wrRetType != "":
+    retBody =
+      &"""
+        return {retBody}"""
+  else:
+    retBody =
+      &"""
+        {retBody}"""
   let trResult =
     if shouldWrap:
       &"""
@@ -334,12 +366,14 @@ func translateProc(self: KotlinLangGen, node: PNode): (string, string) =
     external {trProc}"""
   result = (funcName, trResult)
 
-func translateApi(self: KotlinLangGen, api: PNode): (string, string) =
+func translateApi(
+    self: KotlinLangGen, api: PNode, flagTbl: Table[string, Table[string, string]]
+): (string, string) =
   case api.kind
   of nkTypeDef:
     result = self.translateType(api)
   of nkProcDef, nkFuncDef, nkMethodDef:
-    result = self.translateProc(api)
+    result = self.translateProc(api, flagTbl)
   else:
     result = (&"fail-{$api.kind}", "Cannot translate Api to Kotlin")
 
@@ -354,11 +388,15 @@ method convertEnumToEnumFlag(self: KotlinLangGen, enumBody: string): string =
   result = startPart & "\n" & enumBody
 
 func generateKotlinWrapperContent(
-    self: KotlinLangGen, bindingAST: seq[PNode], modName: string, libName: string
+    self: KotlinLangGen,
+    bindingAST: seq[PNode],
+    modName: string,
+    libName: string,
+    flagLookupTbl: Table[string, Table[string, string]],
 ): string =
   var kotlinApis: OrderedTable[string, string]
   for api in bindingAST:
-    let (apiId, trApi) = self.translateApi(api)
+    let (apiId, trApi) = self.translateApi(api, flagLookupTbl)
     kotlinApis[apiId] = trApi
   kotlinApis = self.handleEnumFlags(kotlinApis)
   kotlinApis = collect(initOrderedTable):
@@ -381,8 +419,9 @@ class {modName.className} {{
 """
 
 proc generateKotlinWrapper(self: KotlinLangGen, bindingAST: seq[PNode]) =
-  let content =
-    self.generateKotlinWrapperContent(bindingAST, moduleName, moduleName.jniLibName)
+  let content = self.generateKotlinWrapperContent(
+    bindingAST, moduleName, moduleName.jniLibName, flagEnumRevrsLookupTbl
+  )
   if showVerboseOutput:
     styledEcho fgGreen, "Kotlin wrapper content:"
     echo content

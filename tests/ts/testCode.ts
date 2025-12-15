@@ -27,6 +27,8 @@ import {
   getDirection,
   authenticate,
   setGameState,
+  requestPermission,
+  FilePermission,
 } from "./nomuna";
 
 noop();
@@ -72,3 +74,9 @@ let statusCode = authenticate("user1");
 console.log(`Status code: ${statusCode}`);
 statusCode = setGameState("user", GameState.Game_over);
 console.log(`set Game State result: ${statusCode}`);
+let newUser = requestPermission(FilePermission.Write);
+console.log(
+  `${newUser} has permission value: 0x${FilePermission.Write.toString(
+    16
+  ).padStart(2, "0")}`
+);

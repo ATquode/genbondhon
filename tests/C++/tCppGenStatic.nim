@@ -29,7 +29,8 @@ Direction: 2
 Game State: 102
 Game State: 102
 Status code: 401
-set Game State result: 400'''
+set Game State result: 400
+admin has permission value: 0x02'''
 """
 #!fmt: on
 

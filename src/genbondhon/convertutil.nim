@@ -11,6 +11,7 @@ type ConvertDirection* {.pure.} = enum
 type NamedTypeCategory* {.pure.} = enum
   noneType
   enumType
+  setType
 
 const nimAndCompatTypeTbl* = {
   "int": "cint",
@@ -26,7 +27,9 @@ const nimAndCompatTypeTbl* = {
   "cstring": "string",
 }.toTable
 
-func convertNimAndCompatType*(origType: string, code: string): string =
+func convertNimAndCompatType*(
+    origType: string, code: string, isFlagEnum: bool, convertDirection: ConvertDirection
+): string =
   case origType
   of "int", "float", "float32", "float64", "char", "string", "cint", "cfloat",
       "cdouble", "cchar":
@@ -34,7 +37,13 @@ func convertNimAndCompatType*(origType: string, code: string): string =
   of "cstring":
     &"${code}"
   else:
-    code
+    if isFlagEnum:
+      if convertDirection == ConvertDirection.fromC:
+        &"cast[{origType}]({code}.int).toSeq()[0]"
+      else:
+        &"cast[cint]({code})"
+    else:
+      code
 
 const nimCompatToCTypeTbl* = {
   "cint": "int",

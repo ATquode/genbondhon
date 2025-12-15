@@ -6,7 +6,7 @@ import
   std/[math, options, paths, sequtils, strformat, strutils, sugar, tables, terminal]
 import compiler/ast
 import base
-import ../[convertutil, currentconfig, util]
+import ../[convertutil, currentconfig, store, util]
 
 type CSharpLangGen = ref object of BaseLangGen
   wrapperFileName: Path
@@ -73,9 +73,14 @@ method translateEnum(self: CSharpLangGen, node: PNode): (string, string) =
         }}"""
   result = (enumName, trResult)
 
-func translateProc(self: CSharpLangGen, node: PNode): (string, string) =
+func translateProc(
+    self: CSharpLangGen,
+    node: PNode,
+    flagLookupTbl: Table[string, Table[string, string]],
+): (string, string) =
   var shouldWrap = false
   let funcName = node.itemName
+  let hasFlagEnum = flagLookupTbl.contains(funcName)
   let paramNode = procParamNode(node)
   var retType = "void"
   var trParamList, wrParamList, callableParamList: seq[string]
@@ -85,23 +90,28 @@ func translateProc(self: CSharpLangGen, node: PNode): (string, string) =
     for i in 1 ..< formalParamNode.safeLen:
       let paramName = formalParamNode[i].paramName
       let paramType = formalParamNode[i].paramType
-      var trParam = &"{paramType.replaceType} {paramName}"
+      let origParamType =
+        if hasFlagEnum:
+          checkRestoreFlagEnumType(paramName, paramType, flagLookupTbl[funcName])
+        else:
+          paramType
+      var trParam = &"{origParamType.replaceType} {paramName}"
       var callableParam = paramName
-      if self.typeCategory(paramType) == NamedTypeCategory.enumType:
+      if self.typeCategory(origParamType) == NamedTypeCategory.enumType:
         shouldWrap = true
         if wrParamList.len == 0:
           wrParamList = trParamList
-        let wrapType = self.enumDataTypes[paramType]
+        let wrapType = self.enumDataTypes[origParamType]
         let wrParam = &"{wrapType} {paramName}"
         wrParamList.add(wrParam)
         callableParam = &"({wrapType}){paramName}"
       elif shouldWrap:
         let wrParam = trParam
         wrParamList.add(wrParam)
-      if paramType.replaceType == "string":
+      if origParamType.replaceType == "string":
         trParam = &"[MarshalAs(UnmanagedType.LPUTF8Str)] {trParam}"
         marshalledIndexList.add(i - 1)
-      elif paramType.replaceType == "bool":
+      elif origParamType.replaceType == "bool":
         trParam = &"[MarshalAs(UnmanagedType.U1)] {trParam}"
         marshalledIndexList.add(i - 1)
       trParamList.add(trParam)
@@ -133,10 +143,14 @@ func translateProc(self: CSharpLangGen, node: PNode): (string, string) =
     if wrRetType == "void":
       &"""
             {procCallStmt};"""
-    else:
+    elif self.typeCategory(retType) == NamedTypeCategory.enumType:
       &"""
             var data = {procCallStmt};
             return ({retType})data;"""
+    else:
+      &"""
+            var data = {procCallStmt};
+            return data;"""
   let externProc = if shouldWrap: wrProc else: trProc
   let accessor = if shouldWrap: "private" else: "public"
   var trResult =
@@ -163,12 +177,14 @@ func translateProc(self: CSharpLangGen, node: PNode): (string, string) =
 {trResult}"""
   result = (funcName, trResult)
 
-func translateApi(self: CSharpLangGen, api: PNode): (string, string) =
+func translateApi(
+    self: CSharpLangGen, api: PNode, flagTbl: Table[string, Table[string, string]]
+): (string, string) =
   case api.kind
   of nkTypeDef:
     result = self.translateType(api)
   of nkProcDef, nkFuncDef, nkMethodDef:
-    result = self.translateProc(api)
+    result = self.translateProc(api, flagTbl)
   else:
     result = (api.itemName, "Cannot translate Api to C#")
 
@@ -204,11 +220,14 @@ method convertEnumToEnumFlag(self: CSharpLangGen, enumBody: string): string =
     .join("\n")
 
 func generateDllWrapperContent(
-    self: CSharpLangGen, bindingAST: seq[PNode], modName: string
+    self: CSharpLangGen,
+    bindingAST: seq[PNode],
+    modName: string,
+    flagLookupTbl: Table[string, Table[string, string]],
 ): string =
   var cSharpApis: OrderedTable[string, string]
   for api in bindingAST:
-    let (apiId, trApi) = self.translateApi(api)
+    let (apiId, trApi) = self.translateApi(api, flagLookupTbl)
     cSharpApis[apiId] = trApi
   cSharpApis = self.handleEnumFlags(cSharpApis)
   cSharpApis = collect(initOrderedTable):
@@ -229,7 +248,8 @@ namespace {modName.capitalizeAscii}Lib
 """
 
 proc generateCSharpDllWrapper(self: CSharpLangGen, bindingAST: seq[PNode]) =
-  let content = self.generateDllWrapperContent(bindingAST, moduleName)
+  let content =
+    self.generateDllWrapperContent(bindingAST, moduleName, flagEnumRevrsLookupTbl)
   if showVerboseOutput:
     styledEcho fgGreen, "CSharp Dll Wrapper Content:"
     echo content

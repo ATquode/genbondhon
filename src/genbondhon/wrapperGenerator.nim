@@ -5,7 +5,7 @@
 import
   std/[dirs, options, paths, sequtils, strformat, strutils, sugar, tables, terminal]
 import compiler/ast
-import convertutil, currentconfig, util, langs/base
+import convertutil, currentconfig, store, util, langs/base
 
 proc relativeModulePath(): string =
   let relModFilePath = origFile.relativePath(bindingDirPath, '/')
@@ -16,6 +16,11 @@ proc generateWrapperFileContent(
     wrappedApis: string, typeDefs, apiNames: seq[string]
 ): string =
   let modulePath = relativeModulePath()
+  let stdImportForFlagEnums =
+    if flagEnums.len > 0:
+      &"""import std/[bitops, sequtils]"""
+    else:
+      ""
   let vccCondImport =
     if shouldUseVCCStr:
       &"""
@@ -27,9 +32,11 @@ when defined(vcc):
       ""
   let exportedApiNames = &"""{{ {apiNames.join(", ")} }}"""
   let q3 = "\"\"\""
+  let importParts = [stdImportForFlagEnums, &"import {modulePath}"].filterIt(it != "")
+
   result =
     &"""
-import {modulePath}
+{importParts.join("\n")}
 {vccCondImport}
 {wrappedApis}
 when defined(js):

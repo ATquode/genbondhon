@@ -5,6 +5,7 @@
 #include "datamanager.h"
 #include "nomuna.hpp"
 
+#include <iomanip>
 #include <iostream>
 
 DataManager::DataManager(QObject *parent)
@@ -38,6 +39,10 @@ DataManager::DataManager(QObject *parent)
     std::cout << "Status code: " << static_cast<int>(statusCode) << std::endl;
     statusCode = setGameState("user", GameState::Game_over);
     std::cout << "set Game State result: " << static_cast<int>(statusCode) << std::endl;
+    const char *newUser = requestPermission(FilePermission::Write);
+    std::string nUser = newUser;
+    std::cout << nUser << " has permission value: " << std::hex << std::showbase << std::internal << std::setw(4) << std::setfill('0')
+              << static_cast<int>(FilePermission::Write) << std::endl;
 }
 
 DataManager *DataManager::getSingleton()

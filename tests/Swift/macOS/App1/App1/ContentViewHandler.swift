@@ -67,5 +67,7 @@ class ContentViewHandler: ObservableObject {
         print("Status code: \(statusCode), value: \(statusCode.rawValue)")
         statusCode = setGameState(username: "user", state: GameState.game_over)
         print("set Game State result: \(statusCode), value: \(statusCode.rawValue)")
+        let newUser = requestPermission(permission: FilePermission.write)
+        print("\(newUser) has permission value: 0x\(String(format: "%02x", FilePermission.write.rawValue))")
     }
 }

@@ -150,6 +150,10 @@ public partial class MainViewModel : ObservableRecipient
         Console.WriteLine($"Status code: {statusCode}, value: {(int)statusCode}");
         statusCode = Nomuna.SetGameState("user", Nomuna.GameState.Game_over);
         Console.WriteLine($"set Game State result: {statusCode}, value: {(int)statusCode}");
+        string newUser = Nomuna.RequestPermission(Nomuna.FilePermission.Write);
+        Console.WriteLine(
+            $"{newUser} has permission: {Nomuna.FilePermission.Write}, value: 0x{(int)Nomuna.FilePermission.Write:x2}"
+        );
     }
 
     [RelayCommand]
