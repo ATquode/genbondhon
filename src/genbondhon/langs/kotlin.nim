@@ -278,6 +278,7 @@ func translateProc(
     self: KotlinLangGen,
     node: PNode,
     flagLookupTbl: Table[string, Table[string, string]],
+    flagEnumSeq: seq[string],
 ): (string, string) =
   var shouldWrap = false
   let funcName = node.itemName
@@ -310,6 +311,8 @@ func translateProc(
           callableParam = &"{paramName}.intVal"
         else:
           callableParam = &"{paramName}.ordinal"
+        if flagEnumSeq.contains(origParamType):
+          callableParam = &"1 shl {callableParam}"
       elif shouldWrap:
         let wrParam = trParam
         wrParamList.add(wrParam)
@@ -367,13 +370,16 @@ func translateProc(
   result = (funcName, trResult)
 
 func translateApi(
-    self: KotlinLangGen, api: PNode, flagTbl: Table[string, Table[string, string]]
+    self: KotlinLangGen,
+    api: PNode,
+    flagTbl: Table[string, Table[string, string]],
+    flagList: seq[string],
 ): (string, string) =
   case api.kind
   of nkTypeDef:
     result = self.translateType(api)
   of nkProcDef, nkFuncDef, nkMethodDef:
-    result = self.translateProc(api, flagTbl)
+    result = self.translateProc(api, flagTbl, flagList)
   else:
     result = (&"fail-{$api.kind}", "Cannot translate Api to Kotlin")
 
@@ -393,10 +399,11 @@ func generateKotlinWrapperContent(
     modName: string,
     libName: string,
     flagLookupTbl: Table[string, Table[string, string]],
+    flagSeq: seq[string],
 ): string =
   var kotlinApis: OrderedTable[string, string]
   for api in bindingAST:
-    let (apiId, trApi) = self.translateApi(api, flagLookupTbl)
+    let (apiId, trApi) = self.translateApi(api, flagLookupTbl, flagSeq)
     kotlinApis[apiId] = trApi
   kotlinApis = self.handleEnumFlags(kotlinApis)
   kotlinApis = collect(initOrderedTable):
@@ -420,7 +427,7 @@ class {modName.className} {{
 
 proc generateKotlinWrapper(self: KotlinLangGen, bindingAST: seq[PNode]) =
   let content = self.generateKotlinWrapperContent(
-    bindingAST, moduleName, moduleName.jniLibName, flagEnumRevrsLookupTbl
+    bindingAST, moduleName, moduleName.jniLibName, flagEnumRevrsLookupTbl, flagEnums
   )
   if showVerboseOutput:
     styledEcho fgGreen, "Kotlin wrapper content:"
