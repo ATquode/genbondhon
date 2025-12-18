@@ -42,6 +42,8 @@ class MainViewModel : ViewModel() {
         Log.d("nomuna", "set Game State result: $statusCode, value: ${statusCode.intVal}")
         val newUser = nomuna.requestPermission(Nomuna.FilePermission.WRITE)
         Log.d("nomuna", "$newUser has permission: ${Nomuna.FilePermission.WRITE}")
+        val permission = nomuna.getLeastPriviledgedPermission()
+        Log.d("nomuna", "Least priviledged permission: $permission")
     }
 
     val retCardUiState =

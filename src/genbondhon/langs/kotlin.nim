@@ -21,6 +21,7 @@ type KotlinLangGen = ref object of BaseLangGen
   jvmPackageName: string
   headerFileName: Path
   enumValueTypes: Table[string, string]
+  importForFlagEnums: bool
 
 proc newKotlinLangGen*(bindingDir: Path, jvmPkgName: string): KotlinLangGen =
   ## `KotlinLangGen` constructor
@@ -112,7 +113,12 @@ func translateProcToJNI(
         callableParamList.add(callableParam)
     if formalParamNode[0].kind != nkEmpty:
       retType = formalParamNode[0].ident.s
-  if self.typeCategory(retType) == NamedTypeCategory.enumType:
+  let origRetType =
+    if hasFlagEnum:
+      checkRestoreFlagEnumType(retTypeLookupKey, retType, flagLookupTbl[funcName])
+    else:
+      retType
+  if self.typeCategory(origRetType) == NamedTypeCategory.enumType:
     retType = "cint" # Kotlin enum -> nim cint -> JNI jint
     if not wrFuncName.contains("Val"):
       wrFuncName = funcName.wrapperFuncName
@@ -320,14 +326,19 @@ func translateProc(
       callableParamList.add(callableParam)
     if formalParamNode[0].kind != nkEmpty:
       retType = formalParamNode[0].ident.s
+  let origRetType =
+    if hasFlagEnum:
+      checkRestoreFlagEnumType(retTypeLookupKey, retType, flagLookupTbl[funcName])
+    else:
+      retType
   let retTypePart =
-    if retType == "":
+    if origRetType == "":
       ""
     else:
-      &": {retType.replaceType}"
-  var wrRetType = retType
+      &": {origRetType.replaceType}"
+  var wrRetType = origRetType
   var wrRetTypePart = retTypePart
-  if self.typeCategory(retType) == NamedTypeCategory.enumType:
+  if self.typeCategory(origRetType) == NamedTypeCategory.enumType:
     shouldWrap = true
     if wrParamList.len == 0:
       wrParamList = trParamList
@@ -338,15 +349,20 @@ func translateProc(
   let procCallStmt = &"""{funcName.wrapperFuncName}({callableParamList.join(", ")})"""
   var retBody = procCallStmt
   if wrRetType == "Int":
-    let valueType = self.enumValueTypes.getOrDefault(retType.replaceType, "ordinal")
+    let valueType = self.enumValueTypes.getOrDefault(origRetType.replaceType, "ordinal")
     let retTypeAccess =
       if valueType == "int":
-        &"{retType}.entries.first {{ it.intVal == data }}"
+        &"{origRetType}.entries.first {{ it.intVal == data }}"
       else:
-        &"{retType}.entries[data]"
+        &"{origRetType}.entries[data]"
+    var procCallWrap = procCallStmt
+    if flagEnumSeq.contains(origRetType):
+      self.importForFlagEnums = true
+      procCallWrap = &"log2({procCallStmt}.toFloat()).toInt()"
+
     retBody =
       &"""
-        val data = {procCallStmt}
+        val data = {procCallWrap}
         return {retTypeAccess}"""
   elif wrRetType != "":
     retBody =
@@ -410,10 +426,18 @@ func generateKotlinWrapperContent(
     for k, v in kotlinApis.pairs:
       if v != "":
         {k: v}
+  let importPart =
+    if self.importForFlagEnums:
+      &"""
+
+import kotlin.math.log2
+"""
+    else:
+      ""
   result =
     &"""
 package {self.jvmPackageName}
-
+{importPart}
 class {modName.className} {{
 {kotlinApis.values.toseq.join("\n\n")}
 

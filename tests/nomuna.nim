@@ -150,3 +150,6 @@ func requestPermission*(permission: FilePermission): string =
     result = "admin"
   of FilePermission.execute:
     result = "guest"
+
+func getLeastPriviledgedPermission*(): FilePermission =
+  FilePermission.read

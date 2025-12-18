@@ -12,6 +12,7 @@ import {
   FilePermission,
   GameState,
   getDirection,
+  getLeastPriviledgedPermission,
   noop,
   print2Str,
   printCond,
@@ -49,6 +50,12 @@ console.log(
   `${newUser} has permission value: 0x${FilePermission.Write.toString(
     16,
   ).padStart(2, "0")}`,
+);
+const permission = getLeastPriviledgedPermission();
+console.log(
+  `Least priviledged permission value: 0x${permission
+    .toString(16)
+    .padStart(2, "0")}`,
 );
 
 const app = mount(App, {

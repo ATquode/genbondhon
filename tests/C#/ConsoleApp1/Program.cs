@@ -52,3 +52,5 @@ statusCode = Nomuna.SetGameState("user", Nomuna.GameState.Game_over);
 Console.WriteLine($"set Game State result: {statusCode}, value: {(int)statusCode}");
 string newUser = Nomuna.RequestPermission(Nomuna.FilePermission.Write);
 Console.WriteLine($"{newUser} has permission: {Nomuna.FilePermission.Write}, value: 0x{(int)Nomuna.FilePermission.Write:x2}");
+Nomuna.FilePermission permission = Nomuna.GetLeastPriviledgedPermission();
+Console.WriteLine($"Least priviledged permission: {permission}, value: 0x{(int)permission:x2}");

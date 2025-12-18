@@ -61,6 +61,9 @@ proc translateProc(node: PNode): string =
   if flagEnums.contains(origRetType):
     hasFlagEnum = true
     retType = "int"
+    var procTable = flagEnumRevrsLookupTbl.mgetOrPut(procName)
+    procTable[retTypeLookupKey] = origRetType
+    flagEnumRevrsLookupTbl[procName] = procTable
   let retTypePart =
     if retType == "":
       ""
@@ -93,9 +96,17 @@ proc translateProc(node: PNode): string =
       flagLines.add(flagConvLine)
     var retLineJs = &"""{moduleName}.{procName}({callableParamListJs.join(", ")})"""
     if retType != "":
-      retLineJs = &"return {retLineJs}"
+      retLineJs =
+        if flagEnums.contains(origRetType):
+          &"return 1 shl {retLineJs}.int"
+        else:
+          &"return {retLineJs}"
     let jsBody =
-      &"""{flagLines.join("\n")}
+      if flagLines.len > 0:
+        &"""{flagLines.join("\n")}
+    {retLineJs}"""
+      else:
+        &"""
     {retLineJs}"""
     retBody =
       &"""when defined(js):

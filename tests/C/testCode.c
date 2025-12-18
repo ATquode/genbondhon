@@ -59,5 +59,7 @@ int main() {
     printf("set Game State result: %d\n", statusCode);
     const char* newUser = requestPermission(WRITE);
     printf("%s has permission value: %#04x\n", newUser, WRITE);
+    FilePermission permission = getLeastPriviledgedPermission();
+    printf("Least priviledged permission value: %#04x\n", permission);
     return 0;
 }

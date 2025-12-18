@@ -41,7 +41,7 @@ func convertNimAndCompatType*(
       if convertDirection == ConvertDirection.fromC:
         &"cast[{origType}]({code}.int).toSeq()[0]"
       else:
-        &"cast[cint]({code})"
+        &"cast[cint]({{{code}}}.{origType})"
     else:
       code
 

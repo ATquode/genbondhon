@@ -89,7 +89,10 @@ enum {enumName}: CUnsignedInt {{
   result = (enumName, trResult)
 
 func translateProc(
-    self: SwiftLangGen, node: PNode, flagLookupTbl: Table[string, Table[string, string]]
+    self: SwiftLangGen,
+    node: PNode,
+    flagLookupTbl: Table[string, Table[string, string]],
+    flagEnumSeq: seq[string],
 ): (string, string) =
   let funcName = node.itemName
   let hasFlagEnum = flagLookupTbl.contains(funcName)
@@ -117,32 +120,43 @@ func translateProc(
       callableParamList.add(callableParam)
     if formalParamNode[0].kind != nkEmpty:
       retType = formalParamNode[0].ident.s
+  let origRetType =
+    if hasFlagEnum:
+      checkRestoreFlagEnumType(retTypeLookupKey, retType, flagLookupTbl[funcName])
+    else:
+      retType
   let retTypePart =
-    if retType == "":
+    if origRetType == "":
       ""
     else:
-      &" -> {retType.replaceType}"
+      &" -> {origRetType.replaceType}"
   let procCallStmt =
     &"""{self.cModuleName}.{funcName}({callableParamList.join(", ")})"""
   var retBody =
-    if retType == "":
+    if origRetType == "":
       procCallStmt
     else:
-      &"return {procCallStmt.convertType(retType, ConvertDirection.fromC, self.cModuleName, self.typeCategory(retType))}"
-  if retType.replaceType == "String":
+      &"return {procCallStmt.convertType(origRetType, ConvertDirection.fromC, self.cModuleName, self.typeCategory(origRetType))}"
+  if origRetType.replaceType == "String":
     retBody =
       &"""let temp = {procCallStmt}
     guard let data = temp else {{
         print("Error!! Failed to get string from {funcName}")
         return "Failed to get string from {funcName}"
     }}
-    return {"data".convertType(retType, ConvertDirection.fromC, self.cModuleName)}"""
-  elif self.typeCategory(retType) == NamedTypeCategory.enumType:
-    retBody =
-      &"""let cEnum = {procCallStmt}
-    let sEnum = {"cEnum".convertType(retType, ConvertDirection.fromC, self.cModuleName, self.typeCategory(retType))}
+    return {"data".convertType(origRetType, ConvertDirection.fromC, self.cModuleName)}"""
+  elif self.typeCategory(origRetType) == NamedTypeCategory.enumType:
+    if flagEnumSeq.contains(origRetType):
+      retBody =
+        &"""let cEnum = {procCallStmt}
+    let data = {"cEnum".convertType(origRetType, ConvertDirection.fromC, self.cModuleName, self.typeCategory(origRetType))}
+    return data"""
+    else:
+      retBody =
+        &"""let cEnum = {procCallStmt}
+    let sEnum = {"cEnum".convertType(origRetType, ConvertDirection.fromC, self.cModuleName, self.typeCategory(origRetType))}
     guard let data = sEnum else {{
-        fatalError("Error!! Failed to get enum {retType} from {funcName}")
+        fatalError("Error!! Failed to get enum {origRetType} from {funcName}")
     }}
     return data"""
   let trResult =
@@ -153,13 +167,16 @@ func {funcName}({trParamList.join(", ")}){retTypePart} {{
   result = (funcName, trResult)
 
 func translateApi(
-    self: SwiftLangGen, api: PNode, flagTbl: Table[string, Table[string, string]]
+    self: SwiftLangGen,
+    api: PNode,
+    flagTbl: Table[string, Table[string, string]],
+    flagList: seq[string],
 ): (string, string) =
   case api.kind
   of nkTypeDef:
     result = self.translateType(api)
   of nkProcDef, nkFuncDef, nkMethodDef:
-    result = self.translateProc(api, flagTbl)
+    result = self.translateProc(api, flagTbl, flagList)
   else:
     result = (api.itemName, "Cannot translate Api to Swift")
 
@@ -187,7 +204,7 @@ proc generateSwiftWrapperContent(
 ): string =
   var swiftApis: OrderedTable[string, string]
   for api in bindingAST:
-    let (apiId, trApi) = self.translateApi(api, flagEnumRevrsLookupTbl)
+    let (apiId, trApi) = self.translateApi(api, flagEnumRevrsLookupTbl, flagEnums)
     swiftApis[apiId] = trApi
   swiftApis = self.handleEnumFlags(swiftApis)
   swiftApis = collect(initOrderedTable):

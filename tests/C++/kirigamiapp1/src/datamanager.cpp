@@ -43,6 +43,9 @@ DataManager::DataManager(QObject *parent)
     std::string nUser = newUser;
     std::cout << nUser << " has permission value: " << std::hex << std::showbase << std::internal << std::setw(4) << std::setfill('0')
               << static_cast<int>(FilePermission::Write) << std::endl;
+    FilePermission permission = getLeastPriviledgedPermission();
+    std::cout << "Least priviledged permission value: " << std::hex << std::showbase << std::internal << std::setw(4) << std::setfill('0')
+              << static_cast<int>(permission) << std::endl;
 }
 
 DataManager *DataManager::getSingleton()

@@ -125,8 +125,13 @@ func translateProc(
         wrParamList[i] = &"{marshalPart} {nonMarshalPart}"
     if formalParamNode[0].kind != nkEmpty:
       retType = formalParamNode[0].ident.s
-  var wrRetType = retType.replaceType
-  if self.typeCategory(retType) == NamedTypeCategory.enumType:
+  let origRetType =
+    if hasFlagEnum:
+      checkRestoreFlagEnumType(retTypeLookupKey, retType, flagLookupTbl[funcName])
+    else:
+      retType
+  var wrRetType = origRetType.replaceType
+  if self.typeCategory(origRetType) == NamedTypeCategory.enumType:
     shouldWrap = true
     if wrParamList.len == 0:
       wrParamList = trParamList
@@ -134,19 +139,19 @@ func translateProc(
         let marshalPartEnd = trParamList[i].find("] ")
         let nonMarshalPart = trParamList[i][marshalPartEnd + 2 ..^ 1]
         trParamList[i] = nonMarshalPart
-    wrRetType = self.enumDataTypes[retType]
+    wrRetType = self.enumDataTypes[origRetType]
   let trProc =
-    &"""{retType.replaceType} {funcName.capitalizeAscii}({trParamList.join(", ")})"""
+    &"""{origRetType.replaceType} {funcName.capitalizeAscii}({trParamList.join(", ")})"""
   let wrProc = &"""{wrRetType} {funcName.wrapperFuncName}({wrParamList.join(", ")})"""
   let procCallStmt = &"""{funcName.wrapperFuncName}({callableParamList.join(", ")})"""
   let retBody =
     if wrRetType == "void":
       &"""
             {procCallStmt};"""
-    elif self.typeCategory(retType) == NamedTypeCategory.enumType:
+    elif self.typeCategory(origRetType) == NamedTypeCategory.enumType:
       &"""
             var data = {procCallStmt};
-            return ({retType})data;"""
+            return ({origRetType})data;"""
     else:
       &"""
             var data = {procCallStmt};
@@ -157,12 +162,12 @@ func translateProc(
     &"""
         [DllImport("{self.dllName}", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode, EntryPoint = "{funcName}")]
         {accessor} static extern {externProc};"""
-  if retType.replaceType == "string":
+  if origRetType.replaceType == "string":
     trResult =
       &"""
         [return: MarshalAs(UnmanagedType.LPUTF8Str)]
 {trResult}"""
-  elif retType.replaceType in ["bool", "char"]: # C char is 1 byte
+  elif origRetType.replaceType in ["bool", "char"]: # C char is 1 byte
     trResult =
       &"""
         [return: MarshalAs(UnmanagedType.U1)]

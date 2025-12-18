@@ -30,7 +30,8 @@ Game State: 102
 Game State: 102
 Status code: 401
 set Game State result: 400
-admin has permission value: 0x02'''
+admin has permission value: 0x02
+Least priviledged permission value: 0x01'''
 """
 #!fmt: on
 

@@ -63,9 +63,14 @@ func translateProc(
       trParamList.add(trParam)
     if formalParamNode[0].kind != nkEmpty:
       retType = formalParamNode[0].ident.s
+  let origRetType =
+    if hasFlagEnum:
+      checkRestoreFlagEnumType(retTypeLookupKey, retType, flagLookupTbl[funcName])
+    else:
+      retType
   let trResult =
     &"""
-{retType.replaceType} {funcName}({trParamList.join(", ")});"""
+{origRetType.replaceType} {funcName}({trParamList.join(", ")});"""
   result = (funcName, trResult)
 
 func translateApi*(

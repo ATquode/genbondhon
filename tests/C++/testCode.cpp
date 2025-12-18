@@ -66,5 +66,7 @@ int main() {
     const char* newUser = requestPermission(FilePermission::Write);
     string nUser = newUser;
     cout << nUser << " has permission value: " << std::hex << std::showbase << std::internal << std::setw(4) << std::setfill('0') << static_cast<int>(FilePermission::Write) << endl;
+    FilePermission permission = getLeastPriviledgedPermission();
+    cout << "Least priviledged permission value: " << std::hex << std::showbase << std::internal << std::setw(4) << std::setfill('0') << static_cast<int>(permission) << endl;
     return 0;
 }

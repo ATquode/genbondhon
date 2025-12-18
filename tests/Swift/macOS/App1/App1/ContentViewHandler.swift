@@ -69,5 +69,7 @@ class ContentViewHandler: ObservableObject {
         print("set Game State result: \(statusCode), value: \(statusCode.rawValue)")
         let newUser = requestPermission(permission: FilePermission.write)
         print("\(newUser) has permission value: 0x\(String(format: "%02x", FilePermission.write.rawValue))")
+        let permission = getLeastPriviledgedPermission()
+        print("Least priviledged permission value: 0x\(String(format: "%02x", permission.rawValue))")
     }
 }

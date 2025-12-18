@@ -154,6 +154,8 @@ public partial class MainViewModel : ObservableRecipient
         Console.WriteLine(
             $"{newUser} has permission: {Nomuna.FilePermission.Write}, value: 0x{(int)Nomuna.FilePermission.Write:x2}"
         );
+        Nomuna.FilePermission permission = Nomuna.GetLeastPriviledgedPermission();
+        Console.WriteLine($"Least priviledged permission: {permission}, value: {(int)permission}");
     }
 
     [RelayCommand]

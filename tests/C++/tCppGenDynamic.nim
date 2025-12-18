@@ -16,6 +16,7 @@ Game State: 102
 Game State: 102
 Hello World!
 Héllø ñíℳ
+Least priviledged permission value: 0x01
 No Operation
 Opposite of North: expected 2, got 2
 Status code: 401

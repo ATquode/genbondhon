@@ -5,6 +5,8 @@
 import std/tables
 import convertutil
 
+const retTypeLookupKey* = "returnType"
+
 var namedTypes*: Table[string, NamedTypeCategory]
 var flagEnums*: seq[string]
 var flagEnumSets*: Table[string, string]
