@@ -8,5 +8,5 @@ public enum NavigationViewHeaderMode
 {
     Always,
     Never,
-    Minimal
+    Minimal,
 }
