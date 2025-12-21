@@ -22,6 +22,7 @@ Binding for following languages & operating systems are currently tested.
 
 - nim `proc`s and `func`s with the following primitives as arguments & return type:
   - int, bool, float, float32, char, string (including Unicode)
+- nim enumerations, including flag enums/bit fields (single value supported, sets aren't supported yet)
 
 ### Usage
 
@@ -44,8 +45,15 @@ If you have the following nim file:
 
 _hello.nim_
 
+    type Direction* {.pure.} = enum
+      north
+      east
+      south
+      west
+
     func sayHello*(name: string): string =
       "Héllø " & name
+
 
 And you run genbondhon on `hello.nim`,
 
@@ -60,11 +68,19 @@ _hello.h_
     #ifndef HELLO_H
     #define HELLO_H
 
+    typedef enum {
+        NORTH,
+        EAST,
+        SOUTH,
+        WEST
+    } Direction;
+
     void NimMain();
 
     const char* sayHello(const char* name);
 
     #endif /* HELLO_H */
+
 
 _hello.hpp_
 
@@ -72,12 +88,20 @@ _hello.hpp_
     #define HELLO_HPP
 
     extern "C" {
+        enum class Direction {
+            North,
+            East,
+            South,
+            West
+        };
+
         void NimMain();
 
         const char* sayHello(const char* name);
     }
 
     #endif /* HELLO_HPP */
+
 
 _hello.cs_
 
@@ -87,6 +111,14 @@ _hello.cs_
     {
         public class Hello
         {
+            public enum Direction: byte
+            {
+                North,
+                East,
+                South,
+                West
+            }
+
             [DllImport("hello.dll", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode, EntryPoint = "NimMain")]
             public static extern void NimMain();
 
@@ -96,9 +128,17 @@ _hello.cs_
         }
     }
 
+
 _hello.swift_
 
     import CHello
+
+    enum Direction: CUnsignedInt {
+        case north
+        case east
+        case south
+        case west
+    }
 
     func NimMain() {
         CHello.NimMain()
@@ -113,11 +153,19 @@ _hello.swift_
         return String(cString: data)
     }
 
+
 _Hello.kt_
 
     package com.example.test
 
     class Hello {
+        enum class Direction {
+            NORTH,
+            EAST,
+            SOUTH,
+            WEST
+        }
+
         external fun nimMain()
 
         external fun sayHello(name: String): String
@@ -129,9 +177,18 @@ _Hello.kt_
         }
     }
 
+
 _hello.d.ts_
 
+    export enum Direction {
+      North,
+      East,
+      South,
+      West,
+    }
+
     export function sayHello(name: string): string;
+
 
 ### Development
 
