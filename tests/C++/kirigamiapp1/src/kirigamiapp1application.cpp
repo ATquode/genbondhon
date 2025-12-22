@@ -12,7 +12,7 @@ KirigamiApp1Application::KirigamiApp1Application(QObject *parent)
     : AbstractKirigamiApplication(parent)
 {
     dataManager = DataManager::getSingleton();
-    setupActions();
+    KirigamiApp1Application::setupActions();
 }
 
 void KirigamiApp1Application::setupActions()
