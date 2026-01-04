@@ -33,6 +33,8 @@ proc NDKPath(appRootDir: Path): Path =
     .filterIt(it.kind == pcDir)
     .mapIt(it.path.splitPath[1].string)
     .sorted(SortOrder.Descending)
+  assert ndkDirs.len > 0,
+    "NDK not found. Make sure NDK is installed and in the expected path."
   let latestNdkDir = ndkDirs[0].Path
   return sdkDirLocation / "ndk".Path / latestNdkDir
 
