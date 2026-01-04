@@ -30,7 +30,13 @@ when defined(vcc):
 """
     else:
       ""
-  let exportedApiNames = &"""{{ {apiNames.join(", ")} }}"""
+  var exportedApiNames = &"""{{ {apiNames.join(", ")} }}"""
+  if exportedApiNames.len > (80 - 8):
+    exportedApiNames =
+      &"""
+{{
+  {apiNames.join(",\n  ")}
+}}"""
   let q3 = "\"\"\""
   let importParts = [stdImportForFlagEnums, &"import {modulePath}"].filterIt(it != "")
 
