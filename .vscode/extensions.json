@@ -2,6 +2,7 @@
     "recommendations": [
         "oderwat.indent-rainbow",
         "nimlang.nimlang",
+        "arnetheduck.vscode-nph",
         "vadimcn.vscode-lldb",
     ]
 }
