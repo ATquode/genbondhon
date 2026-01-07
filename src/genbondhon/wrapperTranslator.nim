@@ -32,25 +32,29 @@ proc translateProc(node: PNode): string =
     newSeq[string]()
   var hasFlagEnum = false
   for i in 1 ..< formalParamNode.safeLen:
+    var paramIsFlagEnum = false
     let paramName = formalParamNode[i].paramName
     let paramType = formalParamNode[i].paramType
     var trParamType = paramType.replaceType
     if flagEnums.contains(paramType):
       hasFlagEnum = true
+      paramIsFlagEnum = true
       trParamType = "cint"
       var procTable = flagEnumRevrsLookupTbl.mgetOrPut(procName)
       procTable[paramName] = paramType
       flagEnumRevrsLookupTbl[procName] = procTable
     let trParam = &"{paramName}: {trParamType}"
     trParamList.add(trParam)
-    if hasFlagEnum:
+    let callableParam =
+      &"{paramName.convertType(paramType.replaceType, ConvertDirection.fromC, flagEnums.contains(paramType))}"
+    if paramIsFlagEnum:
       if callableParamListJs.len == 0:
         callableParamListJs = callableParamList
       let callableParamJs = paramName & "Flag"
       flagNameListJs.add(callableParamJs)
       callableParamListJs.add(callableParamJs)
-    let callableParam =
-      &"{paramName.convertType(paramType.replaceType, ConvertDirection.fromC, flagEnums.contains(paramType))}"
+    else:
+      callableParamListJs.add(callableParam)
     callableParamList.add(callableParam)
   let origRetType =
     if formalParamNode[0].kind != nkEmpty:

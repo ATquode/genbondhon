@@ -153,3 +153,9 @@ func requestPermission*(permission: FilePermission): string =
 
 func getLeastPriviledgedPermission*(): FilePermission =
   FilePermission.read
+
+func requestAccess*(requestedPermission: FilePermission, targetPath: string): bool =
+  if targetPath == "/":
+    return requestedPermission == FilePermission.read
+  else:
+    return requestedPermission == FilePermission.execute
