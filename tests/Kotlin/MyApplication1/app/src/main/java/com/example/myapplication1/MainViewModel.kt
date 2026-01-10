@@ -44,6 +44,9 @@ class MainViewModel : ViewModel() {
         Log.d("nomuna", "$newUser has permission: ${Nomuna.FilePermission.WRITE}")
         val permission = nomuna.getLeastPriviledgedPermission()
         Log.d("nomuna", "Least priviledged permission: $permission")
+
+        val reqRes = nomuna.requestAccess(Nomuna.FilePermission.WRITE, "/")
+        Log.d("nomuna", "Request access result: $reqRes")
     }
 
     val retCardUiState =

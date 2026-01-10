@@ -31,7 +31,8 @@ Game State: 102
 Status code: 401
 set Game State result: 400
 admin has permission value: 0x02
-Least priviledged permission value: 0x01'''
+Least priviledged permission value: 0x01
+Request access result: false'''
 """
 #!fmt: on
 

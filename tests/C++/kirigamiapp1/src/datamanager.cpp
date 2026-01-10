@@ -46,6 +46,8 @@ DataManager::DataManager(QObject *parent)
     FilePermission permission = getLeastPriviledgedPermission();
     std::cout << "Least priviledged permission value: " << std::hex << std::showbase << std::internal << std::setw(4) << std::setfill('0')
               << static_cast<int>(permission) << std::endl;
+    bool reqRes = requestAccess(FilePermission::Write, "/");
+    std::cout << "Request access result: " << std::boolalpha << reqRes << std::noboolalpha << std::endl;
 }
 
 DataManager *DataManager::getSingleton()

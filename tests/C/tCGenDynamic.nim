@@ -19,6 +19,7 @@ Héllø ñíℳ
 Least priviledged permission value: 0x01
 No Operation
 Opposite of NORTH: expected 2, got 2
+Request access result: 0
 Status code: 401
 a
 a

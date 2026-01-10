@@ -18,6 +18,7 @@ import {
   printCond,
   printDirectionRawValue,
   printStr,
+  requestAccess,
   requestPermission,
   setGameState,
   takeChar,
@@ -57,6 +58,8 @@ console.log(
     .toString(16)
     .padStart(2, "0")}`,
 );
+const reqRes = requestAccess(FilePermission.Write, "/");
+console.log(`Request access result: ${reqRes}`);
 
 const app = mount(App, {
   target: document.getElementById("app")!,

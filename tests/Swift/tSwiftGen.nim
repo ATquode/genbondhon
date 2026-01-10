@@ -31,7 +31,8 @@ Game State: game_over, value: 102
 Status code: unauthorized, value: 401
 set Game State result: bad_request, value: 400
 admin has permission value: 0x02
-Least priviledged permission value: 0x01'''
+Least priviledged permission value: 0x01
+Request access result: false'''
   disabled: windows
   disabled: linux
 """

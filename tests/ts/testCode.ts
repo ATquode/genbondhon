@@ -30,6 +30,7 @@ import {
   requestPermission,
   FilePermission,
   getLeastPriviledgedPermission,
+  requestAccess,
 } from "./nomuna";
 
 noop();
@@ -87,3 +88,5 @@ console.log(
     .toString(16)
     .padStart(2, "0")}`
 );
+let reqRes = requestAccess(FilePermission.Write, "/");
+console.log(`Request access result: ${reqRes}`);

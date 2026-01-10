@@ -72,5 +72,7 @@ class ContentViewHandler: ObservableObject {
         print("\(newUser) has permission value: 0x\(String(format: "%02x", FilePermission.write.rawValue))")
         let permission = getLeastPriviledgedPermission()
         print("Least priviledged permission value: 0x\(String(format: "%02x", permission.rawValue))")
+        let reqRes = requestAccess(requestedPermission: FilePermission.write, targetPath: "/")
+        print("Request access result: \(reqRes)")
     }
 }

@@ -153,6 +153,8 @@ public partial class MainViewModel : ObservableRecipient
         );
         Nomuna.FilePermission permission = Nomuna.GetLeastPriviledgedPermission();
         Console.WriteLine($"Least priviledged permission: {permission}, value: {(int)permission}");
+        bool reqRes = Nomuna.RequestAccess(Nomuna.FilePermission.Write, "/");
+        Console.WriteLine($"Request access result: {reqRes}");
     }
 
     [RelayCommand]
