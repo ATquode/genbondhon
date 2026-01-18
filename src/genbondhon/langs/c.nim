@@ -52,15 +52,16 @@ func translateProc(
   if paramNode.isSome:
     let formalParamNode = paramNode.get()
     for i in 1 ..< formalParamNode.safeLen:
-      let paramName = formalParamNode[i].paramName
+      let paramNames = formalParamNode[i].paramNames
       let paramType = formalParamNode[i].paramType
       let origParamType =
         if hasFlagEnum:
-          checkRestoreFlagEnumType(paramName, paramType, flagLookupTbl[funcName])
+          checkRestoreFlagEnumType(paramNames[0], paramType, flagLookupTbl[funcName])
         else:
           paramType
-      let trParam = &"{origParamType.replaceType} {paramName}"
-      trParamList.add(trParam)
+      for paramName in paramNames:
+        let trParam = &"{origParamType.replaceType} {paramName}"
+        trParamList.add(trParam)
     if formalParamNode[0].kind != nkEmpty:
       retType = formalParamNode[0].ident.s
   let origRetType =

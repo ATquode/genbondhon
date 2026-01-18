@@ -56,3 +56,5 @@ Nomuna.FilePermission permission = Nomuna.GetLeastPriviledgedPermission();
 Console.WriteLine($"Least priviledged permission: {permission}, value: 0x{(int)permission:x2}");
 bool reqRes = Nomuna.RequestAccess(Nomuna.FilePermission.Write, "/");
 Console.WriteLine($"Request access result: {reqRes}");
+int k = Nomuna.AddIntNum2(11, 14);
+Console.WriteLine(k);

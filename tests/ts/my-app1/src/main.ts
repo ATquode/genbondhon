@@ -6,6 +6,7 @@ import { mount } from "svelte";
 import "./app.css";
 import App from "./App.svelte";
 import {
+  addIntNum2,
   authenticate,
   Direction,
   extraNoOp,
@@ -60,6 +61,8 @@ console.log(
 );
 const reqRes = requestAccess(FilePermission.Write, "/");
 console.log(`Request access result: ${reqRes}`);
+const b = addIntNum2(11, 14);
+console.log(b);
 
 const app = mount(App, {
   target: document.getElementById("app")!,

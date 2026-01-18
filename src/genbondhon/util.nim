@@ -37,15 +37,19 @@ func procParamNode*(node: PNode): Option[PNode] =
       return some(node[i])
   return none(PNode)
 
-func paramName*(node: PNode): string =
-  ## get paramName from `procParamNode`
+func paramNames*(node: PNode): seq[string] =
+  ## get paramName seq from `procParamNode`
   ## Note: node needs to be formal param node type
+  for i in 0 ..< node.safeLen - 2:
+    result.add(node[i].ident.s)
+
+func paramName*(node: PNode): string =
   node[0].ident.s
 
 func paramType*(node: PNode): string =
   ## get paramType from `procParamNode`
   ## Note: node needs to be formal param node type
-  node[1].ident.s
+  node[node.len - 2].ident.s
 
 func returnTypeContainsType(retTypeNode: PNode, reqType: string): bool =
   if retTypeNode.kind != nkEmpty and retTypeNode.ident.s == reqType: true else: false

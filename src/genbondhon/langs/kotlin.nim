@@ -88,29 +88,29 @@ func translateProcToJNI(
   if paramNode.isSome:
     let formalParamNode = paramNode.get()
     for i in 1 ..< formalParamNode.safeLen:
-      let paramName = formalParamNode[i].paramName
+      let paramNames = formalParamNode[i].paramNames
       let paramType = formalParamNode[i].paramType
       let origParamType =
         if hasFlagEnum:
-          checkRestoreFlagEnumType(paramName, paramType, flagLookupTbl[funcName])
+          checkRestoreFlagEnumType(paramNames[0], paramType, flagLookupTbl[funcName])
         else:
           paramType
       var trParamType = origParamType.replaceTypeJNI
       if self.typeCategory(origParamType) == NamedTypeCategory.enumType:
         trParamType = "jint" # Kotlin enum -> JNI jint
         wrFuncName = funcName.wrapperFuncName
-      let trParam = &"{trParamType} {paramName}"
-      trParamList.add(trParam)
-
-      if trParamType == "jstring":
-        jstringTbl[paramName] = "c_" & paramName
-        callableParamList.add(jstringTbl[paramName])
-      elif self.typeCategory(origParamType) == NamedTypeCategory.enumType:
-        jenumTbl[paramName] = ("c_" & paramName, origParamType)
-        callableParamList.add(jenumTbl[paramName][0])
-      else:
-        let callableParam = paramName.convertTypeJNI(trParamType)
-        callableParamList.add(callableParam)
+      for paramName in paramNames:
+        let trParam = &"{trParamType} {paramName}"
+        trParamList.add(trParam)
+        if trParamType == "jstring":
+          jstringTbl[paramName] = "c_" & paramName
+          callableParamList.add(jstringTbl[paramName])
+        elif self.typeCategory(origParamType) == NamedTypeCategory.enumType:
+          jenumTbl[paramName] = ("c_" & paramName, origParamType)
+          callableParamList.add(jenumTbl[paramName][0])
+        else:
+          let callableParam = paramName.convertTypeJNI(trParamType)
+          callableParamList.add(callableParam)
     if formalParamNode[0].kind != nkEmpty:
       retType = formalParamNode[0].ident.s
   let origRetType =
@@ -295,35 +295,36 @@ func translateProc(
   if paramNode.isSome:
     let formalParamNode = paramNode.get()
     for i in 1 ..< formalParamNode.safeLen:
-      let paramName = formalParamNode[i].paramName
+      let paramNames = formalParamNode[i].paramNames
       let paramType = formalParamNode[i].paramType
       let origParamType =
         if hasFlagEnum:
-          checkRestoreFlagEnumType(paramName, paramType, flagLookupTbl[funcName])
+          checkRestoreFlagEnumType(paramNames[0], paramType, flagLookupTbl[funcName])
         else:
           paramType
-      let trParam = &"{paramName}: {origParamType.replaceType}"
-      var callableParam = paramName
-      if self.typeCategory(origParamType) == NamedTypeCategory.enumType:
-        shouldWrap = true
-        if wrParamList.len == 0:
-          wrParamList = trParamList
-        let wrapType = "Int" # Kotlin enum -> Int for JNI
-        let wrParam = &"{paramName}: {wrapType}"
-        wrParamList.add(wrParam)
-        let valueType = self.enumValueTypes.getOrDefault(paramType, "ordinal")
-        case valueType
-        of "int":
-          callableParam = &"{paramName}.intVal"
-        else:
-          callableParam = &"{paramName}.ordinal"
-        if flagEnumSeq.contains(origParamType):
-          callableParam = &"1 shl {callableParam}"
-      elif shouldWrap:
-        let wrParam = trParam
-        wrParamList.add(wrParam)
-      trParamList.add(trParam)
-      callableParamList.add(callableParam)
+      for paramName in paramNames:
+        let trParam = &"{paramName}: {origParamType.replaceType}"
+        var callableParam = paramName
+        if self.typeCategory(origParamType) == NamedTypeCategory.enumType:
+          shouldWrap = true
+          if wrParamList.len == 0:
+            wrParamList = trParamList
+          let wrapType = "Int" # Kotlin enum -> Int for JNI
+          let wrParam = &"{paramName}: {wrapType}"
+          wrParamList.add(wrParam)
+          let valueType = self.enumValueTypes.getOrDefault(paramType, "ordinal")
+          case valueType
+          of "int":
+            callableParam = &"{paramName}.intVal"
+          else:
+            callableParam = &"{paramName}.ordinal"
+          if flagEnumSeq.contains(origParamType):
+            callableParam = &"1 shl {callableParam}"
+        elif shouldWrap:
+          let wrParam = trParam
+          wrParamList.add(wrParam)
+        trParamList.add(trParam)
+        callableParamList.add(callableParam)
     if formalParamNode[0].kind != nkEmpty:
       retType = formalParamNode[0].ident.s
   let origRetType =

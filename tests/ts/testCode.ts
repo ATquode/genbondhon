@@ -31,6 +31,7 @@ import {
   FilePermission,
   getLeastPriviledgedPermission,
   requestAccess,
+  addIntNum2,
 } from "./nomuna";
 
 noop();
@@ -79,14 +80,16 @@ console.log(`set Game State result: ${statusCode}`);
 let newUser = requestPermission(FilePermission.Write);
 console.log(
   `${newUser} has permission value: 0x${FilePermission.Write.toString(
-    16
-  ).padStart(2, "0")}`
+    16,
+  ).padStart(2, "0")}`,
 );
 let permission = getLeastPriviledgedPermission();
 console.log(
   `Least priviledged permission value: 0x${permission
     .toString(16)
-    .padStart(2, "0")}`
+    .padStart(2, "0")}`,
 );
 let reqRes = requestAccess(FilePermission.Write, "/");
 console.log(`Request access result: ${reqRes}`);
+let l = addIntNum2(11, 14);
+console.log(l);

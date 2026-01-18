@@ -88,34 +88,35 @@ func translateProc(
   if paramNode.isSome:
     let formalParamNode = paramNode.get()
     for i in 1 ..< formalParamNode.safeLen:
-      let paramName = formalParamNode[i].paramName
+      let paramNames = formalParamNode[i].paramNames
       let paramType = formalParamNode[i].paramType
       let origParamType =
         if hasFlagEnum:
-          checkRestoreFlagEnumType(paramName, paramType, flagLookupTbl[funcName])
+          checkRestoreFlagEnumType(paramNames[0], paramType, flagLookupTbl[funcName])
         else:
           paramType
-      var trParam = &"{origParamType.replaceType} {paramName}"
-      var callableParam = paramName
-      if self.typeCategory(origParamType) == NamedTypeCategory.enumType:
-        shouldWrap = true
-        if wrParamList.len == 0:
-          wrParamList = trParamList
-        let wrapType = self.enumDataTypes[origParamType]
-        let wrParam = &"{wrapType} {paramName}"
-        wrParamList.add(wrParam)
-        callableParam = &"({wrapType}){paramName}"
-      elif shouldWrap:
-        let wrParam = trParam
-        wrParamList.add(wrParam)
-      if origParamType.replaceType == "string":
-        trParam = &"[MarshalAs(UnmanagedType.LPUTF8Str)] {trParam}"
-        marshalledIndexList.add(i - 1)
-      elif origParamType.replaceType == "bool":
-        trParam = &"[MarshalAs(UnmanagedType.U1)] {trParam}"
-        marshalledIndexList.add(i - 1)
-      trParamList.add(trParam)
-      callableParamList.add(callableParam)
+      for paramName in paramNames:
+        var trParam = &"{origParamType.replaceType} {paramName}"
+        var callableParam = paramName
+        if self.typeCategory(origParamType) == NamedTypeCategory.enumType:
+          shouldWrap = true
+          if wrParamList.len == 0:
+            wrParamList = trParamList
+          let wrapType = self.enumDataTypes[origParamType]
+          let wrParam = &"{wrapType} {paramName}"
+          wrParamList.add(wrParam)
+          callableParam = &"({wrapType}){paramName}"
+        elif shouldWrap:
+          let wrParam = trParam
+          wrParamList.add(wrParam)
+        if origParamType.replaceType == "string":
+          trParam = &"[MarshalAs(UnmanagedType.LPUTF8Str)] {trParam}"
+          marshalledIndexList.add(i - 1)
+        elif origParamType.replaceType == "bool":
+          trParam = &"[MarshalAs(UnmanagedType.U1)] {trParam}"
+          marshalledIndexList.add(i - 1)
+        trParamList.add(trParam)
+        callableParamList.add(callableParam)
     if shouldWrap:
       for i in marshalledIndexList:
         let marshalPartEnd = trParamList[i].find("] ")

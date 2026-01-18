@@ -159,3 +159,6 @@ func requestAccess*(requestedPermission: FilePermission, targetPath: string): bo
     return requestedPermission == FilePermission.read
   else:
     return requestedPermission == FilePermission.execute
+
+proc addIntNum2*(a, b: int): int =
+  return a + b

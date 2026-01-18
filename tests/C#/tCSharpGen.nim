@@ -32,7 +32,8 @@ Status code: Unauthorized, value: 401
 set Game State result: Bad_request, value: 400
 admin has permission: Write, value: 0x02
 Least priviledged permission: Read, value: 0x01
-Request access result: False'''
+Request access result: False
+25'''
   disabled: unix
 """
 #!fmt: on

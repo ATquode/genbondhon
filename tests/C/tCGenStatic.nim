@@ -32,7 +32,8 @@ Status code: 401
 set Game State result: 400
 admin has permission value: 0x02
 Least priviledged permission value: 0x01
-Request access result: 0'''
+Request access result: 0
+25'''
 """
 #!fmt: on
 

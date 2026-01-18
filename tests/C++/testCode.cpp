@@ -65,10 +65,12 @@ int main() {
     cout << "set Game State result: " << static_cast<int>(statusCode) << endl;
     const char* newUser = requestPermission(FilePermission::Write);
     string nUser = newUser;
-    cout << nUser << " has permission value: " << std::hex << std::showbase << std::internal << std::setw(4) << std::setfill('0') << static_cast<int>(FilePermission::Write) << endl;
+    cout << nUser << " has permission value: " << std::hex << std::showbase << std::internal << std::setw(4) << std::setfill('0') << static_cast<int>(FilePermission::Write) << std::noshowbase << std::dec << endl;
     FilePermission permission = getLeastPriviledgedPermission();
-    cout << "Least priviledged permission value: " << std::hex << std::showbase << std::internal << std::setw(4) << std::setfill('0') << static_cast<int>(permission) << endl;
+    cout << "Least priviledged permission value: " << std::hex << std::showbase << std::internal << std::setw(4) << std::setfill('0') << static_cast<int>(permission) << std::noshowbase << std::dec << endl;
     bool reqRes = requestAccess(FilePermission::Write, "/");
     cout << "Request access result: " << std::boolalpha << reqRes << std::noboolalpha << endl;
+    int o = addIntNum2(11, 14);
+    cout << o << endl;
     return 0;
 }

@@ -63,5 +63,7 @@ int main() {
     printf("Least priviledged permission value: %#04x\n", permission);
     bool reqRes = requestAccess(WRITE, "/");
     printf("Request access result: %d\n", reqRes);
+    int l = addIntNum2(11, 14);
+    printf("%d\n", l);
     return 0;
 }

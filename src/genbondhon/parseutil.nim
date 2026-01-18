@@ -2,8 +2,8 @@
 #
 # SPDX-License-Identifier: MIT
 
-import std/paths
-import compiler/[ast, idents, parser, wordrecg]
+import std/[paths, terminal]
+import compiler/[ast, astalgo, idents, parser, wordrecg]
 import currentconfig
 
 proc parseFile(file: Path): PNode =
@@ -74,8 +74,8 @@ proc parsePublicAPIs*(file: Path): seq[PNode] =
   ## ASTs, where the ASTs are of public access.
   let rootNode = parseFile(file)
   let apiNodes = filterPublicApis(rootNode)
-  # if showVerboseOutput:
-  #   styledEcho styleBright, fgYellow, "Public exported AST:"
-  #   for node in apiNodes:
-  #     echo treeToYaml(configRef, node)
+  if showVerboseOutput:
+    styledEcho styleBright, fgYellow, "Public exported AST:"
+    for node in apiNodes:
+      echo treeToYaml(configRef, node)
   return apiNodes
