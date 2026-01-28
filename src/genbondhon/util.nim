@@ -79,3 +79,7 @@ func checkRestoreFlagEnumType*(
     paramName: string, paramType: string, flagLookupTbl: Table[string, string]
 ): string =
   flagLookupTbl.getOrDefault(paramName, paramType)
+
+func generateValNames*(count: int): seq[string] =
+  for i in 1 .. count:
+    result.add("val" & $i)

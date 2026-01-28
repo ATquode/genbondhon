@@ -8,7 +8,7 @@ import
     [currentconfig, parseutil, wrapperTranslator, wrapperGenerator, util]
 
 let filePath = "tests/nomuna.nim".Path # Testament starts from parent of `tests` dir
-let publicApiCount = 31
+let publicApiCount = 32
 origFile = filePath
 moduleName = filePath.lastPathPart.splitFile.name.string
 bindingDirPath = "bindingTest".Path
@@ -28,10 +28,10 @@ let (wrappedApis, wrappableAST, unwrappableAST) =
 let wrappedFile =
   wrappedApis.generateWrapperFile(wrappedFileName, wrappableAST, unwrappableAST)
 let bindingApis = wrappedFile.parsePublicAPIs()
-check bindingApis.len == publicApiCount + 1 - unwrappableAST.len
-  # public APIs + NimMain() - Unwrappable APIs
+check bindingApis.len == publicApiCount + 2 - unwrappableAST.len
+  # public APIs + NimMain() + anonymous tuples (1) - Unwrappable APIs
 
-var expectedWrapperProcs = @["NimMain"]
+var expectedWrapperProcs = @["Int2Tuple", "NimMain"]
 expectedWrapperProcs.add(
   expectedPublicNames.toOpenArray(5, expectedPublicNames.len - 1)
     # Drop Unwrappable APIs from `expectedPublicNames` - Direction, GameState etc.

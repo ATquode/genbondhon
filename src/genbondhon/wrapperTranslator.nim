@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MIT
 
-import std/[options, strformat, strutils, tables, terminal]
+import std/[options, sequtils, strformat, strutils, sugar, tables, terminal]
 import compiler/[ast, astalgo]
 import convertutil, currentconfig, store, util
 
@@ -21,6 +21,39 @@ proc convertType(
     else:
       origType
   convertNimAndCompatType(oType, code, isFlagEnum, convertDirection)
+
+proc getRegAnonymousTupleType(node: PNode): string =
+  ## get registered anonymous tuple type name matching the signature if available
+  ## or create, register and return new anonymous tuple type name
+  let memberTypes = node.sons.map(x => x.ident.s)
+  let signature = memberTypes.join(",")
+  if signature in anonymousTuplesSigToName:
+    return anonymousTuplesSigToName[signature]
+  var isHomogenous = true
+  let firstType = memberTypes[0]
+  for i in 1 ..< memberTypes.len:
+    if memberTypes[i] != firstType:
+      isHomogenous = false
+      break
+  if isHomogenous:
+    result = &"{firstType.capitalizeAscii}{memberTypes.len}Tuple"
+  else:
+    result = memberTypes[0].capitalizeAscii
+    var count = 1
+    for i in 1 ..< memberTypes.len:
+      if memberTypes[i - 1] == memberTypes[i]:
+        count = count + 1
+        if count > 2:
+          let numIndex = result.rfind($count)
+          result = result[0 ..< numIndex - 1] & $count
+        else:
+          result = result & $count
+      else:
+        count = 1
+        result = result & memberTypes[i].capitalizeAscii
+    result = result & "Tuple"
+  anonymousTuplesSigToName[signature] = result
+  anonymousTuplesNameToSig[result] = signature
 
 proc translateProc(node: PNode): string =
   let procName = node.itemName
@@ -59,10 +92,13 @@ proc translateProc(node: PNode): string =
         callableParamListJs.add(callableParam)
       callableParamList.add(callableParam)
   let origRetType =
-    if formalParamNode[0].kind != nkEmpty:
-      formalParamNode[0].ident.s
-    else:
+    case formalParamNode[0].kind
+    of nkEmpty:
       ""
+    of nkTupleConstr:
+      formalParamNode[0].getRegAnonymousTupleType()
+    else:
+      formalParamNode[0].ident.s
   var retType = origRetType
   if flagEnums.contains(origRetType):
     hasFlagEnum = true
@@ -76,9 +112,22 @@ proc translateProc(node: PNode): string =
     else:
       &""": {retType.replaceType}"""
   let procCallStmt = &"""{moduleName}.{procName}({callableParamList.join(", ")})"""
+  let valNames =
+    if anonymousTuplesNameToSig.contains(retType):
+      generateValNames(callableParamList.len)
+    else:
+      @[]
+  let tupleMemberTypes =
+    if anonymousTuplesNameToSig.contains(retType):
+      anonymousTuplesNameToSig[retType].split(",")
+    else:
+      @[]
   var retBody =
     if retType == "":
       procCallStmt
+    elif anonymousTuplesNameToSig.contains(retType):
+      &"""let ({valNames.join(", ")}) = {procCallStmt}
+  return {retType}({valNames.zip(tupleMemberTypes).map(x => "$#: $#" % [x[0], x[0].convertType(x[1], ConvertDirection.toC, flagEnums.contains(x[1]))]).join(", ")})"""
     else:
       &"return {procCallStmt.convertType(origRetType, ConvertDirection.toC, flagEnums.contains(origRetType))}"
   if shouldUseVCCStr and retType == "string":

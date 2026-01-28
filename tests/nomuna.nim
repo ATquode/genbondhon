@@ -162,3 +162,9 @@ func requestAccess*(requestedPermission: FilePermission, targetPath: string): bo
 
 proc addIntNum2*(a, b: int): int =
   return a + b
+
+proc divMod*(a, b: int): (int, int) =
+  ## Returns (quotient, remainder) when dividing a by b
+  let q = a div b
+  let r = a mod b
+  return (q, r)

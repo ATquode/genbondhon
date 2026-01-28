@@ -156,6 +156,17 @@ func typeDefinitions(jsBaseLangGen: BaseLangGen, apis: seq[PNode]): seq[string] 
         {k: v}
   result = jsTypes.values.toseq
 
+func handleAnonymousTuples(anonymousTupleTbl: Table[string, string]): string =
+  var tupleList: seq[string]
+  for key, val in anonymousTupleTbl.pairs:
+    let memberTypes = val.split(",")
+    let tupleDef =
+      &"""
+type {key}* {{.importc, header: "helper_types.h".}} = object
+  {generateValNames(memberTypes.len).zip(memberTypes).map(x => x[0] & "*: " & nimAndCompatTypeTbl.getOrDefault(x[1], x[1])).join("\n  ")}"""
+    tupleList.add(tupleDef)
+  result = tupleList.join("\n\n")
+
 proc generateWrapperFile*(
     wrappedApis: string, wrapperName: string, wrappableAST, unwrappableAST: seq[PNode]
 ): Path =
@@ -171,10 +182,12 @@ proc generateWrapperFile*(
         "Error: Failed to create binding directory. Reason: ", exceptionMsg
       return
   let filePath = bindingDirPath / fileName
+  let tupleDefs = handleAnonymousTuples(anonymousTuplesNameToSig)
   let nimMainStr = "proc NimMain*() {.raises:[], exportc, cdecl, dynlib, importc.}"
+  let additionalParts = [tupleDefs, nimMainStr].filterIt(it != "").join("\n\n")
   let wrapperApis =
     &"""
-{nimMainStr}
+{additionalParts}
 
 {wrappedApis}"""
   let jsLangGen = BaseLangGen()
@@ -188,6 +201,36 @@ proc generateWrapperFile*(
     echo fileContent
   filePath.string.writeFile(fileContent)
   return filePath
+
+func convertAnonymousTuplesToCTypes(anonTuples: Table[string, string]): string =
+  var tupleList: seq[string]
+  for key, val in anonTuples.pairs:
+    let memberTypes = val.split(",")
+    let valNames = generateValNames(memberTypes.len)
+    let tupleDef =
+      &"""typedef struct {{
+    {memberTypes.zip(valNames).map(x => "$# $#;" % [x[0], x[1]]).join("\n    ")}
+}} {key};"""
+    tupleList.add(tupleDef)
+  result = tupleList.join("\n\n")
+
+proc generateHelperFile*() =
+  let fileName = "helper_types.h".Path
+  let filePath = bindingDirPath / fileName
+  let anonymousTuples = convertAnonymousTuplesToCTypes(anonymousTuplesNameToSig)
+  let helperTypes = anonymousTuples
+  if helperTypes.len == 0:
+    return
+  let fileContent =
+    &"""
+#ifndef HELPER_TYPES_H
+#define HELPER_TYPES_H
+
+{helperTypes}
+
+#endif /* HELPER_TYPES_H */
+"""
+  filePath.string.writeFile(fileContent)
 
 proc generateBindableModule*(bindingDir: Path, wrapperName: string) =
   let moduleFileName = moduleName.Path.addFileExt("nim")
