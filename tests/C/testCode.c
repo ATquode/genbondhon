@@ -65,5 +65,7 @@ int main() {
     printf("Request access result: %d\n", reqRes);
     int l = addIntNum2(11, 14);
     printf("%d\n", l);
+    Int2Tuple divRes = divMod(10, 3);
+    printf("%d, %d\n", divRes.val1, divRes.val2);
     return 0;
 }

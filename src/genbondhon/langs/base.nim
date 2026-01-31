@@ -2,19 +2,21 @@
 #
 # SPDX-License-Identifier: MIT
 
-import std/[dirs, paths, strformat, tables]
+import std/[dirs, paths, sequtils, strformat, tables]
 import compiler/ast
-import ../[convertutil, currentconfig, util]
+import ../[convertutil, currentconfig, store, util]
 
 type BaseLangGen* = ref object of RootObj
   langDir*: Path
   bindingModuleFile*: Path
   namedTypes: Table[string, NamedTypeCategory]
+  anonymousTupleNames: seq[string]
   flagEnums*: seq[string]
   ignoreApiList*: seq[string]
 
 proc initBaseLangGen*(self: BaseLangGen) =
   self.bindingModuleFile = bindingDirPath / moduleName.Path.addFileExt("nim")
+  self.anonymousTupleNames = anonymousTuplesNameToSig.keys.toseq()
 
 method generateBinding*(self: BaseLangGen, bindingAST: seq[PNode]) {.base.} =
   discard
@@ -35,6 +37,11 @@ method translateEnum(self: BaseLangGen, node: PNode): (string, string) {.base.} 
 proc markEnumFlag(self: BaseLangGen, enumType: string) =
   self.flagEnums.add(enumType)
 
+method translateAnonymousPair(
+    self: BaseLangGen, node: PNode
+): (string, string) {.base.} =
+  discard
+
 proc translateContainer*(self: BaseLangGen, node: PNode): (string, string) =
   let containerType = node[2][0].ident.s
   let memberType = node[2][1].ident.s
@@ -52,6 +59,11 @@ proc translateType*(self: BaseLangGen, node: PNode): (string, string) =
   case node.subType
   of nkEnumTy:
     result = self.translateEnum(node)
+  of nkObjectTy:
+    if self.anonymousTupleNames.contains(node.itemName):
+      result = self.translateAnonymousPair(node)
+    else:
+      result = (node.itemName, "Api not supported: object")
   of nkBracketExpr:
     result = self.translateContainer(node)
   else:

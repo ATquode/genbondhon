@@ -202,8 +202,9 @@ proc generateWrapperFile*(
   filePath.string.writeFile(fileContent)
   return filePath
 
-func convertAnonymousTuplesToCTypes(anonTuples: Table[string, string]): string =
-  var tupleList: seq[string]
+func convertAnonymousTuplesToCTypes(
+    anonTuples: Table[string, string]
+): Table[string, string] =
   for key, val in anonTuples.pairs:
     let memberTypes = val.split(",")
     let valNames = generateValNames(memberTypes.len)
@@ -211,13 +212,13 @@ func convertAnonymousTuplesToCTypes(anonTuples: Table[string, string]): string =
       &"""typedef struct {{
     {memberTypes.zip(valNames).map(x => "$# $#;" % [x[0], x[1]]).join("\n    ")}
 }} {key};"""
-    tupleList.add(tupleDef)
-  result = tupleList.join("\n\n")
+    result[key] = tupleDef
 
 proc generateHelperFile*() =
   let fileName = "helper_types.h".Path
   let filePath = bindingDirPath / fileName
-  let anonymousTuples = convertAnonymousTuplesToCTypes(anonymousTuplesNameToSig)
+  anonymousTuplesCSig = convertAnonymousTuplesToCTypes(anonymousTuplesNameToSig)
+  let anonymousTuples = anonymousTuplesCSig.values.toseq.join("\n\n")
   let helperTypes = anonymousTuples
   if helperTypes.len == 0:
     return
