@@ -12,24 +12,49 @@ proc relativeModulePath(): string =
   let relModPath = relModFilePath.changeFileExt("")
   result = relModPath.string
 
+func handleAnonymousTuples(anonymousTupleTbl: Table[string, string]): string =
+  var tupleList: seq[string]
+  for key, val in anonymousTupleTbl.pairs:
+    let memberTypes = val.split(",")
+    let tupleDef =
+      &"""
+type {key}* {{.importc, header: "helper_types.h".}} = object
+  {generateValNames(memberTypes.len).zip(memberTypes).map(x => x[0] & "*: " & nimAndCompatTypeTbl.getOrDefault(x[1], x[1])).join("\n  ")}"""
+    tupleList.add(tupleDef)
+  result = tupleList.join("\n\n")
+
 proc generateWrapperFileContent(
     wrappedApis: string, typeDefs, apiNames: seq[string]
 ): string =
   let modulePath = relativeModulePath()
+
   let stdImportForFlagEnums =
     if flagEnums.len > 0:
       &"""import std/[bitops, sequtils]"""
     else:
       ""
+  let importSection =
+    [stdImportForFlagEnums, &"import {modulePath}"].filterIt(it != "").join("\n")
+
+  let helperPragma = "{.pragma: ffiexport, raises: [], exportc, cdecl, dynlib.}"
+
   let vccCondImport =
     if shouldUseVCCStr:
-      &"""
-
-when defined(vcc):
-  proc CoTaskMemAlloc(cb: int): cstring {{.cdecl, dynlib: "ole32.dll", importc.}}
-"""
+      &"""when defined(vcc):
+  proc CoTaskMemAlloc(cb: int): cstring {{.cdecl, dynlib: "ole32.dll", importc.}}"""
     else:
       ""
+
+  let tupleDefs = handleAnonymousTuples(anonymousTuplesNameToSig)
+
+  let nimMainStr = "proc NimMain*() {.ffiexport, importc.}"
+
+  let startingParts = [
+      importSection, helperPragma, vccCondImport, tupleDefs, nimMainStr
+    ]
+    .filterIt(it != "")
+    .join("\n\n")
+
   var exportedApiNames = &"""{{ {apiNames.join(", ")} }}"""
   if exportedApiNames.len > (80 - 8):
     exportedApiNames =
@@ -37,15 +62,11 @@ when defined(vcc):
 {{
   {apiNames.join(",\n  ")}
 }}"""
-  let q3 = "\"\"\""
-  let importParts = [stdImportForFlagEnums, &"import {modulePath}"].filterIt(it != "")
 
-  result =
-    &"""
-{importParts.join("\n")}
-{vccCondImport}
-{wrappedApis}
-when defined(js):
+  let q3 = "\"\"\""
+
+  let endingParts =
+    &"""when defined(js):
   {{.
     emit: {q3}
 
@@ -53,7 +74,15 @@ when defined(js):
 
 export {exportedApiNames};
 {q3}
-  .}}
+  .}}"""
+
+  result =
+    &"""
+{startingParts}
+
+{wrappedApis}
+
+{endingParts}
 """
 
 func translateEnum(jsLangGen: BaseLangGen, node: PNode): (BaseLangGen, string) =
@@ -156,17 +185,6 @@ func typeDefinitions(jsBaseLangGen: BaseLangGen, apis: seq[PNode]): seq[string] 
         {k: v}
   result = jsTypes.values.toseq
 
-func handleAnonymousTuples(anonymousTupleTbl: Table[string, string]): string =
-  var tupleList: seq[string]
-  for key, val in anonymousTupleTbl.pairs:
-    let memberTypes = val.split(",")
-    let tupleDef =
-      &"""
-type {key}* {{.importc, header: "helper_types.h".}} = object
-  {generateValNames(memberTypes.len).zip(memberTypes).map(x => x[0] & "*: " & nimAndCompatTypeTbl.getOrDefault(x[1], x[1])).join("\n  ")}"""
-    tupleList.add(tupleDef)
-  result = tupleList.join("\n\n")
-
 proc generateWrapperFile*(
     wrappedApis: string, wrapperName: string, wrappableAST, unwrappableAST: seq[PNode]
 ): Path =
@@ -182,20 +200,13 @@ proc generateWrapperFile*(
         "Error: Failed to create binding directory. Reason: ", exceptionMsg
       return
   let filePath = bindingDirPath / fileName
-  let tupleDefs = handleAnonymousTuples(anonymousTuplesNameToSig)
-  let nimMainStr = "proc NimMain*() {.raises:[], exportc, cdecl, dynlib, importc.}"
-  let additionalParts = [tupleDefs, nimMainStr].filterIt(it != "").join("\n\n")
-  let wrapperApis =
-    &"""
-{additionalParts}
 
-{wrappedApis}"""
   let jsLangGen = BaseLangGen()
   let typeDefs = jsLangGen.typeDefinitions(unwrappableAST)
   let apiNames = concat(unwrappableAST, wrappableAST).map(x => x.itemName).filter(
       x => x notin jsLangGen.ignoreApiList
     )
-  let fileContent = generateWrapperFileContent(wrapperApis, typeDefs, apiNames)
+  let fileContent = generateWrapperFileContent(wrappedApis, typeDefs, apiNames)
   if showVerboseOutput:
     styledEcho fgYellow, "Wrapper File Content:"
     echo fileContent

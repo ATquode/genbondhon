@@ -169,7 +169,7 @@ proc translateProc(node: PNode): string =
   {retBody}"""
   result =
     &"""
-proc {procName}*({trParamList.join(", ")}){retTypePart} {{.raises:[], exportc, cdecl, dynlib.}} =
+proc {procName}*({trParamList.join(", ")}){retTypePart} {{.ffiexport.}} =
   {retBody}"""
 
 proc wrapApi(api: PNode): string =
@@ -186,8 +186,7 @@ proc generateWrapperApi(wrappableAST: seq[PNode]): string =
     trApis.add(wrappedApi)
   result =
     &"""
-{trApis.join("\n\n")}
-"""
+{trApis.join("\n\n")}"""
 
 proc preprocessTypes(node: PNode) =
   case node.subType
