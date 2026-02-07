@@ -41,7 +41,7 @@ typedef enum {{
 }} {enumName};"""
   result = (enumName, trResult)
 
-method translateAnonymousPair(self: CLangGen, node: PNode): (string, string) =
+method translateAnonymousTuple(self: CLangGen, node: PNode): (string, string) =
   let pairName = node.itemName
   result = (pairName, anonymousTuplesCSig[pairName])
 

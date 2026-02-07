@@ -37,7 +37,7 @@ method translateEnum(self: BaseLangGen, node: PNode): (string, string) {.base.} 
 proc markEnumFlag(self: BaseLangGen, enumType: string) =
   self.flagEnums.add(enumType)
 
-method translateAnonymousPair(
+method translateAnonymousTuple(
     self: BaseLangGen, node: PNode
 ): (string, string) {.base.} =
   discard
@@ -61,7 +61,7 @@ proc translateType*(self: BaseLangGen, node: PNode): (string, string) =
     result = self.translateEnum(node)
   of nkObjectTy:
     if self.anonymousTupleNames.contains(node.itemName):
-      result = self.translateAnonymousPair(node)
+      result = self.translateAnonymousTuple(node)
     else:
       result = (node.itemName, "Api not supported: object")
   of nkBracketExpr:
