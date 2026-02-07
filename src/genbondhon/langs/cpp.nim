@@ -24,19 +24,14 @@ method translateEnum(self: CppLangGen, node: PNode): (string, string) =
   var enumVals: seq[string]
   for i in 1 ..< enumValsParent.safeLen:
     let (enumValName, enumValVal) = enumValsParent[i].enumNameValue
-    var val =
-      &"""
-    {enumValName.capitalizeAscii}"""
+    var val = &"{enumValName.capitalizeAscii}"
     if enumValVal.isSome:
       val = &"{val} = {enumValVal.unsafeGet}"
     enumVals.add(val)
   var trResult =
-    &"""
-enum class {enumName} {{
+    &"""enum class {enumName} {{
     {enumVals.join(",\n    ")}
 }};"""
-  let lastLineIndex = trResult.rfind("\n")
-  trResult.insert("    ", lastLineIndex + 1)
   self.enumSeq.add(trResult)
   result = (enumName, trResult)
 
@@ -45,8 +40,8 @@ method convertEnumToEnumFlag(self: CppLangGen, enumBody: string): string =
   let itemLines = enumBodyLines[1 ..^ 2]
   let startPart =
     &"""// Use [magic_enum](https://github.com/Neargye/magic_enum),
-    // or [bitwise-enum](https://github.com/jonesinator/bitwise-enum) to use bitwise operators
-    {enumBodyLines[0]}"""
+// or [bitwise-enum](https://github.com/jonesinator/bitwise-enum) to use bitwise operators
+{enumBodyLines[0]}"""
   # add NONE enum item
   let spaceCount =
     itemLines[0].len - itemLines[0].strip(trailing = false, chars = {' '}).len
