@@ -12,6 +12,30 @@ proc relativeModulePath(): string =
   let relModPath = relModFilePath.changeFileExt("")
   result = relModPath.string
 
+func handleCppEnums(enumASTs: seq[PNode]): (string, string) =
+  var cppEnums, altEnums: seq[string]
+  for enumNode in enumASTs:
+    let enumName = enumNode.itemName
+    let enumValParent = enumNode[2]
+    var enumVals: seq[string]
+    for i in 1 ..< enumValParent.safeLen:
+      let (enumValName, enumValVal) = enumValParent[i].enumNameValue
+      var val = enumValName
+      if enumValVal.isSome:
+        val = &"{val} = {enumValVal.unsafeGet}"
+      enumVals.add(val)
+    let cppEnum =
+      &"""type {enumName}WrapEnum {{.
+    importcpp: "{enumName}", header: "helper_types.h", nodecl, pure
+  .}} = enum
+    {enumVals.join("\n    ")}
+
+  genConverter(to{enumName}, {enumName}WrapEnum, {enumName})"""
+    let altEnum = &"""type {enumName}WrapEnum = {enumName}"""
+    cppEnums.add(cppEnum)
+    altEnums.add(altEnum)
+  result = (cppEnums.join("\n\n  "), altEnums.join("\n  "))
+
 func handleAnonymousTuples(anonymousTupleTbl: Table[string, string]): string =
   var tupleList: seq[string]
   for key, val in anonymousTupleTbl.pairs:
@@ -23,8 +47,49 @@ type {key}* {{.importc, header: "helper_types.h".}} = object
     tupleList.add(tupleDef)
   result = tupleList.join("\n\n")
 
+proc getCppDefs(unwrappableAST: seq[PNode]): string =
+  var cppTypes, altTypes: seq[string]
+
+  if useConstCStrType:
+    let constCStrTypeCpp =
+      &"""type ConstCString {{.importc: "const char*".}} = object
+
+  converter toCString(
+    self: ConstCString
+  ): cstring {{.importc: "(char*)", noconv, nodecl.}}
+
+  proc `$`(self: ConstCString): string =
+    $(self.toCString)"""
+
+    let constCStrTypeAlt = "type ConstCString = cstring"
+
+    cppTypes.add(constCStrTypeCpp)
+    altTypes.add(constCStrTypeAlt)
+
+  if useCppEnumWrappers:
+    let converterTemplate =
+      &"""template genConverter(name: untyped, fromTyp, toTyp: typedesc) =
+    converter `name`(
+      self: fromTyp
+    ): toTyp {{.importcpp: "static_cast<int>(@)", noconv, nodecl.}}"""
+
+    let enumNodes =
+      unwrappableAST.filterIt(it.kind == nkTypeDef).filterIt(it.subType == nkEnumTy)
+    let (cppEnumWrappers, altEnumWrappers) = handleCppEnums(enumNodes)
+
+    cppTypes.add(converterTemplate)
+    cppTypes.add(cppEnumWrappers)
+    altTypes.add(altEnumWrappers)
+
+  result =
+    &"""when defined(cpp):
+  {cppTypes.join("\n\n  ")}
+
+else:
+  {altTypes.join("\n  ")}"""
+
 proc generateWrapperFileContent(
-    wrappedApis: string, typeDefs, apiNames: seq[string]
+    wrappedApis: string, unwrappableAST: seq[PNode], typeDefs, apiNames: seq[string]
 ): string =
   let modulePath = relativeModulePath()
 
@@ -36,7 +101,11 @@ proc generateWrapperFileContent(
   let importSection =
     [stdImportForFlagEnums, &"import {modulePath}"].filterIt(it != "").join("\n")
 
-  let helperPragma = "{.pragma: ffiexport, raises: [], exportc, cdecl, dynlib.}"
+  let helperPragma =
+    &"""when defined(cpp):
+  {{.pragma: ffiexport, raises: [], exportcpp, codegenDecl: "$# $#$#".}}
+else:
+  {{.pragma: ffiexport, raises: [], exportc, cdecl, dynlib.}}"""
 
   let vccCondImport =
     if shouldUseVCCStr:
@@ -45,12 +114,19 @@ proc generateWrapperFileContent(
     else:
       ""
 
+  let cppDefs = getCppDefs(unwrappableAST)
+
   let tupleDefs = handleAnonymousTuples(anonymousTuplesNameToSig)
 
-  let nimMainStr = "proc NimMain*() {.ffiexport, importc.}"
+  # extern "C" is hardcoded for NimMain for cpp dynamic lib compilation, so workaround applied.
+  let nimMainStr =
+    &"""when defined(cpp):
+  proc NimMain*() {{.raises: [], exportcpp, cdecl, dynlib, importc.}}
+else:
+  proc NimMain*() {{.ffiexport, importc.}}"""
 
   let startingParts = [
-      importSection, helperPragma, vccCondImport, tupleDefs, nimMainStr
+      importSection, helperPragma, vccCondImport, cppDefs, tupleDefs, nimMainStr
     ]
     .filterIt(it != "")
     .join("\n\n")
@@ -206,7 +282,8 @@ proc generateWrapperFile*(
   let apiNames = concat(unwrappableAST, wrappableAST).map(x => x.itemName).filter(
       x => x notin jsLangGen.ignoreApiList
     )
-  let fileContent = generateWrapperFileContent(wrappedApis, typeDefs, apiNames)
+  let fileContent =
+    generateWrapperFileContent(wrappedApis, unwrappableAST, typeDefs, apiNames)
   if showVerboseOutput:
     styledEcho fgYellow, "Wrapper File Content:"
     echo fileContent

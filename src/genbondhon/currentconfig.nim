@@ -8,6 +8,8 @@ import compiler/options
 const testDirPath* = "tests".Path
 var showVerboseOutput* = false
 var shouldUseVCCStr* = true
+var useConstCStrType* = true
+var useCppEnumWrappers* = true
 var origFile*: Path
 var moduleName* = ""
 var bindingDirPath*: Path

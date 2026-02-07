@@ -55,6 +55,17 @@ proc getRegAnonymousTupleType(node: PNode): string =
   anonymousTuplesSigToName[signature] = result
   anonymousTuplesNameToSig[result] = signature
 
+func convertProcParamTypeForCppCompilation(
+    paramType: string, namedTypeTbl: Table[string, NamedTypeCategory]
+): string =
+  if paramType == "cstring":
+    result = "ConstCString"
+  elif namedTypeTbl.getOrDefault(paramType, NamedTypeCategory.noneType) ==
+      NamedTypeCategory.enumType:
+    result = paramType & "WrapEnum"
+  else:
+    result = paramType
+
 proc translateProc(node: PNode): string =
   let procName = node.itemName
   let paramNode = procParamNode(node)
@@ -69,6 +80,7 @@ proc translateProc(node: PNode): string =
     let paramNames = formalParamNode[i].paramNames
     let paramType = formalParamNode[i].paramType
     var trParamType = paramType.replaceType
+    trParamType = convertProcParamTypeForCppCompilation(trParamType, namedTypes)
     if flagEnums.contains(paramType):
       hasFlagEnum = true
       paramIsFlagEnum = true

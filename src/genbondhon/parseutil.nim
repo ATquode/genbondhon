@@ -55,6 +55,12 @@ func filterPublicApis*(node: PNode): seq[PNode] =
     for i in 0 ..< node.safeLen:
       let filteredNodes = filterPublicApis(node[i])
       result.add(filteredNodes)
+  of nkWhenStmt:
+    let lastNode = node[node.safeLen - 1]
+    if lastNode.kind == nkElse:
+      for i in 0 ..< lastNode.safeLen:
+        let filteredNodes = filterPublicApis(lastNode[i])
+        result.add(filteredNodes)
   of nkTypeSection:
     for i in 0 ..< node.safeLen:
       let filteredNodes = filterPublicApis(node[i])
