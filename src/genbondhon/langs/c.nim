@@ -46,7 +46,9 @@ method translateAnonymousTuple(self: CLangGen, node: PNode): (string, string) =
   result = (pairName, anonymousTuplesCSig[pairName])
 
 func translateProc(
-    node: PNode, flagLookupTbl: Table[string, Table[string, string]]
+    node: PNode,
+    flagLookupTbl: Table[string, Table[string, string]],
+    namedTypeTbl: Table[string, NamedTypeCategory],
 ): (string, string) =
   let funcName = node.itemName
   let hasFlagEnum = flagLookupTbl.contains(funcName)
@@ -57,7 +59,8 @@ func translateProc(
     let formalParamNode = paramNode.get()
     for i in 1 ..< formalParamNode.safeLen:
       let paramNames = formalParamNode[i].paramNames
-      let paramType = formalParamNode[i].paramType
+      var paramType = formalParamNode[i].paramType
+      paramType = paramType.revertParamTypeToNimNativeType(namedTypeTbl)
       let origParamType =
         if hasFlagEnum:
           checkRestoreFlagEnumType(paramNames[0], paramType, flagLookupTbl[funcName])
@@ -79,13 +82,16 @@ func translateProc(
   result = (funcName, trResult)
 
 func translateApi*(
-    self: CLangGen, api: PNode, flagTbl: Table[string, Table[string, string]]
+    self: CLangGen,
+    api: PNode,
+    flagTbl: Table[string, Table[string, string]],
+    namedTypeTbl: Table[string, NamedTypeCategory],
 ): (string, string) =
   case api.kind
   of nkTypeDef:
     result = self.translateType(api)
   of nkProcDef, nkFuncDef, nkMethodDef:
-    result = translateProc(api, flagTbl)
+    result = translateProc(api, flagTbl, namedTypeTbl)
   else:
     result = (api.itemName, "Cannot translate Api to C")
 
@@ -115,6 +121,7 @@ func generateCHeaderContent(
     headerName: string,
     bindingAST: seq[PNode],
     flagLookupTbl: Table[string, Table[string, string]],
+    namedTypeTbl: Table[string, NamedTypeCategory],
 ): string =
   let headerGuard = headerName.toUpperAscii & "_H"
   let optionalStdBoolH =
@@ -127,7 +134,7 @@ func generateCHeaderContent(
       ""
   var cApis: OrderedTable[string, string]
   for api in bindingAST:
-    let (apiId, trApi) = self.translateApi(api, flagLookupTbl)
+    let (apiId, trApi) = self.translateApi(api, flagLookupTbl, namedTypeTbl)
     cApis[apiId] = trApi
   cApis = self.handleEnumFlags(cApis)
   cApis = collect(initOrderedTable):
@@ -145,8 +152,9 @@ func generateCHeaderContent(
 """
 
 proc generateCHeader(self: CLangGen, bindingAST: seq[PNode]) =
-  let content =
-    self.generateCHeaderContent(moduleName, bindingAST, flagEnumRevrsLookupTbl)
+  let content = self.generateCHeaderContent(
+    moduleName, bindingAST, flagEnumRevrsLookupTbl, namedTypes
+  )
   if showVerboseOutput:
     styledEcho fgGreen, "C Header Content:"
     echo content

@@ -2,8 +2,9 @@
 #
 # SPDX-License-Identifier: MIT
 
-import std/[math, options, sequtils, sugar, tables]
+import std/[math, options, sequtils, strutils, sugar, tables]
 import compiler/ast
+import convertutil
 
 func subType*(node: PNode): TNodeKind =
   ## get actual type from TypeDef node
@@ -83,3 +84,19 @@ func checkRestoreFlagEnumType*(
 func generateValNames*(count: int): seq[string] =
   for i in 1 .. count:
     result.add("val" & $i)
+
+func revertParamTypeToNimNativeType*(
+    paramType: string, namedTypeTbl: Table[string, NamedTypeCategory]
+): string =
+  if paramType == "ConstCString":
+    result = "cstring"
+  elif paramType.endsWith("WrapEnum"):
+    var vParamType = paramType
+    vParamType.removeSuffix("WrapEnum")
+    if namedTypeTbl.getOrDefault(vParamType, NamedTypeCategory.noneType) ==
+        NamedTypeCategory.enumType:
+      result = vParamType
+    else:
+      result = paramType
+  else:
+    result = paramType

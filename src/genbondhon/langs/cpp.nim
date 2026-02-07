@@ -65,11 +65,12 @@ func generateCppHeaderContent(
     headerName: string,
     bindingAST: seq[PNode],
     flagLookupTbl: Table[string, Table[string, string]],
+    namedTypeTbl: Table[string, NamedTypeCategory],
 ): string =
   let headerGuard = headerName.toUpperAscii & "_HPP"
   var cppApis: OrderedTable[string, string]
   for api in bindingAST:
-    let (apiId, trApi) = self.translateApi(api, flagLookupTbl)
+    var (apiId, trApi) = self.translateApi(api, flagLookupTbl, namedTypeTbl)
     cppApis[apiId] = trApi
   cppApis = self.handleEnumFlags(cppApis)
   cppApis = collect(initOrderedTable):
@@ -89,8 +90,9 @@ extern "C" {{
 """
 
 proc generateCppHeader(self: CppLangGen, bindingAST: seq[PNode]) =
-  let content =
-    self.generateCppHeaderContent(moduleName, bindingAST, flagEnumRevrsLookupTbl)
+  let content = self.generateCppHeaderContent(
+    moduleName, bindingAST, flagEnumRevrsLookupTbl, namedTypes
+  )
   if showVerboseOutput:
     styledEcho fgGreen, "Cpp Header Content:"
     echo content
