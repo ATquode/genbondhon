@@ -49,7 +49,6 @@ proc generateBindings(
     translateToCompatibleWrapperApi(publicAST)
   let wrapperPath =
     wrappedApis.generateWrapperFile(wrapperName, wrappableAST, unwrappableAST)
-  generateHelperFile()
   generateBindableModule(bindingDir.Path, wrapperName)
   let wrapperAST = parsePublicAPIs(wrapperPath)
   let bindingAST = concat(unwrappableAST, wrapperAST)

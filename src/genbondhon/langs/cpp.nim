@@ -5,9 +5,10 @@
 import std/[options, paths, sequtils, strformat, strutils, sugar, tables, terminal]
 import compiler/ast
 import base, c
-import ../[convertutil, currentconfig, store, util]
+import ../[convertutil, currentconfig, helperGenerator, store, util]
 
 type CppLangGen = ref object of CLangGen
+  enumSeq*: seq[string]
 
 proc newCppLangGen*(bindingDir: Path): CppLangGen =
   ## `CppLangGen` constructor
@@ -36,6 +37,7 @@ enum class {enumName} {{
 }};"""
   let lastLineIndex = trResult.rfind("\n")
   trResult.insert("    ", lastLineIndex + 1)
+  self.enumSeq.add(trResult)
   result = (enumName, trResult)
 
 method convertEnumToEnumFlag(self: CppLangGen, enumBody: string): string =
@@ -60,17 +62,17 @@ method convertEnumToEnumFlag(self: CppLangGen, enumBody: string): string =
     flagLines.add(item)
   result = concat(@[startPart], flagLines, @[enumBodyLines[^1]]).join("\n")
 
-func generateCppHeaderContent(
-    self: CppLangGen,
-    headerName: string,
-    bindingAST: seq[PNode],
-    flagLookupTbl: Table[string, Table[string, string]],
-    namedTypeTbl: Table[string, NamedTypeCategory],
+proc generateCppHeaderContent(
+    self: CppLangGen, headerName: string, bindingAST: seq[PNode]
 ): string =
   let headerGuard = headerName.toUpperAscii & "_HPP"
   var cppApis: OrderedTable[string, string]
   for api in bindingAST:
-    var (apiId, trApi) = self.translateApi(api, flagLookupTbl, namedTypeTbl)
+    var (apiId, trApi) = self.translateApi(api, flagEnumRevrsLookupTbl, namedTypes)
+    if apiId == "NimMain":
+      cppEnums = self.enumSeq
+      generateHelperFile()
+      trApi = &"""extern "C" {trApi}"""
     cppApis[apiId] = trApi
   cppApis = self.handleEnumFlags(cppApis)
   cppApis = collect(initOrderedTable):
@@ -82,17 +84,13 @@ func generateCppHeaderContent(
 #ifndef {headerGuard}
 #define {headerGuard}
 
-extern "C" {{
-    {cppApis.values.toseq.join("\n\n    ")}
-}}
+{cppApis.values.toseq.join("\n\n")}
 
 #endif /* {headerGuard} */
 """
 
 proc generateCppHeader(self: CppLangGen, bindingAST: seq[PNode]) =
-  let content = self.generateCppHeaderContent(
-    moduleName, bindingAST, flagEnumRevrsLookupTbl, namedTypes
-  )
+  let content = self.generateCppHeaderContent(moduleName, bindingAST)
   if showVerboseOutput:
     styledEcho fgGreen, "Cpp Header Content:"
     echo content

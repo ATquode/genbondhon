@@ -5,10 +5,11 @@
 import std/[options, paths, sequtils, strformat, strutils, sugar, tables, terminal]
 import compiler/ast
 import base
-import ../[convertutil, currentconfig, store, util]
+import ../[convertutil, currentconfig, helperGenerator, store, util]
 
 type CLangGen* = ref object of BaseLangGen
   headerFileName*: Path
+  anonymousTupleSeq*: seq[string]
 
 proc newCLangGen*(bindingDir: Path): CLangGen =
   ## `CLangGen` constructor
@@ -42,8 +43,16 @@ typedef enum {{
   result = (enumName, trResult)
 
 method translateAnonymousTuple(self: CLangGen, node: PNode): (string, string) =
-  let pairName = node.itemName
-  result = (pairName, anonymousTuplesCSig[pairName])
+  let tupleName = node.itemName
+  let signature = anonymousTuplesNameToSig[tupleName]
+  let memberTypes = signature.split(",")
+  let valNames = generateValNames(memberTypes.len)
+  let tupleDef =
+    &"""typedef struct {{
+    {memberTypes.zip(valNames).map(x => "$# $#;" % [x[0], x[1]]).join("\n    ")}
+}} {tupleName};"""
+  self.anonymousTupleSeq.add(tupleDef)
+  result = (tupleName, tupleDef)
 
 func translateProc(
     node: PNode,
@@ -116,12 +125,8 @@ method convertEnumToEnumFlag(self: CLangGen, enumBody: string): string =
 func containsBool(apis: seq[PNode]): bool =
   apis.containsType("bool")
 
-func generateCHeaderContent(
-    self: CLangGen,
-    headerName: string,
-    bindingAST: seq[PNode],
-    flagLookupTbl: Table[string, Table[string, string]],
-    namedTypeTbl: Table[string, NamedTypeCategory],
+proc generateCHeaderContent(
+    self: CLangGen, headerName: string, bindingAST: seq[PNode]
 ): string =
   let headerGuard = headerName.toUpperAscii & "_H"
   let optionalStdBoolH =
@@ -134,7 +139,9 @@ func generateCHeaderContent(
       ""
   var cApis: OrderedTable[string, string]
   for api in bindingAST:
-    let (apiId, trApi) = self.translateApi(api, flagLookupTbl, namedTypeTbl)
+    let (apiId, trApi) = self.translateApi(api, flagEnumRevrsLookupTbl, namedTypes)
+    if apiId == "NimMain":
+      anonymousTuples = self.anonymousTupleSeq
     cApis[apiId] = trApi
   cApis = self.handleEnumFlags(cApis)
   cApis = collect(initOrderedTable):
@@ -152,9 +159,7 @@ func generateCHeaderContent(
 """
 
 proc generateCHeader(self: CLangGen, bindingAST: seq[PNode]) =
-  let content = self.generateCHeaderContent(
-    moduleName, bindingAST, flagEnumRevrsLookupTbl, namedTypes
-  )
+  let content = self.generateCHeaderContent(moduleName, bindingAST)
   if showVerboseOutput:
     styledEcho fgGreen, "C Header Content:"
     echo content

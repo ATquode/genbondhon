@@ -290,37 +290,6 @@ proc generateWrapperFile*(
   filePath.string.writeFile(fileContent)
   return filePath
 
-func convertAnonymousTuplesToCTypes(
-    anonTuples: Table[string, string]
-): Table[string, string] =
-  for key, val in anonTuples.pairs:
-    let memberTypes = val.split(",")
-    let valNames = generateValNames(memberTypes.len)
-    let tupleDef =
-      &"""typedef struct {{
-    {memberTypes.zip(valNames).map(x => "$# $#;" % [x[0], x[1]]).join("\n    ")}
-}} {key};"""
-    result[key] = tupleDef
-
-proc generateHelperFile*() =
-  let fileName = "helper_types.h".Path
-  let filePath = bindingDirPath / fileName
-  anonymousTuplesCSig = convertAnonymousTuplesToCTypes(anonymousTuplesNameToSig)
-  let anonymousTuples = anonymousTuplesCSig.values.toseq.join("\n\n")
-  let helperTypes = anonymousTuples
-  if helperTypes.len == 0:
-    return
-  let fileContent =
-    &"""
-#ifndef HELPER_TYPES_H
-#define HELPER_TYPES_H
-
-{helperTypes}
-
-#endif /* HELPER_TYPES_H */
-"""
-  filePath.string.writeFile(fileContent)
-
 proc generateBindableModule*(bindingDir: Path, wrapperName: string) =
   let moduleFileName = moduleName.Path.addFileExt("nim")
   let moduleFilePath = bindingDir / moduleFileName
