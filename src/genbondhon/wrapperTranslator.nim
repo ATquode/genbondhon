@@ -84,7 +84,6 @@ proc translateProc(node: PNode): string =
     if flagEnums.contains(paramType):
       hasFlagEnum = true
       paramIsFlagEnum = true
-      trParamType = "cint"
       var procTable = flagEnumRevrsLookupTbl.mgetOrPut(procName)
       for paramName in paramNames:
         procTable[paramName] = paramType
