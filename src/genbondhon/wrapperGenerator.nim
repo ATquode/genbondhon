@@ -131,7 +131,7 @@ proc generateWrapperFileContent(
 
   let helperPragma =
     &"""when defined(cpp):
-  {{.pragma: ffiexport, raises: [], exportcpp, codegenDecl: "$# $#$#".}}
+  {{.pragma: ffiexport, raises: [], exportcpp, codegenDecl: "__declspec(dllexport) $# $#$#".}}
 else:
   {{.pragma: ffiexport, raises: [], exportc, cdecl, dynlib.}}"""
 
