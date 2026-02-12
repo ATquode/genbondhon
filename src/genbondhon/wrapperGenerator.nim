@@ -129,9 +129,24 @@ proc generateWrapperFileContent(
   let importSection =
     [stdImportForFlagEnums, &"import {modulePath}"].filterIt(it != "").join("\n")
 
+  let q3 = "\"\"\""
+
   let helperPragma =
     &"""when defined(cpp):
-  {{.pragma: ffiexport, raises: [], exportcpp, codegenDecl: "__declspec(dllexport) $# $#$#".}}
+  when defined(windows):
+    {{.
+      pragma: ffiexport,
+      raises: [],
+      exportcpp,
+      codegenDecl: "__declspec(dllexport) $# $#$#"
+    .}}
+  else:
+    {{.
+      pragma: ffiexport,
+      raises: [],
+      exportcpp,
+      codegenDecl: {q3}__attribute__((visibility("default"))) $# $#$#{q3}
+    .}}
 else:
   {{.pragma: ffiexport, raises: [], exportc, cdecl, dynlib.}}"""
 
@@ -163,8 +178,6 @@ else:
 {{
   {apiNames.join(",\n  ")}
 }}"""
-
-  let q3 = "\"\"\""
 
   let endingParts =
     &"""when defined(js):
