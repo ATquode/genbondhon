@@ -10,6 +10,7 @@ var showVerboseOutput* = false
 var shouldUseVCCStr* = true
 var useConstCStrType* = true
 var useCppEnumWrappers* = true
+var useCppPairTuple* = true
 var origFile*: Path
 var moduleName* = ""
 var bindingDirPath*: Path

@@ -54,7 +54,11 @@ method translateAnonymousTuple(self: CLangGen, node: PNode): (string, string) =
   self.anonymousTupleSeq.add(tupleDef)
   result = (tupleName, tupleDef)
 
+method convertTypeToStdType(self: CLangGen, paramType: string): string {.base.} =
+  paramType
+
 func translateProc(
+    self: CLangGen,
     node: PNode,
     flagLookupTbl: Table[string, Table[string, string]],
     namedTypeTbl: Table[string, NamedTypeCategory],
@@ -70,6 +74,7 @@ func translateProc(
       let paramNames = formalParamNode[i].paramNames
       var paramType = formalParamNode[i].paramType
       paramType = paramType.revertParamTypeToNimNativeType(namedTypeTbl)
+      paramType = self.convertTypeToStdType(paramType)
       let origParamType =
         if hasFlagEnum:
           checkRestoreFlagEnumType(paramNames[0], paramType, flagLookupTbl[funcName])
@@ -80,6 +85,7 @@ func translateProc(
         trParamList.add(trParam)
     if formalParamNode[0].kind != nkEmpty:
       retType = formalParamNode[0].ident.s
+  retType = self.convertTypeToStdType(retType)
   let origRetType =
     if hasFlagEnum:
       checkRestoreFlagEnumType(retTypeLookupKey, retType, flagLookupTbl[funcName])
@@ -100,7 +106,7 @@ func translateApi*(
   of nkTypeDef:
     result = self.translateType(api)
   of nkProcDef, nkFuncDef, nkMethodDef:
-    result = translateProc(api, flagTbl, namedTypeTbl)
+    result = self.translateProc(api, flagTbl, namedTypeTbl)
   else:
     result = (api.itemName, "Cannot translate Api to C")
 

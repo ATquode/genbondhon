@@ -36,18 +36,32 @@ func handleCppEnums(enumASTs: seq[PNode]): (string, string) =
     altEnums.add(altEnum)
   result = (cppEnums.join("\n\n  "), altEnums.join("\n  "))
 
-func handleAnonymousTuples(anonymousTupleTbl: Table[string, string]): string =
-  var tupleList: seq[string]
+func handleAnonymousTuples(
+    anonymousTupleTbl: Table[string, string]
+): Table[string, string] =
   for key, val in anonymousTupleTbl.pairs:
     let memberTypes = val.split(",")
     let tupleDef =
-      &"""
-type {key}* {{.importc, header: "helper_types.h".}} = object
-  {generateValNames(memberTypes.len).zip(memberTypes).map(x => x[0] & "*: " & nimAndCompatTypeTbl.getOrDefault(x[1], x[1])).join("\n  ")}"""
-    tupleList.add(tupleDef)
-  result = tupleList.join("\n\n")
+      &"""type {key}* {{.importc, header: "helper_types.h".}} = object
+    {generateValNames(memberTypes.len).zip(memberTypes).map(x => x[0] & "*: " & nimAndCompatTypeTbl.getOrDefault(x[1], x[1])).join("\n    ")}"""
+    result[key] = tupleDef
 
-proc getCppDefs(unwrappableAST: seq[PNode]): string =
+func handleAnonymousCppTuples(
+    tupleNames: seq[string], anonymousTupleSigTbl: Table[string, string]
+): string =
+  var cppTuples: seq[string]
+  for tupleTypeName in tupleNames:
+    let tupleSignature = anonymousTupleSigTbl[tupleTypeName]
+    let memberTypes = tupleSignature.split(",")
+    let tupleType = if memberTypes.len == 2: "CppPair" else: "CppTuple"
+    let cppTuple =
+      &"""type {tupleTypeName} = {tupleType}[{memberTypes.mapIt(nimAndCompatTypeTbl.getOrDefault(it, it)).join(", ")}]"""
+    cppTuples.add(cppTuple)
+  result = cppTuples.join("\n  ")
+
+proc getCppDefs(
+    unwrappableAST: seq[PNode], anonymousTupleTbl: Table[string, string]
+): string =
   var cppTypes, altTypes: seq[string]
 
   if useConstCStrType:
@@ -80,6 +94,20 @@ proc getCppDefs(unwrappableAST: seq[PNode]): string =
     cppTypes.add(converterTemplate)
     cppTypes.add(cppEnumWrappers)
     altTypes.add(altEnumWrappers)
+
+  if useCppPairTuple:
+    let cppPairType =
+      &"""type CppPair[T1, T2] {{.importcpp: "std::pair", header: "<utility>".}} = object
+
+  proc makePair[T1, T2](
+    a: T1, b: T2
+  ): CppPair[T1, T2] {{.importcpp: "std::make_pair(@)", header: "<utility>".}}"""
+    let cppTuples =
+      handleAnonymousCppTuples(anonymousTupleTbl.keys.toSeq, anonymousTuplesNameToSig)
+
+    cppTypes.add(cppPairType)
+    cppTypes.add(cppTuples)
+    altTypes.add(anonymousTupleTbl.values.toSeq.join("\n\n  "))
 
   result =
     &"""when defined(cpp):
@@ -114,9 +142,8 @@ else:
     else:
       ""
 
-  let cppDefs = getCppDefs(unwrappableAST)
-
-  let tupleDefs = handleAnonymousTuples(anonymousTuplesNameToSig)
+  let tupleTbl = handleAnonymousTuples(anonymousTuplesNameToSig)
+  let cppDefs = getCppDefs(unwrappableAST, tupleTbl)
 
   # extern "C" is hardcoded for NimMain for cpp dynamic lib compilation, so workaround applied.
   let nimMainStr =
@@ -125,9 +152,7 @@ else:
 else:
   proc NimMain*() {{.ffiexport, importc.}}"""
 
-  let startingParts = [
-      importSection, helperPragma, vccCondImport, cppDefs, tupleDefs, nimMainStr
-    ]
+  let startingParts = [importSection, helperPragma, vccCondImport, cppDefs, nimMainStr]
     .filterIt(it != "")
     .join("\n\n")
 

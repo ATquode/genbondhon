@@ -138,7 +138,10 @@ proc translateProc(node: PNode): string =
       procCallStmt
     elif anonymousTuplesNameToSig.contains(retType):
       &"""let ({valNames.join(", ")}) = {procCallStmt}
-  return {retType}({valNames.zip(tupleMemberTypes).map(x => "$#: $#" % [x[0], x[0].convertType(x[1], ConvertDirection.toC, flagEnums.contains(x[1]))]).join(", ")})"""
+  when defined(cpp):
+    return {(if true: "makePair" else: "makeTuple")}({valNames.zip(tupleMemberTypes).map(x => "$#" % [x[0].convertType(x[1], ConvertDirection.toC, flagEnums.contains(x[1]))]).join(", ")})
+  else:
+    return {retType}({valNames.zip(tupleMemberTypes).map(x => "$#: $#" % [x[0], x[0].convertType(x[1], ConvertDirection.toC, flagEnums.contains(x[1]))]).join(", ")})"""
     else:
       &"return {procCallStmt.convertType(origRetType, ConvertDirection.toC, flagEnums.contains(origRetType))}"
   if shouldUseVCCStr and retType == "string":

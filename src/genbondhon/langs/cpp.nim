@@ -35,6 +35,23 @@ method translateEnum(self: CppLangGen, node: PNode): (string, string) =
   self.enumSeq.add(trResult)
   result = (enumName, trResult)
 
+method translateAnonymousTuple(self: CppLangGen, node: PNode): (string, string) =
+  let tupleName = node.itemName
+  result = (tupleName, "")
+
+method convertTypeToStdType(self: CppLangGen, paramType: string): string =
+  # pair/tuple
+  if anonymousTuplesNameToSig.contains(paramType):
+    let signature = anonymousTuplesNameToSig[paramType]
+    let memberTypes = signature.split(",")
+    let memberList = memberTypes.join(", ")
+    if memberTypes.len == 2:
+      result = &"std::pair<{memberList}>"
+    else:
+      result = &"std::tuple<{memberList}>"
+  else:
+    result = paramType
+
 method convertEnumToEnumFlag(self: CppLangGen, enumBody: string): string =
   let enumBodyLines = enumBody.splitLines
   let itemLines = enumBodyLines[1 ..^ 2]
@@ -61,6 +78,10 @@ proc generateCppHeaderContent(
     self: CppLangGen, headerName: string, bindingAST: seq[PNode]
 ): string =
   let headerGuard = headerName.toUpperAscii & "_HPP"
+
+  let includeUtility = if useCppPairTuple: "#include <utility>" else: ""
+  let includeHeaders = [includeUtility].filterIt(it != "").join("\n")
+
   var cppApis: OrderedTable[string, string]
   for api in bindingAST:
     var (apiId, trApi) = self.translateApi(api, flagEnumRevrsLookupTbl, namedTypes)
@@ -74,12 +95,14 @@ proc generateCppHeaderContent(
     for k, v in cppApis.pairs:
       if v != "":
         {k: v}
+  let cppHeaderWithApis =
+    [includeHeaders, cppApis.values.toseq.join("\n\n")].filterIt(it != "").join("\n\n")
   result =
     &"""
 #ifndef {headerGuard}
 #define {headerGuard}
 
-{cppApis.values.toseq.join("\n\n")}
+{cppHeaderWithApis}
 
 #endif /* {headerGuard} */
 """

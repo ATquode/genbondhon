@@ -72,5 +72,7 @@ int main() {
     cout << "Request access result: " << std::boolalpha << reqRes << std::noboolalpha << endl;
     int o = addIntNum2(11, 14);
     cout << o << endl;
+    std::pair<int, int> p = divMod(10, 3);
+    cout << p.first << ", " << p.second << endl;
     return 0;
 }
