@@ -33,7 +33,8 @@ set Game State result: Bad_request, value: 400
 admin has permission: Write, value: 0x02
 Least priviledged permission: Read, value: 0x01
 Request access result: False
-25'''
+25
+3, 1'''
   disabled: unix
 """
 #!fmt: on

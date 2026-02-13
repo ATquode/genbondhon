@@ -58,3 +58,5 @@ bool reqRes = Nomuna.RequestAccess(Nomuna.FilePermission.Write, "/");
 Console.WriteLine($"Request access result: {reqRes}");
 int k = Nomuna.AddIntNum2(11, 14);
 Console.WriteLine(k);
+(int l, int m) = Nomuna.DivMod(10, 3);
+Console.WriteLine($"{l}, {m}");

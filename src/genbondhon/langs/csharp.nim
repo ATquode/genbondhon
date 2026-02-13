@@ -73,10 +73,38 @@ method translateEnum(self: CSharpLangGen, node: PNode): (string, string) =
         }}"""
   result = (enumName, trResult)
 
+method translateAnonymousTuple(self: CSharpLangGen, node: PNode): (string, string) =
+  let tupleName = node.itemName
+  let signature = anonymousTuplesNameToSig[tupleName]
+  let memberTypes = signature.split(",")
+  let valNames = generateValNames(memberTypes.len)
+  let tupleDef =
+    &"""
+        [StructLayout(LayoutKind.Sequential)]
+        private struct {tupleName}
+        {{
+            {memberTypes.zip(valNames).map(x => "public $# $#;" % [x[0], x[1]]).join("\n            ")}
+        }}"""
+  result = (tupleName, tupleDef)
+
+func convertTypeToStdType(
+    paramType: string, tupleNameSigTbl: Table[string, string]
+): string =
+  # pair/tuple
+  if tupleNameSigTbl.contains(paramType):
+    let signature = tupleNameSigTbl[paramType]
+    let memberTypes = signature.split(",")
+    let memberList = memberTypes.join(", ")
+    result = &"({memberList})"
+  else:
+    result = paramType
+
 func translateProc(
     self: CSharpLangGen,
     node: PNode,
     flagLookupTbl: Table[string, Table[string, string]],
+    namedTypeTbl: Table[string, NamedTypeCategory],
+    tupleNameSigTbl: Table[string, string],
 ): (string, string) =
   var shouldWrap = false
   let funcName = node.itemName
@@ -89,7 +117,9 @@ func translateProc(
     let formalParamNode = paramNode.get()
     for i in 1 ..< formalParamNode.safeLen:
       let paramNames = formalParamNode[i].paramNames
-      let paramType = formalParamNode[i].paramType
+      var paramType = formalParamNode[i].paramType
+      paramType = paramType.revertParamTypeToNimNativeType(namedTypeTbl)
+      paramType = paramType.convertTypeToStdType(tupleNameSigTbl)
       let origParamType =
         if hasFlagEnum:
           checkRestoreFlagEnumType(paramNames[0], paramType, flagLookupTbl[funcName])
@@ -129,10 +159,13 @@ func translateProc(
   let origRetType =
     if hasFlagEnum:
       checkRestoreFlagEnumType(retTypeLookupKey, retType, flagLookupTbl[funcName])
+    elif tupleNameSigTbl.contains(retType):
+      convertTypeToStdType(retType, tupleNameSigTbl)
     else:
       retType
   var wrRetType = origRetType.replaceType
-  if self.typeCategory(origRetType) == NamedTypeCategory.enumType:
+  if tupleNameSigTbl.contains(retType) or
+      self.typeCategory(origRetType) == NamedTypeCategory.enumType:
     shouldWrap = true
     if wrParamList.len == 0:
       wrParamList = trParamList
@@ -140,7 +173,10 @@ func translateProc(
         let marshalPartEnd = trParamList[i].find("] ")
         let nonMarshalPart = trParamList[i][marshalPartEnd + 2 ..^ 1]
         trParamList[i] = nonMarshalPart
-    wrRetType = self.enumDataTypes[origRetType]
+    if self.typeCategory(origRetType) == NamedTypeCategory.enumType:
+      wrRetType = self.enumDataTypes[origRetType]
+    elif tupleNameSigTbl.contains(retType):
+      wrRetType = retType
   let trProc =
     &"""{origRetType.replaceType} {funcName.capitalizeAscii}({trParamList.join(", ")})"""
   let wrProc = &"""{wrRetType} {funcName.wrapperFuncName}({wrParamList.join(", ")})"""
@@ -153,6 +189,10 @@ func translateProc(
       &"""
             var data = {procCallStmt};
             return ({origRetType})data;"""
+    elif tupleNameSigTbl.contains(retType):
+      &"""
+            var data = {procCallStmt};
+            return ({tupleNameSigTbl[retType].split(",").len.generateValNames().map(x => "data.$#".format(x)).join(", ")});"""
     else:
       &"""
             var data = {procCallStmt};
@@ -176,7 +216,8 @@ func translateProc(
   if shouldWrap:
     trResult =
       &"""
-        public static {trProc} {{
+        public static {trProc}
+        {{
 {retBody}
         }}
 
@@ -184,13 +225,17 @@ func translateProc(
   result = (funcName, trResult)
 
 func translateApi(
-    self: CSharpLangGen, api: PNode, flagTbl: Table[string, Table[string, string]]
+    self: CSharpLangGen,
+    api: PNode,
+    flagTbl: Table[string, Table[string, string]],
+    namedTypeTbl: Table[string, NamedTypeCategory],
+    tupleNameSigTbl: Table[string, string],
 ): (string, string) =
   case api.kind
   of nkTypeDef:
     result = self.translateType(api)
   of nkProcDef, nkFuncDef, nkMethodDef:
-    result = self.translateProc(api, flagTbl)
+    result = self.translateProc(api, flagTbl, namedTypeTbl, tupleNameSigTbl)
   else:
     result = (api.itemName, "Cannot translate Api to C#")
 
@@ -230,10 +275,13 @@ func generateDllWrapperContent(
     bindingAST: seq[PNode],
     modName: string,
     flagLookupTbl: Table[string, Table[string, string]],
+    namedTypeTbl: Table[string, NamedTypeCategory],
+    tupleNameSigTbl: Table[string, string],
 ): string =
   var cSharpApis: OrderedTable[string, string]
   for api in bindingAST:
-    let (apiId, trApi) = self.translateApi(api, flagLookupTbl)
+    let (apiId, trApi) =
+      self.translateApi(api, flagLookupTbl, namedTypeTbl, tupleNameSigTbl)
     cSharpApis[apiId] = trApi
   cSharpApis = self.handleEnumFlags(cSharpApis)
   cSharpApis = collect(initOrderedTable):
@@ -254,8 +302,9 @@ namespace {modName.capitalizeAscii}Lib
 """
 
 proc generateCSharpDllWrapper(self: CSharpLangGen, bindingAST: seq[PNode]) =
-  let content =
-    self.generateDllWrapperContent(bindingAST, moduleName, flagEnumRevrsLookupTbl)
+  let content = self.generateDllWrapperContent(
+    bindingAST, moduleName, flagEnumRevrsLookupTbl, namedTypes, anonymousTuplesNameToSig
+  )
   if showVerboseOutput:
     styledEcho fgGreen, "CSharp Dll Wrapper Content:"
     echo content
