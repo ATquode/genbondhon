@@ -49,6 +49,9 @@ proc testBuildingApp(moduleName: string) =
     let compileCmd =
       &"nim cpp -c -d:release --cpu:{arch} --os:android -d:androidNDK --noMain:on --app:staticlib --nimcache:{androidCacheDirBase}-{arch} bindings/nomuna.nim"
     executeTask("generate cpp code from nim code for " & arch, compileCmd)
+    # copy helper type header
+    let copyHelperTypesCmd = &"cp bindings/helper_types.h {androidCacheDirBase}-{arch}/"
+    executeTask("copy helper types", copyHelperTypesCmd)
   # compile to object files
   let myApplicationDir = "tests/Kotlin/MyApplication1".Path
   let clangExe = if defined(windows): "clang++.exe" else: "clang++"

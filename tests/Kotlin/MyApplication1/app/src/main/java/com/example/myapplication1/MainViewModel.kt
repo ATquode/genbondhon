@@ -48,6 +48,8 @@ class MainViewModel : ViewModel() {
         Log.d("nomuna", "Request access result: $reqRes")
         val a = nomuna.addIntNum2(11,14)
         Log.d("nomuna", "$a")
+        val (b, c) = nomuna.divMod(10, 3)
+        Log.d("nomuna", "$b, $c")
     }
 
     val retCardUiState =

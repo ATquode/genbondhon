@@ -75,6 +75,8 @@ func translateProcToJNI(
     node: PNode,
     className: string,
     flagLookupTbl: Table[string, Table[string, string]],
+    namedTypeTbl: Table[string, NamedTypeCategory],
+    tupleNameSigTbl: Table[string, string],
 ): string =
   let funcName = node.itemName
   let hasFlagEnum = flagLookupTbl.contains(funcName)
@@ -89,7 +91,8 @@ func translateProcToJNI(
     let formalParamNode = paramNode.get()
     for i in 1 ..< formalParamNode.safeLen:
       let paramNames = formalParamNode[i].paramNames
-      let paramType = formalParamNode[i].paramType
+      var paramType = formalParamNode[i].paramType
+      paramType = paramType.revertParamTypeToNimNativeType(namedTypeTbl)
       let origParamType =
         if hasFlagEnum:
           checkRestoreFlagEnumType(paramNames[0], paramType, flagLookupTbl[funcName])
@@ -116,18 +119,21 @@ func translateProcToJNI(
   let origRetType =
     if hasFlagEnum:
       checkRestoreFlagEnumType(retTypeLookupKey, retType, flagLookupTbl[funcName])
+    elif tupleNameSigTbl.contains(retType):
+      "jobject"
     else:
       retType
+  var trRetType = origRetType
   if self.typeCategory(origRetType) == NamedTypeCategory.enumType:
-    retType = "cint" # Kotlin enum -> nim cint -> JNI jint
+    trRetType = "cint" # Kotlin enum -> nim cint -> JNI jint
     if not wrFuncName.contains("Val"):
       wrFuncName = funcName.wrapperFuncName
   let procCallStmt = &"""{funcName}({callableParamList.join(", ")})"""
   var retBody =
-    if retType == "void":
+    if origRetType == "void":
       &"{procCallStmt};"
     else:
-      &"return {procCallStmt.convertTypeJNI(retType, self.typeCategory(retType))};"
+      &"return {procCallStmt.convertTypeJNI(trRetType, self.typeCategory(trRetType))};"
   if jstringTbl.len > 0:
     var getStrings, releaseStrings: seq[string]
     for key, value in jstringTbl:
@@ -136,7 +142,7 @@ func translateProcToJNI(
       let releaseStrCode = &"env->ReleaseStringUTFChars({key}, {value});"
       releaseStrings.add(releaseStrCode)
     let procCallLine =
-      if retType == "void":
+      if origRetType == "void":
         procCallStmt
       else:
         &"auto data = {procCallStmt}"
@@ -146,11 +152,11 @@ func translateProcToJNI(
     {procCallLine};
     {releaseStrings.join("\n    ")}"""
 
-    if retType != "void":
+    if origRetType != "void":
       retBody =
         &"""
 {retBody}
-    return {"data".convertTypeJNI(retType, self.typeCategory(retType))};"""
+    return {"data".convertTypeJNI(trRetType, self.typeCategory(trRetType))};"""
   if jenumTbl.len > 0:
     var getEnums: seq[string]
     for key, value in jenumTbl:
@@ -161,26 +167,41 @@ func translateProcToJNI(
       &"""
 {getEnums.join("\n    ")}
     {retBody}"""
+  if tupleNameSigTbl.contains(retType):
+    let procCallLine =
+      if retBody.contains("auto data ="):
+        retBody.split("\n")[0 ..^ 2].join("\n")
+      else:
+        &"auto data = {procCallStmt}"
+    let memberLen = tupleNameSigTbl[retType].split(",").len
+    let createTupleFunc =
+      if memberLen == 2: "createKotlinPairPrimitive" else: "unimplemented"
+    retBody =
+      &"""{procCallLine};
+    return {createTupleFunc}(env, data);"""
 
   result =
     &"""
 extern "C"
-JNIEXPORT {retType.replaceTypeJNI} JNICALL
+JNIEXPORT {trRetType.replaceTypeJNI} JNICALL
 {jniFuncName(self.jvmPackageName, className, wrFuncName)}({trParamList.join(", ")}) {{
     {retBody}
 }}"""
 
-proc translateApiToJNI(
+func translateApiToJNI(
     self: KotlinLangGen,
     api: PNode,
     className: string,
     flagTbl: Table[string, Table[string, string]],
+    namedTypeTbl: Table[string, NamedTypeCategory],
+    tupleNameSigTbl: Table[string, string],
 ): string =
   case api.kind
   of nkTypeDef:
     result = "" # C/C++ header has the definition
   of nkProcDef, nkFuncDef, nkMethodDef:
-    result = self.translateProcToJNI(api, className, flagTbl)
+    result =
+      self.translateProcToJNI(api, className, flagTbl, namedTypeTbl, tupleNameSigTbl)
   else:
     result = "Cannot translate Api to JNI"
 
@@ -189,13 +210,63 @@ proc generateJNIWrapperContent(
 ): string =
   var jniApis: seq[string]
   for api in bindingAST:
-    let trApi = self.translateApiToJNI(api, className, flagEnumRevrsLookupTbl)
+    let trApi = self.translateApiToJNI(
+      api, className, flagEnumRevrsLookupTbl, namedTypes, anonymousTuplesNameToSig
+    )
     if trApi != "":
       jniApis.add(trApi)
+  let stringHeader = if useCppPairTuple: "#include <string>" else: ""
+  let cppHeader = &"""#include "{self.headerFileName.string}""""
+  let includePart =
+    ["#include <jni.h>", stringHeader, cppHeader].filterIt(it != "").join("\n")
+
+  let templatePart =
+    if useCppPairTuple:
+      &"""template<typename T>
+jobject boxPrimitive(JNIEnv *env, T value) {{
+    std::string dataType, typeSign;
+
+    if constexpr (std::is_same_v<T, jint>) {{
+        dataType = "Integer";
+        typeSign = "I";
+    }} else if constexpr (std::is_same_v<T, jdouble>) {{
+        dataType = "Double";
+        typeSign = "D";
+    }} else if constexpr (std::is_same_v<T, jboolean>) {{
+        dataType = "Boolean";
+        typeSign = "Z";
+    }} else if constexpr (std::is_same_v<T, jlong>) {{
+        dataType = "Long";
+        typeSign = "J";
+    }} else if constexpr (std::is_same_v<T, jfloat>) {{
+        dataType = "Float";
+        typeSign = "F";
+    }}
+
+    std::string className = "java/lang/" + dataType;
+    std::string signature = "(" + typeSign + ")" + "L" + className + ";";
+    jclass cls = env->FindClass(className.c_str());
+    jmethodID valueOfMethod = env->GetStaticMethodID(cls, "valueOf", signature.c_str());
+
+    return env->CallStaticObjectMethod(cls, valueOfMethod, value);
+}}
+
+template <typename T1, typename T2>
+jobject createKotlinPairPrimitive(JNIEnv *env, std::pair<T1, T2> p) {{
+    jobject firstObj = boxPrimitive(env, p.first);
+    jobject secondObj = boxPrimitive(env, p.second);
+    jclass pairClass = env->FindClass("kotlin/Pair");
+    jmethodID constructor = env->GetMethodID(pairClass, "<init>", "(Ljava/lang/Object;Ljava/lang/Object;)V");
+    return env->NewObject(pairClass, constructor, firstObj, secondObj);
+}}"""
+    else:
+      ""
+
+  let topPart = [includePart, templatePart].filterIt(it != "").join("\n\n")
+
   result =
     &"""
-#include <jni.h>
-#include "{self.headerFileName.string}"
+{topPart}
 
 {jniApis.join("\n\n")}
 """
@@ -280,11 +351,32 @@ method translateEnum(self: KotlinLangGen, node: PNode): (string, string) =
     }}"""
   result = (enumName, trResult)
 
+func convertTypeToStdType(
+    paramType: string, tupleNameSigTbl: Table[string, string]
+): string =
+  # pair/tuple
+  if tupleNameSigTbl.contains(paramType):
+    let signature = tupleNameSigTbl[paramType]
+    let memberTypes = signature.split(",")
+    let memberList = memberTypes
+      .map(x => nimAndCompatTypeTbl.getOrDefault(x, x).replaceType)
+      .join(", ")
+    if memberTypes.len == 2:
+      result = &"Pair<{memberList}>"
+    elif memberTypes.len == 3:
+      result = &"Triple<{memberList}>"
+    else:
+      result = &"Unsupported<{memberList}>"
+  else:
+    result = paramType
+
 func translateProc(
     self: KotlinLangGen,
     node: PNode,
     flagLookupTbl: Table[string, Table[string, string]],
     flagEnumSeq: seq[string],
+    namedTypeTbl: Table[string, NamedTypeCategory],
+    tupleNameSigTbl: Table[string, string],
 ): (string, string) =
   var shouldWrap = false
   let funcName = node.itemName
@@ -296,7 +388,8 @@ func translateProc(
     let formalParamNode = paramNode.get()
     for i in 1 ..< formalParamNode.safeLen:
       let paramNames = formalParamNode[i].paramNames
-      let paramType = formalParamNode[i].paramType
+      var paramType = formalParamNode[i].paramType
+      paramType = paramType.revertParamTypeToNimNativeType(namedTypeTbl)
       let origParamType =
         if hasFlagEnum:
           checkRestoreFlagEnumType(paramNames[0], paramType, flagLookupTbl[funcName])
@@ -330,6 +423,8 @@ func translateProc(
   let origRetType =
     if hasFlagEnum:
       checkRestoreFlagEnumType(retTypeLookupKey, retType, flagLookupTbl[funcName])
+    elif tupleNameSigTbl.contains(retType):
+      convertTypeToStdType(retType, tupleNameSigTbl)
     else:
       retType
   let retTypePart =
@@ -391,12 +486,14 @@ func translateApi(
     api: PNode,
     flagTbl: Table[string, Table[string, string]],
     flagList: seq[string],
+    namedTypeTbl: Table[string, NamedTypeCategory],
+    tupleNameSigTbl: Table[string, string],
 ): (string, string) =
   case api.kind
   of nkTypeDef:
     result = self.translateType(api)
   of nkProcDef, nkFuncDef, nkMethodDef:
-    result = self.translateProc(api, flagTbl, flagList)
+    result = self.translateProc(api, flagTbl, flagList, namedTypeTbl, tupleNameSigTbl)
   else:
     result = (&"fail-{$api.kind}", "Cannot translate Api to Kotlin")
 
@@ -417,10 +514,13 @@ func generateKotlinWrapperContent(
     libName: string,
     flagLookupTbl: Table[string, Table[string, string]],
     flagSeq: seq[string],
+    namedTypeTbl: Table[string, NamedTypeCategory],
+    tupleNameSigTbl: Table[string, string],
 ): string =
   var kotlinApis: OrderedTable[string, string]
   for api in bindingAST:
-    let (apiId, trApi) = self.translateApi(api, flagLookupTbl, flagSeq)
+    let (apiId, trApi) =
+      self.translateApi(api, flagLookupTbl, flagSeq, namedTypeTbl, tupleNameSigTbl)
     kotlinApis[apiId] = trApi
   kotlinApis = self.handleEnumFlags(kotlinApis)
   kotlinApis = collect(initOrderedTable):
@@ -452,7 +552,8 @@ class {modName.className} {{
 
 proc generateKotlinWrapper(self: KotlinLangGen, bindingAST: seq[PNode]) =
   let content = self.generateKotlinWrapperContent(
-    bindingAST, moduleName, moduleName.jniLibName, flagEnumRevrsLookupTbl, flagEnums
+    bindingAST, moduleName, moduleName.jniLibName, flagEnumRevrsLookupTbl, flagEnums,
+    namedTypes, anonymousTuplesNameToSig,
   )
   if showVerboseOutput:
     styledEcho fgGreen, "Kotlin wrapper content:"
@@ -468,6 +569,13 @@ func getNimCompilationCommands(
   for (arch, _, _) in androidAbiArchArray:
     cmds.add &"""
     nim cpp -c -d:release --cpu:{arch} --os:android -d:androidNDK --noMain:on --app:staticlib --nimcache:{androidCacheDirBase}-{arch} {self.bindingModuleFile.string}"""
+  return cmds.join("\n")
+
+func copyHelperTypesCommands(androidCacheDirBase: string): string =
+  var cmds: seq[string]
+  for (arch, _, _) in androidAbiArchArray:
+    cmds.add &"""
+    cp bindings/helper_types.h {androidCacheDirBase}-{arch}/"""
   return cmds.join("\n")
 
 func getCppCompilationCommands(androidCacheDirBase: string): string =
@@ -508,6 +616,10 @@ Provide JVM Package Name in command line using the respective option.
 First, compile the nim code to C++ code for android with the following command.
 
 {getNimCompilationCommands(self, androidCacheDirBase)}
+
+Copy `helper_types.h` to the cache folders.
+
+{copyHelperTypesCommands(androidCacheDirBase)}
 
 Then compile the C++ code with proper android C++ compiler. You may find it as
 `$ANDROID_HOME/ndk/$ndkVer/toolchains/llvm/prebuilt/$hostOS/bin/clang++`.
