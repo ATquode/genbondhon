@@ -23,6 +23,9 @@ proc testBuildingMyApp(moduleName: string) =
   let compileToCCmd =
     &"nim c -c -d:release --os:ios --noMain:on --app:staticLib --nimcache: {iosCacheDir} bindings/nomuna.nim"
   executeTask("nim compilation to C", compileToCCmd)
+  # copy helper type header
+  let copyHelperTypesCmd = &"cp bindings/helper_types.h {iosCacheDir}/"
+  executeTask("copy helper types", copyHelperTypesCmd)
   # compile to obj files
   let compileToObjFileIosCmd =
     &"xcrun -sdk iphoneos clang -c -arch arm64 -I {findNimStdLib()} *.c"

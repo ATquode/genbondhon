@@ -62,3 +62,5 @@ let reqRes = requestAccess(requestedPermission: FilePermission.write, targetPath
 print("Request access result: \(reqRes)")
 let k = addIntNum2(a: 11, b: 14)
 print(k)
+let (l, m) = divMod(a: 10, b: 3)
+print("\(l), \(m)")

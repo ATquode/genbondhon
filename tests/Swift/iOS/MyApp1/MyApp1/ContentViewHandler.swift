@@ -76,5 +76,7 @@ class ContentViewHandler: ObservableObject {
         print("Request access result: \(reqRes)")
         let a = addIntNum2(a: 11, b: 14)
         print(a)
+        let (b, c) = divMod(a: 10, b: 3)
+        print("\(b), \(c)")
     }
 }

@@ -88,11 +88,26 @@ enum {enumName}: CUnsignedInt {{
 }}"""
   result = (enumName, trResult)
 
+func convertTypeToStdType(
+    paramType: string, tupleNameSigTbl: Table[string, string]
+): string =
+  if tupleNameSigTbl.contains(paramType):
+    let signature = tupleNameSigTbl[paramType]
+    let memberTypes = signature.split(",")
+    let memberList = memberTypes
+      .map(x => nimAndCompatTypeTbl.getOrDefault(x, x).replaceType)
+      .join(", ")
+    result = &"({memberList})"
+  else:
+    result = paramType
+
 func translateProc(
     self: SwiftLangGen,
     node: PNode,
     flagLookupTbl: Table[string, Table[string, string]],
     flagEnumSeq: seq[string],
+    namedTypeTbl: Table[string, NamedTypeCategory],
+    tupleNameSigTbl: Table[string, string],
 ): (string, string) =
   let funcName = node.itemName
   let hasFlagEnum = flagLookupTbl.contains(funcName)
@@ -103,7 +118,8 @@ func translateProc(
     let formalParamNode = paramNode.get()
     for i in 1 ..< formalParamNode.safeLen:
       let paramNames = formalParamNode[i].paramNames
-      let paramType = formalParamNode[i].paramType
+      var paramType = formalParamNode[i].paramType
+      paramType = paramType.revertParamTypeToNimNativeType(namedTypeTbl)
       let origParamType =
         if hasFlagEnum:
           checkRestoreFlagEnumType(paramNames[0], paramType, flagLookupTbl[funcName])
@@ -124,6 +140,8 @@ func translateProc(
   let origRetType =
     if hasFlagEnum:
       checkRestoreFlagEnumType(retTypeLookupKey, retType, flagLookupTbl[funcName])
+    elif tupleNameSigTbl.contains(retType):
+      convertTypeToStdType(retType, tupleNameSigTbl)
     else:
       retType
   let retTypePart =
@@ -160,6 +178,14 @@ func translateProc(
         fatalError("Error!! Failed to get enum {origRetType} from {funcName}")
     }}
     return data"""
+  elif tupleNameSigTbl.contains(retType):
+    let memberTypesCompat = tupleNameSigTbl[retType].split(",").map(
+        x => nimAndCompatTypeTbl.getOrDefault(x, x)
+      )
+    let memberNames = memberTypesCompat.len.generateValNames()
+    retBody =
+      &"""let cTuple = {procCallStmt}
+    return ({memberNames.zip(memberTypesCompat).map(x => "cTuple.$#".format(x[0]).convertType(x[1], ConvertDirection.fromC, self.cModuleName)).join(", ")})"""
   let trResult =
     &"""
 func {funcName}({trParamList.join(", ")}){retTypePart} {{
@@ -172,12 +198,14 @@ func translateApi(
     api: PNode,
     flagTbl: Table[string, Table[string, string]],
     flagList: seq[string],
+    namedTypeTbl: Table[string, NamedTypeCategory],
+    tupleNameSigTbl: Table[string, string],
 ): (string, string) =
   case api.kind
   of nkTypeDef:
     result = self.translateType(api)
   of nkProcDef, nkFuncDef, nkMethodDef:
-    result = self.translateProc(api, flagTbl, flagList)
+    result = self.translateProc(api, flagTbl, flagList, namedTypeTbl, tupleNameSigTbl)
   else:
     result = (api.itemName, "Cannot translate Api to Swift")
 
@@ -205,7 +233,9 @@ proc generateSwiftWrapperContent(
 ): string =
   var swiftApis: OrderedTable[string, string]
   for api in bindingAST:
-    let (apiId, trApi) = self.translateApi(api, flagEnumRevrsLookupTbl, flagEnums)
+    let (apiId, trApi) = self.translateApi(
+      api, flagEnumRevrsLookupTbl, flagEnums, namedTypes, anonymousTuplesNameToSig
+    )
     swiftApis[apiId] = trApi
   swiftApis = self.handleEnumFlags(swiftApis)
   swiftApis = collect(initOrderedTable):
