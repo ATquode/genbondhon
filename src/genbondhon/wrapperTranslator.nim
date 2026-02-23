@@ -140,6 +140,8 @@ proc translateProc(node: PNode): string =
       &"""let ({valNames.join(", ")}) = {procCallStmt}
   when defined(cpp):
     return {(if true: "makePair" else: "makeTuple")}({valNames.zip(tupleMemberTypes).map(x => "$#" % [x[0].convertType(x[1], ConvertDirection.toC, flagEnums.contains(x[1]))]).join(", ")})
+  elif defined(js):
+    return @[{valNames.zip(tupleMemberTypes).map(x => "$#.toJs" % [x[0].convertType(x[1], ConvertDirection.toC, flagEnums.contains(x[1]))]).join(", ")}]
   else:
     return {retType}({valNames.zip(tupleMemberTypes).map(x => "$#: $#" % [x[0], x[0].convertType(x[1], ConvertDirection.toC, flagEnums.contains(x[1]))]).join(", ")})"""
     else:

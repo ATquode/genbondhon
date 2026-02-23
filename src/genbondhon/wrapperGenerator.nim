@@ -38,13 +38,17 @@ func handleCppEnums(enumASTs: seq[PNode]): (string, string) =
 
 func handleAnonymousTuples(
     anonymousTupleTbl: Table[string, string]
-): Table[string, string] =
+): (Table[string, string], Table[string, string]) =
+  var jsTupleTbl, tupleTbl: Table[string, string]
   for key, val in anonymousTupleTbl.pairs:
     let memberTypes = val.split(",")
+    let tupleDefJs = &"type {key} = seq[JsObject]"
     let tupleDef =
       &"""type {key}* {{.importc, header: "helper_types.h".}} = object
-    {generateValNames(memberTypes.len).zip(memberTypes).map(x => x[0] & "*: " & nimAndCompatTypeTbl.getOrDefault(x[1], x[1])).join("\n    ")}"""
-    result[key] = tupleDef
+      {generateValNames(memberTypes.len).zip(memberTypes).map(x => x[0] & "*: " & nimAndCompatTypeTbl.getOrDefault(x[1], x[1])).join("\n      ")}"""
+    jsTupleTbl[key] = tupleDefJs
+    tupleTbl[key] = tupleDef
+  result = (jsTupleTbl, tupleTbl)
 
 func handleAnonymousCppTuples(
     tupleNames: seq[string], anonymousTupleSigTbl: Table[string, string]
@@ -60,7 +64,9 @@ func handleAnonymousCppTuples(
   result = cppTuples.join("\n  ")
 
 proc getCppDefs(
-    unwrappableAST: seq[PNode], anonymousTupleTbl: Table[string, string]
+    unwrappableAST: seq[PNode],
+    anonymousTupleTblJs: Table[string, string],
+    anonymousTupleTbl: Table[string, string],
 ): string =
   var cppTypes, altTypes: seq[string]
 
@@ -107,27 +113,40 @@ proc getCppDefs(
 
     cppTypes.add(cppPairType)
     cppTypes.add(cppTuples)
-    altTypes.add(anonymousTupleTbl.values.toSeq.join("\n\n  "))
 
   result =
     &"""when defined(cpp):
   {cppTypes.join("\n\n  ")}
 
 else:
-  {altTypes.join("\n  ")}"""
+  {altTypes.join("\n  ")}
+  when defined(js):
+    {anonymousTupleTblJs.values.toSeq.join("\n    ")}
+  else:
+    {anonymousTupleTbl.values.toSeq.join("\n    ")}"""
 
 proc generateWrapperFileContent(
     wrappedApis: string, unwrappableAST: seq[PNode], typeDefs, apiNames: seq[string]
 ): string =
   let modulePath = relativeModulePath()
 
-  let stdImportForFlagEnums =
-    if flagEnums.len > 0:
-      &"""import std/[bitops, sequtils]"""
+  let stdImportFlagEnumsCommon = if flagEnums.len > 0: "import std/sequtils" else: ""
+
+  let flagEnumsJsImport = if flagEnums.len > 0: "bitops" else: ""
+  let tupleJsImport = if anonymousTuplesNameToSig.len > 0: "jsffi" else: ""
+  let stdImportJsSeq = [flagEnumsJsImport, tupleJsImport].filterIt(it != "")
+  let stdImportForJsPart =
+    if stdImportJsSeq.len > 1:
+      &"""[{stdImportJsSeq.join(", ")}]"""
     else:
-      ""
-  let importSection =
-    [stdImportForFlagEnums, &"import {modulePath}"].filterIt(it != "").join("\n")
+      stdImportJsSeq[0]
+  let stdImportForJs =
+    &"""when defined(js):
+  import std/{stdImportForJsPart}"""
+
+  let importSection = [stdImportFlagEnumsCommon, stdImportForJs, &"import {modulePath}"]
+    .filterIt(it != "")
+    .join("\n")
 
   let q3 = "\"\"\""
 
@@ -157,8 +176,8 @@ else:
     else:
       ""
 
-  let tupleTbl = handleAnonymousTuples(anonymousTuplesNameToSig)
-  let cppDefs = getCppDefs(unwrappableAST, tupleTbl)
+  let (jsTupleTbl, tupleTbl) = handleAnonymousTuples(anonymousTuplesNameToSig)
+  let cppDefs = getCppDefs(unwrappableAST, jsTupleTbl, tupleTbl)
 
   # extern "C" is hardcoded for NimMain for cpp dynamic lib compilation, so workaround applied.
   let nimMainStr =

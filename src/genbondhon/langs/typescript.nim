@@ -43,8 +43,24 @@ export enum {enumName} {{
 }}"""
   result = (enumName, trResult)
 
+func convertTypeToStdType(
+    paramType: string, tupleNameSigTbl: Table[string, string]
+): string =
+  if tupleNameSigTbl.contains(paramType):
+    let signature = tupleNameSigTbl[paramType]
+    let memberTypes = signature.split(",")
+    let memberList = memberTypes
+      .map(x => nimAndCompatTypeTbl.getOrDefault(x, x).replaceType)
+      .join(", ")
+    result = &"[{memberList}]"
+  else:
+    result = paramType
+
 func translateProc(
-    node: PNode, flagLookupTbl: Table[string, Table[string, string]]
+    node: PNode,
+    flagLookupTbl: Table[string, Table[string, string]],
+    namedTypeTbl: Table[string, NamedTypeCategory],
+    tupleNameSigTbl: Table[string, string],
 ): (string, string) =
   let funcName = node.itemName
   if funcName == "NimMain":
@@ -57,7 +73,8 @@ func translateProc(
     let formalParamNode = paramNode.get()
     for i in 1 ..< formalParamNode.safeLen:
       let paramNames = formalParamNode[i].paramNames
-      let paramType = formalParamNode[i].paramType
+      var paramType = formalParamNode[i].paramType
+      paramType = paramType.revertParamTypeToNimNativeType(namedTypeTbl)
       let origParamType =
         if hasFlagEnum:
           checkRestoreFlagEnumType(paramNames[0], paramType, flagLookupTbl[funcName])
@@ -71,6 +88,8 @@ func translateProc(
   let origRetType =
     if hasFlagEnum:
       checkRestoreFlagEnumType(retTypeLookupKey, retType, flagLookupTbl[funcName])
+    elif tupleNameSigTbl.contains(retType):
+      convertTypeToStdType(retType, tupleNameSigTbl)
     else:
       retType
   let retTypePart =
@@ -84,13 +103,17 @@ export function {funcName}({trParamList.join(", ")}){retTypePart};"""
   result = (funcName, trResult)
 
 func translateApi(
-    self: TypeScriptLangGen, api: PNode, flagTbl: Table[string, Table[string, string]]
+    self: TypeScriptLangGen,
+    api: PNode,
+    flagTbl: Table[string, Table[string, string]],
+    namedTypeTbl: Table[string, NamedTypeCategory],
+    tupleNameSigTbl: Table[string, string],
 ): (string, string) =
   case api.kind
   of nkTypeDef:
     result = self.translateType(api)
   of nkProcDef, nkFuncDef, nkMethodDef:
-    result = translateProc(api, flagTbl)
+    result = translateProc(api, flagTbl, namedTypeTbl, tupleNameSigTbl)
   else:
     result = (&"fail-{$api.kind}", "Cannot translate Api to TypeScript")
 
@@ -113,10 +136,13 @@ func generateTypeScriptWrapperContent(
     self: TypeScriptLangGen,
     bindingAST: seq[PNode],
     flagLookupTbl: Table[string, Table[string, string]],
+    namedTypeTbl: Table[string, NamedTypeCategory],
+    tupleNameSigTbl: Table[string, string],
 ): string =
   var typescriptApis: OrderedTable[string, string]
   for api in bindingAST:
-    let (apiId, trApi) = self.translateApi(api, flagLookupTbl)
+    let (apiId, trApi) =
+      self.translateApi(api, flagLookupTbl, namedTypeTbl, tupleNameSigTbl)
     typescriptApis[apiId] = trApi
   typescriptApis = self.handleEnumFlags(typescriptApis)
   typescriptApis = collect(initOrderedTable):
@@ -129,8 +155,9 @@ func generateTypeScriptWrapperContent(
 """
 
 proc generateTypeScriptDeclaration(self: TypeScriptLangGen, bindingAST: seq[PNode]) =
-  let content =
-    self.generateTypeScriptWrapperContent(bindingAST, flagEnumRevrsLookupTbl)
+  let content = self.generateTypeScriptWrapperContent(
+    bindingAST, flagEnumRevrsLookupTbl, namedTypes, anonymousTuplesNameToSig
+  )
   if showVerboseOutput:
     styledEcho fgGreen, "TypeScript Declaration file content:"
     echo content

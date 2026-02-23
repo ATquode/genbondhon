@@ -32,6 +32,7 @@ import {
   getLeastPriviledgedPermission,
   requestAccess,
   addIntNum2,
+  divMod,
 } from "./nomuna";
 
 noop();
@@ -93,3 +94,5 @@ let reqRes = requestAccess(FilePermission.Write, "/");
 console.log(`Request access result: ${reqRes}`);
 let l = addIntNum2(11, 14);
 console.log(l);
+let [m, n] = divMod(10, 3);
+console.log(`${m}, ${n}`);
