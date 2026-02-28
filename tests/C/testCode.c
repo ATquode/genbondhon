@@ -67,5 +67,10 @@ int main() {
     printf("%d\n", l);
     Int2Tuple divRes = divMod(10, 3);
     printf("%d, %d\n", divRes.val1, divRes.val2);
+    Int2Tuple position;
+    position.val1 = 1;
+    position.val2 = 2;
+    Int3Tuple position3d = extendTo3D(position, 3);
+    printf("%d, %d, %d\n", position3d.val1, position3d.val2, position3d.val3);
     return 0;
 }
