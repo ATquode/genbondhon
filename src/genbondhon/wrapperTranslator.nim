@@ -137,23 +137,18 @@ proc translateProc(node: PNode): string =
     else:
       &""": {retType.replaceType}"""
   let procCallStmt = &"""{moduleName}.{procName}({callableParamList.join(", ")})"""
-  let valNames =
-    if anonymousTuplesNameToSig.contains(retType):
-      generateValNames(callableParamList.len)
-    else:
-      @[]
-  let tupleMemberTypes =
-    if anonymousTuplesNameToSig.contains(retType):
-      anonymousTuplesNameToSig[retType].split(",")
-    else:
-      @[]
+  var valNames: seq[string]
+  var tupleMemberTypes: seq[string]
+  if anonymousTuplesNameToSig.contains(retType):
+    tupleMemberTypes = anonymousTuplesNameToSig[retType].split(",")
+    valNames = generateValNames(tupleMemberTypes.len)
   var retBody =
     if retType == "":
       procCallStmt
     elif anonymousTuplesNameToSig.contains(retType):
       &"""let ({valNames.join(", ")}) = {procCallStmt}
   when defined(cpp):
-    return {(if true: "makePair" else: "makeTuple")}({valNames.zip(tupleMemberTypes).map(x => "$#" % [x[0].convertType(x[1], ConvertDirection.toC, flagEnums.contains(x[1]))]).join(", ")})
+    return {(if tupleMemberTypes.len == 2: "makePair" else: "makeTuple")}({valNames.zip(tupleMemberTypes).map(x => "$#" % [x[0].convertType(x[1], ConvertDirection.toC, flagEnums.contains(x[1]))]).join(", ")})
   elif defined(js):
     return @[{valNames.zip(tupleMemberTypes).map(x => "$#.toJs" % [x[0].convertType(x[1], ConvertDirection.toC, flagEnums.contains(x[1]))]).join(", ")}]
   else:

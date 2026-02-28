@@ -107,7 +107,13 @@ proc getCppDefs(
 
   proc makePair[T1, T2](
     a: T1, b: T2
-  ): CppPair[T1, T2] {{.importcpp: "std::make_pair(@)", header: "<utility>".}}"""
+  ): CppPair[T1, T2] {{.importcpp: "std::make_pair(@)", header: "<utility>".}}
+  
+  type CppTuple[T1, T2, T3] {{.importcpp: "std::tuple", header: "<utility>".}} = object
+  
+  proc makeTuple[T1, T2, T3](
+    a: T1, b: T2, c: T3
+  ): CppTuple[T1, T2, T3] {{.importcpp: "std::make_tuple(@)", header: "<utility>".}}"""
     let cppTuples =
       handleAnonymousCppTuples(anonymousTupleTbl.keys.toSeq, anonymousTuplesNameToSig)
 
