@@ -105,6 +105,14 @@ proc getCppDefs(
     let cppPairType =
       &"""type CppPair[T1, T2] {{.importcpp: "std::pair", header: "<utility>".}} = object
 
+  proc val1[T1, T2](
+    this: CppPair[T1, T2]
+  ): T1 {{.importcpp: "#.first", header: "<utility>".}}
+
+  proc val2[T1, T2](
+    this: CppPair[T1, T2]
+  ): T1 {{.importcpp: "#.second", header: "<utility>".}}
+
   proc makePair[T1, T2](
     a: T1, b: T2
   ): CppPair[T1, T2] {{.importcpp: "std::make_pair(@)", header: "<utility>".}}
