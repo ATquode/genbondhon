@@ -78,7 +78,12 @@ proc translateProc(node: PNode): string =
   for i in 1 ..< formalParamNode.safeLen:
     var paramIsFlagEnum = false
     let paramNames = formalParamNode[i].paramNames
-    let paramType = formalParamNode[i].paramType
+    let formalParamTypeNode = formalParamNode[i][formalParamNode[i].len - 2]
+    let paramType =
+      if formalParamTypeNode.kind == nkTupleConstr:
+        formalParamTypeNode.getRegAnonymousTupleType()
+      else:
+        formalParamNode[i].paramType
     var trParamType = paramType.replaceType
     trParamType = convertProcParamTypeForCppCompilation(trParamType, namedTypes)
     if flagEnums.contains(paramType):
@@ -90,9 +95,18 @@ proc translateProc(node: PNode): string =
       flagEnumRevrsLookupTbl[procName] = procTable
     let trParam = &"""{paramNames.join(", ")}: {trParamType}"""
     trParamList.add(trParam)
+    var valNames: seq[string]
+    var tupleMemberTypes: seq[string]
+    if anonymousTuplesNameToSig.contains(paramType):
+      tupleMemberTypes = anonymousTuplesNameToSig[paramType].split(",")
+      valNames = generateValNames(tupleMemberTypes.len)
     for paramName in paramNames:
+      let paramNameCopy = paramName
       let callableParam =
-        &"{paramName.convertType(paramType.replaceType, ConvertDirection.fromC, flagEnums.contains(paramType))}"
+        if anonymousTuplesNameToSig.contains(paramType):
+          &"""({valNames.zip(tupleMemberTypes).map(x => paramNameCopy & "." & x[0].convertType(x[1].replaceType, ConvertDirection.fromC, flagEnums.contains(x[1].replaceType))).join(", ")})"""
+        else:
+          &"{paramName.convertType(paramType.replaceType, ConvertDirection.fromC, flagEnums.contains(paramType))}"
       if paramIsFlagEnum:
         if callableParamListJs.len == 0:
           callableParamListJs = callableParamList

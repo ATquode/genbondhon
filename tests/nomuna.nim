@@ -168,3 +168,162 @@ proc divMod*(a, b: int): (int, int) =
   let q = a div b
   let r = a mod b
   return (q, r)
+
+proc extendTo3D*(point: (int, int), zValue: int): (int, int, int) =
+  ## Takes a 2-member tuple and returns a 3-member tuple
+  let (x, y) = point # Unpacking the input tuple
+  return (x, y, zValue)
+
+#[ binding_api.nim
+
+type IntArray* {.importc, header: "helper_types.h".} = object
+  len*: cint
+  data*: ptr UncheckedArray[cint]
+
+proc malloc(size: int): pointer {.importc: "malloc", header: "<stdlib.h>".}
+
+proc divMod*(a, b: cint): IntArray {.raises: [], exportc, cdecl, dynlib.} =
+  let (val1, val2) = nomuna.divMod(a.int, b.int)
+  let arr = cast[ptr UncheckedArray[cint]](malloc(sizeof(cint) * 2))
+  arr[0] = val1.cint
+  arr[1] = val2.cint
+  result.len = 2
+  result.data = arr
+]#
+
+#[ nomuna.h
+
+typedef struct
+{
+    int len;
+    int* data;
+} IntArray;
+
+IntArray divMod(int a, int b);
+]#
+
+#[ helper_types.h
+
+#ifndef HELPER_TYPES_H
+#define HELPER_TYPES_H
+
+typedef struct
+{
+    int len;
+    int* data;
+} IntArray;
+
+#endif /* HELPER_TYPES_H */
+]#
+
+#[
+{
+  "kind": "nkProcDef",
+  "info": ["nomuna.nim", 157, 0],
+  "sons": [
+    {
+      "kind": "nkPostfix",
+      "info": ["nomuna.nim", 157, 11],
+      "sons": [
+        {
+          "kind": "nkIdent",
+          "info": ["nomuna.nim", 157, 11],
+          "ident": "*",
+          "typ": 
+        },
+        {
+          "kind": "nkIdent",
+          "info": ["nomuna.nim", 157, 5],
+          "ident": "divMod",
+          "typ": 
+        }
+      ],
+      "typ": 
+    },
+    {
+      "kind": "nkEmpty",
+      "info": ["???", 0, -1],
+      "typ": 
+    },
+    {
+      "kind": "nkEmpty",
+      "info": ["???", 0, -1],
+      "typ": 
+    },
+    {
+      "kind": "nkFormalParams",
+      "info": ["nomuna.nim", 157, 12],
+      "sons": [
+        {
+          "kind": "nkTupleConstr",
+          "info": ["nomuna.nim", 157, 25],
+          "sons": [
+            {
+              "kind": "nkIdent",
+              "info": ["nomuna.nim", 157, 26],
+              "ident": "int",
+              "typ": 
+            },
+            {
+              "kind": "nkIdent",
+              "info": ["nomuna.nim", 157, 31],
+              "ident": "int",
+              "typ": 
+            }
+          ],
+          "typ": 
+        },
+        {
+          "kind": "nkIdentDefs",
+          "info": ["nomuna.nim", 157, 13],
+          "sons": [
+            {
+              "kind": "nkIdent",
+              "info": ["nomuna.nim", 157, 13],
+              "ident": "a",
+              "typ": 
+            },
+            {
+              "kind": "nkIdent",
+              "info": ["nomuna.nim", 157, 16],
+              "ident": "b",
+              "typ": 
+            },
+            {
+              "kind": "nkIdent",
+              "info": ["nomuna.nim", 157, 19],
+              "ident": "int",
+              "typ": 
+            },
+            {
+              "kind": "nkEmpty",
+              "info": ["nomuna.nim", 157, 22],
+              "typ": 
+            }
+          ],
+          "typ": 
+        }
+      ],
+      "typ": 
+    }
+  ],
+  "typ": 
+}
+]#
+
+# func getPermission*(username: string): FilePermissions =
+#   if username == "admin":
+#     result = {FilePermission.read, FilePermission.write, FilePermission.execute}
+#   elif username == "user":
+#     result = {FilePermission.read, FilePermission.execute}
+#   else:
+#     result = {FilePermission.execute}
+
+# func requestPermission*(user: string, permission: FilePermission): bool =
+#   case permission
+#   of FilePermission.read:
+#     return user == "user" or user == "admin"
+#   of FilePermission.write:
+#     return user == "admin"
+#   of FilePermission.execute:
+#     return true
