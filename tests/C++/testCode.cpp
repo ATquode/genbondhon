@@ -74,5 +74,8 @@ int main() {
     cout << o << endl;
     std::pair<int, int> p = divMod(10, 3);
     cout << p.first << ", " << p.second << endl;
+    std::pair<int, int> position {1, 2};
+    std::tuple<int, int, int> position3d = extendTo3D(position, 3);
+    cout << std::get<0>(position3d) << ", " << std::get<1>(position3d) << ", " << std::get<2>(position3d) << endl;
     return 0;
 }

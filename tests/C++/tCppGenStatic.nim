@@ -34,7 +34,8 @@ admin has permission value: 0x02
 Least priviledged permission value: 0x01
 Request access result: false
 25
-3, 1'''
+3, 1
+1, 2, 3'''
 """
 #!fmt: on
 
