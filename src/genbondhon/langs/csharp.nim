@@ -113,18 +113,18 @@ func translateProc(
   var retType = "void"
   var trParamList, wrParamList, callableParamList: seq[string]
   var marshalledIndexList: seq[int]
+  var csTupleTbl: Table[string, (string, string)]
   if paramNode.isSome:
     let formalParamNode = paramNode.get()
     for i in 1 ..< formalParamNode.safeLen:
       let paramNames = formalParamNode[i].paramNames
       var paramType = formalParamNode[i].paramType
       paramType = paramType.revertParamTypeToNimNativeType(namedTypeTbl)
-      paramType = paramType.convertTypeToStdType(tupleNameSigTbl)
       let origParamType =
         if hasFlagEnum:
           checkRestoreFlagEnumType(paramNames[0], paramType, flagLookupTbl[funcName])
         else:
-          paramType
+          paramType.convertTypeToStdType(tupleNameSigTbl)
       for paramName in paramNames:
         var trParam = &"{origParamType.replaceType} {paramName}"
         var callableParam = paramName
@@ -136,6 +136,14 @@ func translateProc(
           let wrParam = &"{wrapType} {paramName}"
           wrParamList.add(wrParam)
           callableParam = &"({wrapType}){paramName}"
+        elif tupleNameSigTbl.contains(paramType):
+          shouldWrap = true
+          if wrParamList.len == 0:
+            wrParamList = trParamList
+          let wrParam = &"{paramType} {paramName}"
+          wrParamList.add(wrParam)
+          csTupleTbl[paramType] = (paramName, "s" & paramName.capitalizeAscii)
+          callableParam = csTupleTbl[paramType][1]
         elif shouldWrap:
           let wrParam = trParam
           wrParamList.add(wrParam)
@@ -181,7 +189,7 @@ func translateProc(
     &"""{origRetType.replaceType} {funcName.capitalizeAscii}({trParamList.join(", ")})"""
   let wrProc = &"""{wrRetType} {funcName.wrapperFuncName}({wrParamList.join(", ")})"""
   let procCallStmt = &"""{funcName.wrapperFuncName}({callableParamList.join(", ")})"""
-  let retBody =
+  var retBody =
     if wrRetType == "void":
       &"""
             {procCallStmt};"""
@@ -197,6 +205,23 @@ func translateProc(
       &"""
             var data = {procCallStmt};
             return data;"""
+  if csTupleTbl.len > 0:
+    var tupleSetups: seq[string]
+    for key, value in csTupleTbl:
+      let typeName = key
+      let paramName = value[0]
+      let varName = value[1]
+      let memberCount = tupleNameSigTbl[key].split(",").len
+      let tupleSetup =
+        &"""
+            {typeName} {varName} = new()
+            {{
+                {(1..memberCount).toSeq.map(i => "val$# = $#.Item$#" % [$i, paramName, $i]).join(",\n" & "    ".repeat(4))}
+            }};"""
+      tupleSetups.add(tupleSetup)
+    retBody =
+      &"""{tupleSetups.join("    ".repeat(3))}
+{retBody}"""
   let externProc = if shouldWrap: wrProc else: trProc
   let accessor = if shouldWrap: "private" else: "public"
   var trResult =

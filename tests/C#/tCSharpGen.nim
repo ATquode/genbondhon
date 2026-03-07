@@ -34,7 +34,8 @@ admin has permission: Write, value: 0x02
 Least priviledged permission: Read, value: 0x01
 Request access result: False
 25
-3, 1'''
+3, 1
+1, 2, 3'''
   disabled: unix
 """
 #!fmt: on

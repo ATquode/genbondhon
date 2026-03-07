@@ -60,3 +60,6 @@ int k = Nomuna.AddIntNum2(11, 14);
 Console.WriteLine(k);
 (int l, int m) = Nomuna.DivMod(10, 3);
 Console.WriteLine($"{l}, {m}");
+var position = (1, 2);
+var position3d = Nomuna.ExtendTo3D(position, 3);
+Console.WriteLine($"{position3d.Item1}, {position3d.Item2}, {position3d.Item3}");
