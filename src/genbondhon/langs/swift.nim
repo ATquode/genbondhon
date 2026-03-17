@@ -124,16 +124,23 @@ func translateProc(
         if hasFlagEnum:
           checkRestoreFlagEnumType(paramNames[0], paramType, flagLookupTbl[funcName])
         else:
-          paramType
+          paramType.convertTypeToStdType(tupleNameSigTbl)
       for paramName in paramNames:
         let trParam = &"{paramName}: {origParamType.replaceType}"
         trParamList.add(trParam)
-        let callableParam = paramName.convertType(
-          origParamType.replaceType,
-          ConvertDirection.toC,
-          self.cModuleName,
-          self.typeCategory(origParamType),
-        )
+        var callableParam = paramName
+        let paramNameCopy = paramName
+        if tupleNameSigTbl.contains(paramType):
+          let memberTypes = tupleNameSigTbl[paramType].split(",")
+          callableParam =
+            &"""{paramType}({(1..memberTypes.len).toSeq.zip(memberTypes).map(x => "val$#: $#" % [$x[0], (paramNameCopy & "." & $(x[0]-1)).convertType(nimAndCompatTypeTbl.getOrDefault(x[1], x[1]).replaceType, ConvertDirection.toC, self.cModuleName, self.typeCategory(x[1]))]).join(", ")})"""
+        else:
+          callableParam = paramName.convertType(
+            origParamType.replaceType,
+            ConvertDirection.toC,
+            self.cModuleName,
+            self.typeCategory(origParamType),
+          )
         callableParamList.add(callableParam)
     if formalParamNode[0].kind != nkEmpty:
       retType = formalParamNode[0].ident.s
