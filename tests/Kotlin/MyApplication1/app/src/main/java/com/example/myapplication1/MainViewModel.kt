@@ -50,6 +50,9 @@ class MainViewModel : ViewModel() {
         Log.d("nomuna", "$a")
         val (b, c) = nomuna.divMod(10, 3)
         Log.d("nomuna", "$b, $c")
+        val position = Pair(1, 2)
+        val position3D = nomuna.extendTo3D(position, 3);
+        Log.d("nomuna", "${position3D.first}, ${position3D.second}, ${position3D.third}")
     }
 
     val retCardUiState =

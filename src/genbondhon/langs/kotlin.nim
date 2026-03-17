@@ -102,6 +102,8 @@ func translateProcToJNI(
       if self.typeCategory(origParamType) == NamedTypeCategory.enumType:
         trParamType = "jint" # Kotlin enum -> JNI jint
         wrFuncName = funcName.wrapperFuncName
+      elif tupleNameSigTbl.contains(origParamType):
+        trParamType = "jobject"
       for paramName in paramNames:
         let trParam = &"{trParamType} {paramName}"
         trParamList.add(trParam)
@@ -111,6 +113,16 @@ func translateProcToJNI(
         elif self.typeCategory(origParamType) == NamedTypeCategory.enumType:
           jenumTbl[paramName] = ("c_" & paramName, origParamType)
           callableParamList.add(jenumTbl[paramName][0])
+        elif tupleNameSigTbl.contains(origParamType):
+          let memberTypes = tupleNameSigTbl[origParamType].split(",")
+          let createTupleFunc =
+            case memberTypes.len
+            of 2: "createCppPairPrimitive"
+            of 3: "createCppTuplePrimitive"
+            else: "unsupported"
+          let callableTuple =
+            &"""{createTupleFunc}<{memberTypes.join(", ")}>(env, {paramName})"""
+          callableParamList.add(callableTuple)
         else:
           let callableParam = paramName.convertTypeJNI(trParamType)
           callableParamList.add(callableParam)
@@ -175,7 +187,10 @@ func translateProcToJNI(
         &"auto data = {procCallStmt}"
     let memberLen = tupleNameSigTbl[retType].split(",").len
     let createTupleFunc =
-      if memberLen == 2: "createKotlinPairPrimitive" else: "unimplemented"
+      case memberLen
+      of 2: "createKotlinPairPrimitive"
+      of 3: "createKotlinTriplePrimitive"
+      else: "unsupported"
     retBody =
       &"""{procCallLine};
     return {createTupleFunc}(env, data);"""
@@ -216,32 +231,46 @@ proc generateJNIWrapperContent(
     if trApi != "":
       jniApis.add(trApi)
   let stringHeader = if useCppPairTuple: "#include <string>" else: ""
+  let mapHeader = if useCppPairTuple: "#include <map>" else: ""
   let cppHeader = &"""#include "{self.headerFileName.string}""""
-  let includePart =
-    ["#include <jni.h>", stringHeader, cppHeader].filterIt(it != "").join("\n")
+  let includePart = ["#include <jni.h>", stringHeader, mapHeader, cppHeader]
+    .filterIt(it != "")
+    .join("\n")
 
+  let constPart =
+    if useCppPairTuple:
+      &"""std::map<std::string, std::string> typeSignMap = {{
+    {{"Integer", "I"}},
+    {{"Double", "D"}},
+    {{"Boolean", "Z"}},
+    {{"Long", "J"}},
+    {{"Float", "F"}}
+}};"""
+    else:
+      ""
   let templatePart =
     if useCppPairTuple:
       &"""template<typename T>
-jobject boxPrimitive(JNIEnv *env, T value) {{
-    std::string dataType, typeSign;
-
+std::string getDataType() {{
     if constexpr (std::is_same_v<T, jint>) {{
-        dataType = "Integer";
-        typeSign = "I";
+        return "Integer";
     }} else if constexpr (std::is_same_v<T, jdouble>) {{
-        dataType = "Double";
-        typeSign = "D";
+        return "Double";
     }} else if constexpr (std::is_same_v<T, jboolean>) {{
-        dataType = "Boolean";
-        typeSign = "Z";
+        return "Boolean";
     }} else if constexpr (std::is_same_v<T, jlong>) {{
-        dataType = "Long";
-        typeSign = "J";
+        return "Long";
     }} else if constexpr (std::is_same_v<T, jfloat>) {{
-        dataType = "Float";
-        typeSign = "F";
+        return "Float";
+    }} else {{
+        return "Unsupported type";
     }}
+}}
+
+template<typename T>
+jobject boxPrimitive(JNIEnv *env, T value) {{
+    std::string dataType = getDataType<T>();
+    std::string typeSign = typeSignMap[dataType];
 
     std::string className = "java/lang/" + dataType;
     std::string signature = "(" + typeSign + ")" + "L" + className + ";";
@@ -251,6 +280,29 @@ jobject boxPrimitive(JNIEnv *env, T value) {{
     return env->CallStaticObjectMethod(cls, valueOfMethod, value);
 }}
 
+template<typename T>
+T unboxPrimitive(JNIEnv *env, jobject obj) {{
+    std::string dataType = getDataType<T>();
+    std::string methodName = dataType;
+    methodName[0] = static_cast<char>(std::tolower(static_cast<unsigned char>(dataType[0])));
+    if (methodName == "integer") {{
+        methodName = "int";
+    }}
+    methodName += "Value";
+    std::string typeSign = typeSignMap[dataType];
+
+    std::string className = "java/lang/" + dataType;
+    std::string signature = "()" + typeSign;
+    jclass cls = env->FindClass(className.c_str());
+    jmethodID valueMethod = env->GetMethodID(cls, methodName.c_str(), signature.c_str());
+
+    if constexpr (std::is_same_v<T, jint>) return env->CallIntMethod(obj, valueMethod);
+    else if constexpr (std::is_same_v<T, jfloat>) return env->CallFloatMethod(obj, valueMethod);
+    else if constexpr (std::is_same_v<T, jdouble>) return env->CallDoubleMethod(obj, valueMethod);
+    else if constexpr (std::is_same_v<T, jboolean>) return env->CallBooleanMethod(obj, valueMethod);
+    else if constexpr (std::is_same_v<T, jlong>) return env->CallLongMethod(obj, valueMethod);
+}}
+
 template <typename T1, typename T2>
 jobject createKotlinPairPrimitive(JNIEnv *env, std::pair<T1, T2> p) {{
     jobject firstObj = boxPrimitive(env, p.first);
@@ -258,11 +310,48 @@ jobject createKotlinPairPrimitive(JNIEnv *env, std::pair<T1, T2> p) {{
     jclass pairClass = env->FindClass("kotlin/Pair");
     jmethodID constructor = env->GetMethodID(pairClass, "<init>", "(Ljava/lang/Object;Ljava/lang/Object;)V");
     return env->NewObject(pairClass, constructor, firstObj, secondObj);
+}}
+
+template <typename T1, typename T2, typename T3>
+jobject createKotlinTriplePrimitive(JNIEnv *env, std::tuple<T1, T2, T3> tuple) {{
+    jobject firstObj = boxPrimitive(env, std::get<0>(tuple));
+    jobject secondObj = boxPrimitive(env, std::get<1>(tuple));
+    jobject thirdObj = boxPrimitive(env, std::get<2>(tuple));
+    jclass tripleClass = env->FindClass("kotlin/Triple");
+    jmethodID constructor = env->GetMethodID(tripleClass, "<init>", "(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)V");
+    return env->NewObject(tripleClass, constructor, firstObj, secondObj, thirdObj);
+}}
+
+template <typename T1, typename T2>
+std::pair<T1, T2> createCppPairPrimitive(JNIEnv *env, jobject p) {{
+    jclass pairClass = env->FindClass("kotlin/Pair");
+    jfieldID firstField = env->GetFieldID(pairClass, "first", "Ljava/lang/Object;");
+    jfieldID secondField = env->GetFieldID(pairClass, "second", "Ljava/lang/Object;");
+    jobject firstObj = env->GetObjectField(p, firstField);
+    jobject secondObj = env->GetObjectField(p, secondField);
+    auto firstVal = unboxPrimitive<T1>(env, firstObj);
+    auto secondVal = unboxPrimitive<T2>(env, secondObj);
+    return std::make_pair(firstVal, secondVal);
+}}
+
+template <typename T1, typename T2, typename T3>
+std::tuple<T1, T2, T3> createCppTuplePrimitive(JNIEnv *env, jobject t) {{
+    jclass tripleClass = env->FindClass("kotlin/Triple");
+    jfieldID firstField = env->GetFieldID(tripleClass, "first", "Ljava/lang/Object;");
+    jfieldID secondField = env->GetFieldID(tripleClass, "second", "Ljava/lang/Object;");
+    jfieldID thirdField = env->GetFieldID(tripleClass, "third", "Ljava/lang/Object;");
+    jobject firstObj = env->GetObjectField(t, firstField);
+    jobject secondObj = env->GetObjectField(t, secondField);
+    jobject thirdObj = env->GetObjectField(t, thirdField);
+    auto firstVal = unboxPrimitive<T1>(env, firstObj);
+    auto secondVal = unboxPrimitive<T2>(env, secondObj);
+    auto thirdVal = unboxPrimitive<T3>(env, thirdObj);
+    return std::make_tuple(firstVal, secondVal, thirdVal);
 }}"""
     else:
       ""
 
-  let topPart = [includePart, templatePart].filterIt(it != "").join("\n\n")
+  let topPart = [includePart, constPart, templatePart].filterIt(it != "").join("\n\n")
 
   result =
     &"""
@@ -394,7 +483,7 @@ func translateProc(
         if hasFlagEnum:
           checkRestoreFlagEnumType(paramNames[0], paramType, flagLookupTbl[funcName])
         else:
-          paramType
+          paramType.convertTypeToStdType(tupleNameSigTbl)
       for paramName in paramNames:
         let trParam = &"{paramName}: {origParamType.replaceType}"
         var callableParam = paramName
