@@ -75,6 +75,7 @@ proc translateProc(node: PNode): string =
   var trParamList, callableParamList, callableParamListJs, flagNameListJs =
     newSeq[string]()
   var hasFlagEnum = false
+  var needJsFuncCall = false
   for i in 1 ..< formalParamNode.safeLen:
     var paramIsFlagEnum = false
     let paramNames = formalParamNode[i].paramNames
@@ -113,6 +114,15 @@ proc translateProc(node: PNode): string =
         let callableParamJs = paramName & "Flag"
         flagNameListJs.add(callableParamJs)
         callableParamListJs.add(callableParamJs)
+      elif anonymousTuplesNameToSig.contains(paramType):
+        needJsFuncCall = true
+        if callableParamListJs.len == 0:
+          callableParamListJs = callableParamList
+        let callableParamJs = (0 ..< tupleMemberTypes.len).toSeq
+          .zip(tupleMemberTypes)
+          .map(x => "$#[$#].to($#)" % [paramNameCopy, $x[0], x[1]])
+          .join(", ")
+        callableParamListJs.add("($#)".format(callableParamJs))
       else:
         callableParamListJs.add(callableParam)
       callableParamList.add(callableParam)
@@ -136,7 +146,16 @@ proc translateProc(node: PNode): string =
       ""
     else:
       &""": {retType.replaceType}"""
-  let procCallStmt = &"""{moduleName}.{procName}({callableParamList.join(", ")})"""
+  let procCallNormal = &"""{moduleName}.{procName}({callableParamList.join(", ")})"""
+  let procCallJs = &"""{moduleName}.{procName}({callableParamListJs.join(", ")})"""
+  let procCallStmt =
+    if needJsFuncCall:
+      &"""when defined(js):
+    {procCallJs}
+  else:
+    {procCallNormal}"""
+    else:
+      procCallNormal
   var valNames: seq[string]
   var tupleMemberTypes: seq[string]
   if anonymousTuplesNameToSig.contains(retType):
@@ -146,7 +165,7 @@ proc translateProc(node: PNode): string =
     if retType == "":
       procCallStmt
     elif anonymousTuplesNameToSig.contains(retType):
-      &"""let ({valNames.join(", ")}) = {procCallStmt}
+      &"""let ({valNames.join(", ")}) = {(if needJsFuncCall: "\n    " & procCallStmt.replace("\n", "\n  ") else: procCallStmt)}
   when defined(cpp):
     return {(if tupleMemberTypes.len == 2: "makePair" else: "makeTuple")}({valNames.zip(tupleMemberTypes).map(x => "$#" % [x[0].convertType(x[1], ConvertDirection.toC, flagEnums.contains(x[1]))]).join(", ")})
   elif defined(js):
@@ -154,11 +173,17 @@ proc translateProc(node: PNode): string =
   else:
     return {retType}({valNames.zip(tupleMemberTypes).map(x => "$#: $#" % [x[0], x[0].convertType(x[1], ConvertDirection.toC, flagEnums.contains(x[1]))]).join(", ")})"""
     else:
-      &"return {procCallStmt.convertType(origRetType, ConvertDirection.toC, flagEnums.contains(origRetType))}"
+      if needJsFuncCall:
+        &"""when defined(js):
+    return {procCallJs}
+  else:
+    return {procCallNormal.convertType(origRetType, ConvertDirection.toC, flagEnums.contains(origRetType))}"""
+      else:
+        &"return {procCallNormal.convertType(origRetType, ConvertDirection.toC, flagEnums.contains(origRetType))}"
   if shouldUseVCCStr and retType == "string":
     retBody =
       &"""when defined(vcc):
-    let nimstr = {procCallStmt}
+    let nimstr = {procCallNormal}
     let cstr = CoTaskMemAlloc(nimstr.len + 1)
     {{.emit: ["strcpy(", cstr, ", ", nimstr.cstring, ");"].}}
     return cstr
