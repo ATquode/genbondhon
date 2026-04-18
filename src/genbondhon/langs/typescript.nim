@@ -79,7 +79,7 @@ func translateProc(
         if hasFlagEnum:
           checkRestoreFlagEnumType(paramNames[0], paramType, flagLookupTbl[funcName])
         else:
-          paramType
+          paramType.convertTypeToStdType(tupleNameSigTbl)
       for paramName in paramNames:
         let trParam = &"{paramName}: {origParamType.replaceType}"
         trParamList.add(trParam)

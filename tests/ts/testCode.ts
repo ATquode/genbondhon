@@ -33,6 +33,7 @@ import {
   requestAccess,
   addIntNum2,
   divMod,
+  extendTo3D,
 } from "./nomuna";
 
 noop();
@@ -96,3 +97,5 @@ let l = addIntNum2(11, 14);
 console.log(l);
 let [m, n] = divMod(10, 3);
 console.log(`${m}, ${n}`);
+let [o, p, q] = extendTo3D([1, 2], 3);
+console.log(`${o}, ${p}, ${q}`);
