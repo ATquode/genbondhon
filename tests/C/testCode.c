@@ -72,5 +72,10 @@ int main() {
     position.val2 = 2;
     Int3Tuple position3d = extendTo3D(position, 3);
     printf("%d, %d, %d\n", position3d.val1, position3d.val2, position3d.val3);
+    position3d.val1 = 1;
+    position3d.val2 = 2;
+    position3d.val3 = 3;
+    Int3Tuple newPosition3d = translate3D(position3d, -2);
+    printf("%d, %d, %d\n", newPosition3d.val1, newPosition3d.val2, newPosition3d.val3);
     return 0;
 }

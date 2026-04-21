@@ -34,6 +34,7 @@ import {
   addIntNum2,
   divMod,
   extendTo3D,
+  translate3D,
 } from "./nomuna";
 
 noop();
@@ -99,3 +100,5 @@ let [m, n] = divMod(10, 3);
 console.log(`${m}, ${n}`);
 let [o, p, q] = extendTo3D([1, 2], 3);
 console.log(`${o}, ${p}, ${q}`);
+let [r, s, t] = translate3D([1, 2, 3], -2);
+console.log(`${r}, ${s}, ${t}`);

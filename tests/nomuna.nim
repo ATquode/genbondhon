@@ -174,6 +174,9 @@ proc extendTo3D*(point: (int, int), zValue: int): (int, int, int) =
   let (x, y) = point # Unpacking the input tuple
   return (x, y, zValue)
 
+proc translate3D*(point: (int, int, int), zDistance: int): (int, int, int) =
+  return (point[0], point[1], point[2] + zDistance)
+
 #[ binding_api.nim
 
 type IntArray* {.importc, header: "helper_types.h".} = object
