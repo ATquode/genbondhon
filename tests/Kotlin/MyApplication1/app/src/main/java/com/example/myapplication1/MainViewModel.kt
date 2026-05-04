@@ -53,6 +53,8 @@ class MainViewModel : ViewModel() {
         val position = Pair(1, 2)
         val position3D = nomuna.extendTo3D(position, 3);
         Log.d("nomuna", "${position3D.first}, ${position3D.second}, ${position3D.third}")
+        val newPosition3D = nomuna.translate3D(Triple(1, 2, 3), -2)
+        Log.d("nomuna", "${newPosition3D.first}, ${newPosition3D.second}, ${newPosition3D.third}")
     }
 
     val retCardUiState =

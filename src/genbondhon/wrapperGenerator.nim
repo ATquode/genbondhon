@@ -102,6 +102,7 @@ proc getCppDefs(
     altTypes.add(altEnumWrappers)
 
   if useCppPairTuple:
+    let q3 = "\"\"\""
     let cppPairType =
       &"""type CppPair[T1, T2] {{.importcpp: "std::pair", header: "<utility>".}} = object
 
@@ -116,12 +117,48 @@ proc getCppDefs(
   proc makePair[T1, T2](
     a: T1, b: T2
   ): CppPair[T1, T2] {{.importcpp: "std::make_pair(@)", header: "<utility>".}}
+
+  macro genTupleGetters(T: typedesc): untyped =
+    let typeSym = T.getTypeInst()[1]
+    let typeImpl = typeSym.getImpl()
+    let typeName = typeImpl[0][0]
+    let genericParams = typeImpl[1]
+    var genericList = genericParams.mapIt($it).join(", ")
+    result = newStmtList()
+    for i in 0 ..< genericParams.len:
+      let procName = "val" & $(i + 1)
+      let returnType = $genericParams[i]
+      let procDef =
+        &{q3}
+        proc {{procName}}[{{genericList}}](
+          this: {{typeName}}[{{genericList}}]
+        ): {{returnType}} {{{{.importcpp: "std::get<{{$i}}>(#)", header: "<tuple>".}}}}{q3}
+      result.add(procDef.parseStmt)
+
+  macro genTupleConstructor(T: typedesc): untyped =
+    let typeSym = T.getTypeInst()[1]
+    let typeImpl = typeSym.getImpl()
+    let typeName = typeImpl[0][0]
+    let genericParams = typeImpl[1]
+    var genericList = genericParams.mapIt($it).join(", ")
+    let varNames = LowercaseLetters.toSeq
+    var paramList: seq[string]
+    for i in 0 ..< genericParams.len:
+      let paramName = varNames[i]
+      let paramType = $genericParams[i]
+      let param = &"{{paramName}}: {{paramType}}"
+      paramList.add(param)
+    let procDef =
+      &{q3}
+    proc makeTuple[{{genericList}}](
+      {{paramList.join(", ")}}
+    ): {{typeName}}[{{genericList}}] {{{{.importcpp: "std::make_tuple(@)", header: "<tuple>".}}}}{q3}
+    result = procDef.parseStmt
   
   type CppTuple[T1, T2, T3] {{.importcpp: "std::tuple", header: "<tuple>".}} = object
-  
-  proc makeTuple[T1, T2, T3](
-    a: T1, b: T2, c: T3
-  ): CppTuple[T1, T2, T3] {{.importcpp: "std::make_tuple(@)", header: "<tuple>".}}"""
+
+  genTupleGetters(CppTuple)
+  genTupleConstructor(CppTuple)"""
     let cppTuples =
       handleAnonymousCppTuples(anonymousTupleTbl.keys.toSeq, anonymousTuplesNameToSig)
 
@@ -145,6 +182,10 @@ proc generateWrapperFileContent(
   let modulePath = relativeModulePath()
 
   let stdImportFlagEnumsCommon = if flagEnums.len > 0: "import std/sequtils" else: ""
+  let stdImportCppTuple =
+    if useCppPairTuple: "import std/[macros, sequtils, strformat, strutils]" else: ""
+  let stdImportCommon =
+    if stdImportCppTuple != "": stdImportCppTuple else: stdImportFlagEnumsCommon
 
   let flagEnumsJsImport = if flagEnums.len > 0: "bitops" else: ""
   let tupleJsImport = if anonymousTuplesNameToSig.len > 0: "jsffi" else: ""
@@ -158,7 +199,7 @@ proc generateWrapperFileContent(
     &"""when defined(js):
   import std/{stdImportForJsPart}"""
 
-  let importSection = [stdImportFlagEnumsCommon, stdImportForJs, &"import {modulePath}"]
+  let importSection = [stdImportCommon, stdImportForJs, &"import {modulePath}"]
     .filterIt(it != "")
     .join("\n")
 

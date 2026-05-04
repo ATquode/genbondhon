@@ -77,5 +77,7 @@ int main() {
     std::pair<int, int> position {1, 2};
     std::tuple<int, int, int> position3d = extendTo3D(position, 3);
     cout << std::get<0>(position3d) << ", " << std::get<1>(position3d) << ", " << std::get<2>(position3d) << endl;
+    std::tuple<int, int, int> newPosition3d = translate3D({1, 2, 3}, -2);
+    cout << std::get<0>(newPosition3d) << ", " << std::get<1>(newPosition3d) << ", " << std::get<2>(newPosition3d) << endl;
     return 0;
 }
