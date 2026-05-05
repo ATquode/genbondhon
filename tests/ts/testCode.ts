@@ -35,6 +35,7 @@ import {
   divMod,
   extendTo3D,
   translate3D,
+  inverseQuaternion,
 } from "./nomuna";
 
 noop();
@@ -102,3 +103,5 @@ let [o, p, q] = extendTo3D([1, 2], 3);
 console.log(`${o}, ${p}, ${q}`);
 let [r, s, t] = translate3D([1, 2, 3], -2);
 console.log(`${r}, ${s}, ${t}`);
+let [q1, q2, q3, q4] = inverseQuaternion([1, -2, 2, 1]);
+console.log(`${q1}, ${q2}, ${q3}, ${q4}`);

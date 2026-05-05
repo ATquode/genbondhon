@@ -65,3 +65,5 @@ var position3d = Nomuna.ExtendTo3D(position, 3);
 Console.WriteLine($"{position3d.Item1}, {position3d.Item2}, {position3d.Item3}");
 var newPosition3d = Nomuna.Translate3D((1, 2, 3), -2);
 Console.WriteLine($"{newPosition3d.Item1}, {newPosition3d.Item2}, {newPosition3d.Item3}");
+var quaternion = Nomuna.InverseQuaternion((1, -2, 2, 1));
+Console.WriteLine($"{quaternion.Item1}, {quaternion.Item2}, {quaternion.Item3}, {quaternion.Item4}");

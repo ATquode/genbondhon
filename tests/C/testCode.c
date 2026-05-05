@@ -77,5 +77,12 @@ int main() {
     position3d.val3 = 3;
     Int3Tuple newPosition3d = translate3D(position3d, -2);
     printf("%d, %d, %d\n", newPosition3d.val1, newPosition3d.val2, newPosition3d.val3);
+    Float4Tuple quaternion;
+    quaternion.val1 = 1.0;
+    quaternion.val2 = -2.0;
+    quaternion.val3 = 2.0;
+    quaternion.val4 = 1.0;
+    Float4Tuple inverseQuat = inverseQuaternion(quaternion);
+    printf("%f, %f, %f, %f\n", inverseQuat.val1, inverseQuat.val2, inverseQuat.val3, inverseQuat.val4);
     return 0;
 }

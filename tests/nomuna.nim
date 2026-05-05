@@ -177,6 +177,9 @@ proc extendTo3D*(point: (int, int), zValue: int): (int, int, int) =
 proc translate3D*(point: (int, int, int), zDistance: int): (int, int, int) =
   return (point[0], point[1], point[2] + zDistance)
 
+func inverseQuaternion*(q: (float, float, float, float)): (float, float, float, float) =
+  return (q[0], -q[1], -q[2], -q[3])
+
 #[ binding_api.nim
 
 type IntArray* {.importc, header: "helper_types.h".} = object

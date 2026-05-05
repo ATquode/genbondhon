@@ -36,7 +36,8 @@ Request access result: False
 25
 3, 1
 1, 2, 3
-1, 2, 1'''
+1, 2, 1
+1, 2, -2, -1'''
   disabled: unix
 """
 #!fmt: on
