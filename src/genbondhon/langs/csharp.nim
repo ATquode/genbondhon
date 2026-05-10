@@ -83,7 +83,7 @@ method translateAnonymousTuple(self: CSharpLangGen, node: PNode): (string, strin
         [StructLayout(LayoutKind.Sequential)]
         private struct {tupleName}
         {{
-            {memberTypes.zip(valNames).map(x => "public $# $#;" % [x[0], x[1]]).join("\n            ")}
+            {memberTypes.zip(valNames).map(x => "public $# $#;" % [x[0].replaceType, x[1]]).join("\n            ")}
         }}"""
   result = (tupleName, tupleDef)
 
@@ -94,7 +94,7 @@ func convertTypeToStdType(
   if tupleNameSigTbl.contains(paramType):
     let signature = tupleNameSigTbl[paramType]
     let memberTypes = signature.split(",")
-    let memberList = memberTypes.join(", ")
+    let memberList = memberTypes.mapIt(it.replaceType).join(", ")
     result = &"({memberList})"
   else:
     result = paramType

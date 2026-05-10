@@ -94,9 +94,7 @@ func convertTypeToStdType(
   if tupleNameSigTbl.contains(paramType):
     let signature = tupleNameSigTbl[paramType]
     let memberTypes = signature.split(",")
-    let memberList = memberTypes
-      .map(x => nimAndCompatTypeTbl.getOrDefault(x, x).replaceType)
-      .join(", ")
+    let memberList = memberTypes.mapIt(it.replaceType).join(", ")
     result = &"({memberList})"
   else:
     result = paramType
@@ -133,7 +131,7 @@ func translateProc(
         if tupleNameSigTbl.contains(paramType):
           let memberTypes = tupleNameSigTbl[paramType].split(",")
           callableParam =
-            &"""{paramType}({(1..memberTypes.len).toSeq.zip(memberTypes).map(x => "val$#: $#" % [$x[0], (paramNameCopy & "." & $(x[0]-1)).convertType(nimAndCompatTypeTbl.getOrDefault(x[1], x[1]).replaceType, ConvertDirection.toC, self.cModuleName, self.typeCategory(x[1]))]).join(", ")})"""
+            &"""{paramType}({(1..memberTypes.len).toSeq.zip(memberTypes).map(x => "val$#: $#" % [$x[0], (paramNameCopy & "." & $(x[0]-1)).convertType(x[1].replaceType, ConvertDirection.toC, self.cModuleName, self.typeCategory(x[1]))]).join(", ")})"""
         else:
           callableParam = paramName.convertType(
             origParamType.replaceType,
@@ -186,9 +184,7 @@ func translateProc(
     }}
     return data"""
   elif tupleNameSigTbl.contains(retType):
-    let memberTypesCompat = tupleNameSigTbl[retType].split(",").map(
-        x => nimAndCompatTypeTbl.getOrDefault(x, x)
-      )
+    let memberTypesCompat = tupleNameSigTbl[retType].split(",")
     let memberNames = memberTypesCompat.len.generateValNames()
     retBody =
       &"""let cTuple = {procCallStmt}

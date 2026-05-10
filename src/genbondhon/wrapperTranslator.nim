@@ -25,7 +25,7 @@ proc convertType(
 proc getRegAnonymousTupleType(node: PNode): string =
   ## get registered anonymous tuple type name matching the signature if available
   ## or create, register and return new anonymous tuple type name
-  let memberTypes = node.sons.map(x => x.ident.s)
+  let memberTypes = node.sons.map(x => x.ident.s.replaceType)
   let signature = memberTypes.join(",")
   if signature in anonymousTuplesSigToName:
     return anonymousTuplesSigToName[signature]
@@ -36,9 +36,9 @@ proc getRegAnonymousTupleType(node: PNode): string =
       isHomogenous = false
       break
   if isHomogenous:
-    result = &"{firstType.capitalizeAscii}{memberTypes.len}Tuple"
+    result = &"{firstType.replaceType.capitalizeAscii}{memberTypes.len}Tuple"
   else:
-    result = memberTypes[0].capitalizeAscii
+    result = memberTypes[0].replaceType.capitalizeAscii
     var count = 1
     for i in 1 ..< memberTypes.len:
       if memberTypes[i - 1] == memberTypes[i]:
@@ -50,7 +50,7 @@ proc getRegAnonymousTupleType(node: PNode): string =
           result = result & $count
       else:
         count = 1
-        result = result & memberTypes[i].capitalizeAscii
+        result = result & memberTypes[i].replaceType.capitalizeAscii
     result = result & "Tuple"
   anonymousTuplesSigToName[signature] = result
   anonymousTuplesNameToSig[result] = signature
@@ -105,7 +105,7 @@ proc translateProc(node: PNode): string =
       let paramNameCopy = paramName
       let callableParam =
         if anonymousTuplesNameToSig.contains(paramType):
-          &"""({valNames.zip(tupleMemberTypes).map(x => paramNameCopy & "." & x[0].convertType(x[1].replaceType, ConvertDirection.fromC, flagEnums.contains(x[1].replaceType))).join(", ")})"""
+          &"""({valNames.zip(tupleMemberTypes).map(x => paramNameCopy & "." & x[0].convertType(x[1], ConvertDirection.fromC, flagEnums.contains(x[1]))).join(", ")})"""
         else:
           &"{paramName.convertType(paramType.replaceType, ConvertDirection.fromC, flagEnums.contains(paramType))}"
       if paramIsFlagEnum:
@@ -120,7 +120,7 @@ proc translateProc(node: PNode): string =
           callableParamListJs = callableParamList
         let callableParamJs = (0 ..< tupleMemberTypes.len).toSeq
           .zip(tupleMemberTypes)
-          .map(x => "$#[$#].to($#)" % [paramNameCopy, $x[0], x[1]])
+          .map(x => "$#[$#].to($#)" % [paramNameCopy, $x[0], x[1].replaceType])
           .join(", ")
         callableParamListJs.add("($#)".format(callableParamJs))
       else:

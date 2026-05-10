@@ -49,9 +49,7 @@ func convertTypeToStdType(
   if tupleNameSigTbl.contains(paramType):
     let signature = tupleNameSigTbl[paramType]
     let memberTypes = signature.split(",")
-    let memberList = memberTypes
-      .map(x => nimAndCompatTypeTbl.getOrDefault(x, x).replaceType)
-      .join(", ")
+    let memberList = memberTypes.mapIt(it.replaceType).join(", ")
     result = &"[{memberList}]"
   else:
     result = paramType

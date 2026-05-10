@@ -18,7 +18,7 @@ proc newCLangGen*(bindingDir: Path): CLangGen =
   )
   initBaseLangGen(result)
 
-func replaceType(nimCType: string): string =
+func replaceType*(nimCType: string): string =
   ## Replaces Nim Compat Types to C Types
   nimCompatToCTypeTbl.getOrDefault(nimCType, nimCType)
 
@@ -49,7 +49,7 @@ method translateAnonymousTuple(self: CLangGen, node: PNode): (string, string) =
   let valNames = generateValNames(memberTypes.len)
   let tupleDef =
     &"""typedef struct {{
-    {memberTypes.zip(valNames).map(x => "$# $#;" % [x[0], x[1]]).join("\n    ")}
+    {memberTypes.zip(valNames).map(x => "$# $#;" % [x[0].replaceType, x[1]]).join("\n    ")}
 }} {tupleName};"""
   self.anonymousTupleSeq.add(tupleDef)
   result = (tupleName, tupleDef)

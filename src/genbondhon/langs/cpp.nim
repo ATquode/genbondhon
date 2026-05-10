@@ -44,7 +44,7 @@ method convertTypeToStdType(self: CppLangGen, paramType: string): string =
   if anonymousTuplesNameToSig.contains(paramType):
     let signature = anonymousTuplesNameToSig[paramType]
     let memberTypes = signature.split(",")
-    let memberList = memberTypes.join(", ")
+    let memberList = memberTypes.mapIt(it.replaceType).join(", ")
     if memberTypes.len == 2:
       result = &"std::pair<{memberList}>"
     else:

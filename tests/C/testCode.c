@@ -83,6 +83,6 @@ int main() {
     quaternion.val3 = 2.0;
     quaternion.val4 = 1.0;
     Float4Tuple inverseQuat = inverseQuaternion(quaternion);
-    printf("%f, %f, %f, %f\n", inverseQuat.val1, inverseQuat.val2, inverseQuat.val3, inverseQuat.val4);
+    printf("%lf, %lf, %lf, %lf\n", inverseQuat.val1, inverseQuat.val2, inverseQuat.val3, inverseQuat.val4);
     return 0;
 }

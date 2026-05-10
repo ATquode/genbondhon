@@ -121,7 +121,7 @@ func translateProcToJNI(
             of 3: "createCppTuplePrimitive"
             else: "unsupported"
           let callableTuple =
-            &"""{createTupleFunc}<{memberTypes.join(", ")}>(env, {paramName})"""
+            &"""{createTupleFunc}<{memberTypes.mapIt(it.replaceTypeJNI).join(", ")}>(env, {paramName})"""
           callableParamList.add(callableTuple)
         else:
           let callableParam = paramName.convertTypeJNI(trParamType)
@@ -447,9 +447,7 @@ func convertTypeToStdType(
   if tupleNameSigTbl.contains(paramType):
     let signature = tupleNameSigTbl[paramType]
     let memberTypes = signature.split(",")
-    let memberList = memberTypes
-      .map(x => nimAndCompatTypeTbl.getOrDefault(x, x).replaceType)
-      .join(", ")
+    let memberList = memberTypes.mapIt(it.replaceType).join(", ")
     if memberTypes.len == 2:
       result = &"Pair<{memberList}>"
     elif memberTypes.len == 3:
