@@ -167,11 +167,11 @@ proc translateProc(node: PNode): string =
     elif anonymousTuplesNameToSig.contains(retType):
       &"""let ({valNames.join(", ")}) = {(if needJsFuncCall: "\n    " & procCallStmt.replace("\n", "\n  ") else: procCallStmt)}
   when defined(cpp):
-    return {(if tupleMemberTypes.len == 2: "makePair" else: "makeTuple")}({valNames.zip(tupleMemberTypes).map(x => "$#" % [x[0].convertType(x[1], ConvertDirection.toC, flagEnums.contains(x[1]))]).join(", ")})
+    return {(if tupleMemberTypes.len == 2: "makePair" else: "makeTuple")}({valNames.zip(tupleMemberTypes).map(x => "$#" % [x[0].convertType(x[1].replaceType, ConvertDirection.toC, flagEnums.contains(x[1]))]).join(", ")})
   elif defined(js):
-    return @[{valNames.zip(tupleMemberTypes).map(x => "$#.toJs" % [x[0].convertType(x[1], ConvertDirection.toC, flagEnums.contains(x[1]))]).join(", ")}]
+    return @[{valNames.zip(tupleMemberTypes).map(x => "$#.toJs" % [x[0].convertType(x[1].replaceType, ConvertDirection.toC, flagEnums.contains(x[1]))]).join(", ")}]
   else:
-    return {retType}({valNames.zip(tupleMemberTypes).map(x => "$#: $#" % [x[0], x[0].convertType(x[1], ConvertDirection.toC, flagEnums.contains(x[1]))]).join(", ")})"""
+    return {retType}({valNames.zip(tupleMemberTypes).map(x => "$#: $#" % [x[0], x[0].convertType(x[1].replaceType, ConvertDirection.toC, flagEnums.contains(x[1]))]).join(", ")})"""
     else:
       if needJsFuncCall:
         &"""when defined(js):

@@ -79,5 +79,7 @@ int main() {
     cout << std::get<0>(position3d) << ", " << std::get<1>(position3d) << ", " << std::get<2>(position3d) << endl;
     std::tuple<int, int, int> newPosition3d = translate3D({1, 2, 3}, -2);
     cout << std::get<0>(newPosition3d) << ", " << std::get<1>(newPosition3d) << ", " << std::get<2>(newPosition3d) << endl;
+    std::tuple<double, double, double, double> inverseQuat = inverseQuaternion({1.0, -2.0, 2.0, 1.0});
+    cout << std::get<0>(inverseQuat) << ", " << std::get<1>(inverseQuat) << ", " << std::get<2>(inverseQuat) << ", " << std::get<3>(inverseQuat) << endl;
     return 0;
 }

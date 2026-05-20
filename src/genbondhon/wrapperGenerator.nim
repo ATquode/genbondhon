@@ -3,7 +3,10 @@
 # SPDX-License-Identifier: MIT
 
 import
-  std/[dirs, options, paths, sequtils, strformat, strutils, sugar, tables, terminal]
+  std/[
+    algorithm, dirs, intsets, options, paths, sequtils, strformat, strutils, sugar,
+    tables, terminal,
+  ]
 import compiler/ast
 import convertutil, currentconfig, store, util, langs/base
 
@@ -57,11 +60,38 @@ func handleAnonymousCppTuples(
   for tupleTypeName in tupleNames:
     let tupleSignature = anonymousTupleSigTbl[tupleTypeName]
     let memberTypes = tupleSignature.split(",")
-    let tupleType = if memberTypes.len == 2: "CppPair" else: "CppTuple"
-    let cppTuple =
-      &"""type {tupleTypeName} = {tupleType}[{memberTypes.mapIt(nimAndCompatTypeTbl.getOrDefault(it, it)).join(", ")}]"""
+    let tupleType =
+      if memberTypes.len == 2:
+        "CppPair"
+      elif memberTypes.len == 3:
+        "CppTuple"
+      else:
+        "CppTuple$#" % $memberTypes.len
+    let cppTuple = &"""type {tupleTypeName} = {tupleType}[{memberTypes.join(", ")}]"""
     cppTuples.add(cppTuple)
   result = cppTuples.join("\n  ")
+
+func createGenericCppTupleType(len: int): string =
+  var tupleName = "CppTuple"
+  if len > 3:
+    tupleName = tupleName & $len
+  let genericTypes = (1 .. len).toSeq.mapIt("T$#" % $it).join(", ")
+  result =
+    &"""type {tupleName}[{genericTypes}] {{.importcpp: "std::tuple", header: "<tuple>".}} = object
+
+  genTupleGetters({tupleName})
+  genTupleConstructor({tupleName})"""
+
+func generateGenericCppTupleTypes(
+    anonymousTuplesNameToSig: Table[string, string]
+): string =
+  var genericTupleLengths = initIntSet()
+  for _, val in anonymousTuplesNameToSig.pairs:
+    let memberLen = val.split(",").len
+    genericTupleLengths.incl(memberLen)
+  genericTupleLengths.excl(2)
+  result =
+    genericTupleLengths.toSeq.sorted.mapIt(createGenericCppTupleType(it)).join("\n\n  ")
 
 proc getCppDefs(
     unwrappableAST: seq[PNode],
@@ -153,16 +183,13 @@ proc getCppDefs(
     proc makeTuple[{{genericList}}](
       {{paramList.join(", ")}}
     ): {{typeName}}[{{genericList}}] {{{{.importcpp: "std::make_tuple(@)", header: "<tuple>".}}}}{q3}
-    result = procDef.parseStmt
-  
-  type CppTuple[T1, T2, T3] {{.importcpp: "std::tuple", header: "<tuple>".}} = object
-
-  genTupleGetters(CppTuple)
-  genTupleConstructor(CppTuple)"""
+    result = procDef.parseStmt"""
+    let cppGenericTuples = generateGenericCppTupleTypes(anonymousTuplesNameToSig)
     let cppTuples =
       handleAnonymousCppTuples(anonymousTupleTbl.keys.toSeq, anonymousTuplesNameToSig)
 
     cppTypes.add(cppPairType)
+    cppTypes.add(cppGenericTuples)
     cppTypes.add(cppTuples)
 
   result =
