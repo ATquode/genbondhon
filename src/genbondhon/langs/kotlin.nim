@@ -22,6 +22,7 @@ type KotlinLangGen = ref object of BaseLangGen
   headerFileName: Path
   enumValueTypes: Table[string, string]
   importForFlagEnums: bool
+  genericTupleMarks: array[1 .. 26, bool] # limit generic params count to 26
 
 proc newKotlinLangGen*(bindingDir: Path, jvmPkgName: string): KotlinLangGen =
   ## `KotlinLangGen` constructor
@@ -118,10 +119,18 @@ func translateProcToJNI(
           let createTupleFunc =
             case memberTypes.len
             of 2: "createCppPairPrimitive"
-            of 3: "createCppTuplePrimitive"
-            else: "unsupported"
+            else: "createCppTuplePrimitive"
+          var callableTupleParams = &"env, {paramName}"
+          if memberTypes.len > 2:
+            var tupleParamNames = @["first", "second", "third"]
+            if memberTypes.len > 3:
+              tupleParamNames =
+                tupleParamNames & (4 .. memberTypes.len).toSeq.mapIt("item" & $it).toSeq
+            let tupleParamArray =
+              &"""{{ {tupleParamNames.mapIt("\"$#\"" % it).join(", ")} }}"""
+            callableTupleParams = &"""{callableTupleParams}, {tupleParamArray}"""
           let callableTuple =
-            &"""{createTupleFunc}<{memberTypes.mapIt(it.replaceTypeJNI).join(", ")}>(env, {paramName})"""
+            &"""{createTupleFunc}<{memberTypes.mapIt(it.replaceTypeJNI).join(", ")}>({callableTupleParams})"""
           callableParamList.add(callableTuple)
         else:
           let callableParam = paramName.convertTypeJNI(trParamType)
@@ -185,15 +194,22 @@ func translateProcToJNI(
         retBody.split("\n")[0 ..^ 2].join("\n")
       else:
         &"auto data = {procCallStmt}"
-    let memberLen = tupleNameSigTbl[retType].split(",").len
+    let memberTypes = tupleNameSigTbl[retType].split(",")
+    let memberLen = memberTypes.len
     let createTupleFunc =
       case memberLen
-      of 2: "createKotlinPairPrimitive"
-      of 3: "createKotlinTriplePrimitive"
-      else: "unsupported"
+      of 2:
+        "createKotlinPairPrimitive"
+      of 3:
+        "createKotlinTriplePrimitive"
+      else:
+        &"""createKotlinTuple<{memberTypes.mapIt(nimCompatToCTypeTbl.getOrDefault(it, it)).join(", ")}>"""
+    var retTupleParams = "env, data"
+    if memberLen > 3:
+      retTupleParams = &"""{retTupleParams}, "Generic{memberLen}Tuple""""
     retBody =
       &"""{procCallLine};
-    return {createTupleFunc}(env, data);"""
+    return {createTupleFunc}({retTupleParams});"""
 
   result =
     &"""
@@ -322,6 +338,25 @@ jobject createKotlinTriplePrimitive(JNIEnv *env, std::tuple<T1, T2, T3> tuple) {
     return env->NewObject(tripleClass, constructor, firstObj, secondObj, thirdObj);
 }}
 
+template <typename... Ts, size_t... Is>
+jobject getKotlinTupleObj(JNIEnv *env, jclass clazz, jmethodID method, std::tuple<Ts...>& tuple, std::index_sequence<Is...>) {{
+    return env->NewObject(clazz, method, boxPrimitive(env, std::get<Is>(tuple))...);
+}}
+
+template <typename... Ts>
+jobject createKotlinTuple(JNIEnv *env, std::tuple<Ts...>& tuple, std::string className) {{
+    std::string fullClass = "com/example/myapplication1/Nomuna$" + className;
+    jclass kotlinCls = env->FindClass(fullClass.c_str());
+    constexpr auto tupleSize = sizeof...(Ts);
+    std::string sig = "(";
+    for (std::size_t i = 0; i < tupleSize; ++i) {{
+        sig += "Ljava/lang/Object;";
+    }}
+    sig += ")V";
+    jmethodID constructor = env->GetMethodID(kotlinCls, "<init>", sig.c_str());
+    return getKotlinTupleObj(env, kotlinCls, constructor, tuple, std::index_sequence_for<Ts...>{{}});
+}}
+
 template <typename T1, typename T2>
 std::pair<T1, T2> createCppPairPrimitive(JNIEnv *env, jobject p) {{
     jclass pairClass = env->FindClass("kotlin/Pair");
@@ -334,19 +369,26 @@ std::pair<T1, T2> createCppPairPrimitive(JNIEnv *env, jobject p) {{
     return std::make_pair(firstVal, secondVal);
 }}
 
-template <typename T1, typename T2, typename T3>
-std::tuple<T1, T2, T3> createCppTuplePrimitive(JNIEnv *env, jobject t) {{
-    jclass tripleClass = env->FindClass("kotlin/Triple");
-    jfieldID firstField = env->GetFieldID(tripleClass, "first", "Ljava/lang/Object;");
-    jfieldID secondField = env->GetFieldID(tripleClass, "second", "Ljava/lang/Object;");
-    jfieldID thirdField = env->GetFieldID(tripleClass, "third", "Ljava/lang/Object;");
-    jobject firstObj = env->GetObjectField(t, firstField);
-    jobject secondObj = env->GetObjectField(t, secondField);
-    jobject thirdObj = env->GetObjectField(t, thirdField);
-    auto firstVal = unboxPrimitive<T1>(env, firstObj);
-    auto secondVal = unboxPrimitive<T2>(env, secondObj);
-    auto thirdVal = unboxPrimitive<T3>(env, thirdObj);
-    return std::make_tuple(firstVal, secondVal, thirdVal);
+template <typename... Ts, size_t... Is>
+std::tuple<Ts...> cppTupleImpl(JNIEnv *env,
+                               jclass kotlinCls,
+                               jobject t,
+                               const std::array<std::string_view, sizeof...(Ts)>& fieldNames,
+                               std::index_sequence<Is...>) {{
+    return std::make_tuple(unboxPrimitive<Ts>(
+            env,
+            env->GetObjectField(
+                    t,
+                    env->GetFieldID(kotlinCls, fieldNames[Is].data(), "Ljava/lang/Object;")
+                    )
+            )...
+    );
+}}
+
+template <typename... Ts>
+std::tuple<Ts...> createCppTuplePrimitive(JNIEnv *env, jobject t, const std::array<std::string_view, sizeof...(Ts)>& fieldNames) {{
+    jclass kotlinClass = env->GetObjectClass(t);
+    return cppTupleImpl<Ts...>(env, kotlinClass, t, fieldNames, std::index_sequence_for<Ts...>{{}});
 }}"""
     else:
       ""
@@ -440,6 +482,25 @@ method translateEnum(self: KotlinLangGen, node: PNode): (string, string) =
     }}"""
   result = (enumName, trResult)
 
+method translateAnonymousTuple(self: KotlinLangGen, node: PNode): (string, string) =
+  let tupleName = node.itemName
+  let signature = anonymousTuplesNameToSig[tupleName]
+  let memberTypes = signature.split(",")
+  if memberTypes.len <= 3:
+    return (tupleName, "")
+  if self.genericTupleMarks[memberTypes.len]:
+    return (tupleName, "")
+  let memberNames =
+    @["first", "second", "third"] &
+    (4 .. memberTypes.len).toSeq.mapIt("item" & $it).toSeq
+  let genericTypes = toSeq('A' .. 'Z')[0 ..< memberTypes.len].mapIt($it)
+    # not allowing more than 26 members
+  let tupleDef =
+    &"""
+    data class Generic{memberTypes.len}Tuple<{genericTypes.join(", ")}>({memberNames.zip(genericTypes).map(x => "val $#: $#" % [x[0], x[1]]).join(", ")})"""
+  result = (tupleName, tupleDef)
+  self.genericTupleMarks[memberTypes.len] = true
+
 func convertTypeToStdType(
     paramType: string, tupleNameSigTbl: Table[string, string]
 ): string =
@@ -453,7 +514,7 @@ func convertTypeToStdType(
     elif memberTypes.len == 3:
       result = &"Triple<{memberList}>"
     else:
-      result = &"Unsupported<{memberList}>"
+      result = &"Generic{memberTypes.len}Tuple<{memberList}>"
   else:
     result = paramType
 
