@@ -45,7 +45,7 @@ proc getRegAnonymousTupleType(node: PNode): string =
         count = count + 1
         if count > 2:
           let numIndex = result.rfind($(count - 1))
-          result = result[0 ..< numIndex - 1] & $count
+          result = result[0 ..< numIndex] & $count
         else:
           result = result & $count
       else:
