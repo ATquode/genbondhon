@@ -105,7 +105,7 @@ proc translateProc(node: PNode): string =
       let paramNameCopy = paramName
       let callableParam =
         if anonymousTuplesNameToSig.contains(paramType):
-          &"""({valNames.zip(tupleMemberTypes).map(x => paramNameCopy & "." & x[0].convertType(x[1], ConvertDirection.fromC, flagEnums.contains(x[1]))).join(", ")})"""
+          &"""({valNames.zip(tupleMemberTypes).map(x => convertType(paramNameCopy & "." & x[0], x[1], ConvertDirection.fromC, flagEnums.contains(x[1]))).join(", ")})"""
         else:
           &"{paramName.convertType(paramType.replaceType, ConvertDirection.fromC, flagEnums.contains(paramType))}"
       if paramIsFlagEnum:

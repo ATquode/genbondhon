@@ -48,7 +48,7 @@ func handleAnonymousTuples(
     let tupleDefJs = &"type {key} = seq[JsObject]"
     let tupleDef =
       &"""type {key}* {{.importc, header: "helper_types.h".}} = object
-      {generateValNames(memberTypes.len).zip(memberTypes).map(x => x[0] & "*: " & nimAndCompatTypeTbl.getOrDefault(x[1], x[1])).join("\n      ")}"""
+      {generateValNames(memberTypes.len).zip(memberTypes).map(x => x[0] & "*: " & x[1]).join("\n      ")}"""
     jsTupleTbl[key] = tupleDefJs
     tupleTbl[key] = tupleDef
   result = (jsTupleTbl, tupleTbl)
