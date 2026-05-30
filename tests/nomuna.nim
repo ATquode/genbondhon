@@ -180,6 +180,12 @@ proc translate3D*(point: (int, int, int), zDistance: int): (int, int, int) =
 func inverseQuaternion*(q: (float, float, float, float)): (float, float, float, float) =
   return (q[0], -q[1], -q[2], -q[3])
 
+func swapBoundingBoxes*(
+    rects: (int, int, int, int, string)
+): (int, int, int, int, string) =
+  # Extracts, rearranges, and returns the data fields
+  result = (rects[2], rects[3], rects[0], rects[1], rects[4] & " (swapped)")
+
 #[ binding_api.nim
 
 type IntArray* {.importc, header: "helper_types.h".} = object
