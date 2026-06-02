@@ -205,8 +205,9 @@ func translateProcToJNI(
       else:
         &"""createKotlinTuple<{memberTypes.mapIt(nimCompatToCTypeTbl.getOrDefault(it, it)).join(", ")}>"""
     var retTupleParams = "env, data"
+    let q1 = "\""
     if memberLen > 3:
-      retTupleParams = &"""{retTupleParams}, "Generic{memberLen}Tuple""""
+      retTupleParams = &"""{retTupleParams}, "Generic{memberLen}Tuple{q1}"""
     retBody =
       &"""{procCallLine};
     return {createTupleFunc}({retTupleParams});"""
@@ -248,7 +249,8 @@ proc generateJNIWrapperContent(
       jniApis.add(trApi)
   let stringHeader = if useCppPairTuple: "#include <string>" else: ""
   let mapHeader = if useCppPairTuple: "#include <map>" else: ""
-  let cppHeader = &"""#include "{self.headerFileName.string}""""
+  let q1 = "\""
+  let cppHeader = &"""#include "{self.headerFileName.string}{q1}"""
   let includePart = ["#include <jni.h>", stringHeader, mapHeader, cppHeader]
     .filterIt(it != "")
     .join("\n")
