@@ -189,12 +189,68 @@ func translateProcToJNI(
 {getEnums.join("\n    ")}
     {retBody}"""
   if tupleNameSigTbl.contains(retType):
-    let procCallLine =
+    var procCallLine =
       if retBody.contains("auto data ="):
         retBody.split("\n")[0 ..^ 2].join("\n")
       else:
         &"auto data = {procCallStmt}"
     let memberTypes = tupleNameSigTbl[retType].split(",")
+    if memberTypes.contains("cstring") and memberTypes.len > 2:
+      var callableTuples = 0
+      procCallLine = procCallLine
+        .split("\n")
+        .mapIt(
+          block:
+            if it.contains("auto data ="):
+              let spaceCount = it.find("auto data =")
+              let tupleCalls =
+                callableParamList.filterIt(it.contains("createCppTuplePrimitive"))
+              callableTuples = tupleCalls.len
+              if tupleCalls.len == 1:
+                let tupleCall = tupleCalls[0]
+                &"""{" ".repeat(spaceCount)}auto cpp_data = {tupleCall};"""
+              else:
+                (0 ..< tupleCalls.len).toSeq
+                .zip(tupleCalls)
+                .mapIt(&"""{" ".repeat(spaceCount)}auto cpp_data{it[0]} = {it[1]};""")
+                .join("\n")
+            else:
+              it
+        )
+        .join("\n")
+      var tupleCount = 0
+      let updCallParamList = callableParamList
+        .mapIt(
+          block:
+            if it.contains("createCppTuplePrimitive"):
+              let cppData =
+                if callableTuples > 1:
+                  &"cpp_data{tupleCount}"
+                else:
+                  "cpp_data"
+              tupleCount += 1
+              "std::tuple(\n" & " ".repeat(12) &
+                (0 ..< memberTypes.len).toSeq
+                .zip(memberTypes)
+                .mapIt(
+                  block:
+                    if it[1] == "cstring":
+                      "std::get<$#>($#).c_str()" % [$it[0], cppData]
+                    else:
+                      "std::get<$#>($#)" % [$it[0], cppData]
+                )
+                .join(",\n" & " ".repeat(12)) & "\n" & " ".repeat(8) & ")"
+            else:
+              it
+        )
+        .join(",")
+      procCallLine.add(
+        &"""
+
+    auto data = {funcName}(
+        {updCallParamList}
+    )"""
+      )
     let memberLen = memberTypes.len
     let createTupleFunc =
       case memberLen
@@ -268,7 +324,20 @@ proc generateJNIWrapperContent(
       ""
   let templatePart =
     if useCppPairTuple:
-      &"""template<typename T>
+      &"""template<typename JniT>
+struct JniToCpp {{ using type = JniT; }};
+
+template<> struct JniToCpp<jint>     {{ using type = int; }};
+template<> struct JniToCpp<jdouble>  {{ using type = double; }};
+template<> struct JniToCpp<jboolean> {{ using type = bool; }};
+template<> struct JniToCpp<jlong>    {{ using type = long long; }};
+template<> struct JniToCpp<jfloat>   {{ using type = float; }};
+template<> struct JniToCpp<jstring>  {{ using type = std::string; }};
+
+template<typename JniT>
+using to_cpp_t = typename JniToCpp<JniT>::type;
+
+template<typename T>
 std::string getDataType() {{
     if constexpr (std::is_same_v<T, jint>) {{
         return "Integer";
@@ -287,6 +356,10 @@ std::string getDataType() {{
 
 template<typename T>
 jobject boxPrimitive(JNIEnv *env, T value) {{
+    if constexpr(std::is_same_v<T, const char*>) {{
+        return env->NewStringUTF(value);
+    }}
+
     std::string dataType = getDataType<T>();
     std::string typeSign = typeSignMap[dataType];
 
@@ -299,7 +372,17 @@ jobject boxPrimitive(JNIEnv *env, T value) {{
 }}
 
 template<typename T>
-T unboxPrimitive(JNIEnv *env, jobject obj) {{
+to_cpp_t<T> unboxPrimitive(JNIEnv *env, jobject obj) {{
+    if constexpr (std::is_same_v<T, jstring>) {{
+        auto jStr = static_cast<jstring>(obj);
+        if (!jStr) return "";
+
+        const char* cStr = env->GetStringUTFChars(jStr, nullptr);
+        std::string result(cStr);
+        env->ReleaseStringUTFChars(jStr, cStr);
+        return result;
+    }}
+
     std::string dataType = getDataType<T>();
     std::string methodName = dataType;
     methodName[0] = static_cast<char>(std::tolower(static_cast<unsigned char>(dataType[0])));
@@ -372,7 +455,7 @@ std::pair<T1, T2> createCppPairPrimitive(JNIEnv *env, jobject p) {{
 }}
 
 template <typename... Ts, size_t... Is>
-std::tuple<Ts...> cppTupleImpl(JNIEnv *env,
+std::tuple<to_cpp_t<Ts>...> cppTupleImpl(JNIEnv *env,
                                jclass kotlinCls,
                                jobject t,
                                const std::array<std::string_view, sizeof...(Ts)>& fieldNames,
@@ -388,7 +471,7 @@ std::tuple<Ts...> cppTupleImpl(JNIEnv *env,
 }}
 
 template <typename... Ts>
-std::tuple<Ts...> createCppTuplePrimitive(JNIEnv *env, jobject t, const std::array<std::string_view, sizeof...(Ts)>& fieldNames) {{
+std::tuple<to_cpp_t<Ts>...> createCppTuplePrimitive(JNIEnv *env, jobject t, const std::array<std::string_view, sizeof...(Ts)>& fieldNames) {{
     jclass kotlinClass = env->GetObjectClass(t);
     return cppTupleImpl<Ts...>(env, kotlinClass, t, fieldNames, std::index_sequence_for<Ts...>{{}});
 }}"""

@@ -167,7 +167,7 @@ proc translateProc(node: PNode): string =
     elif anonymousTuplesNameToSig.contains(retType):
       &"""let ({valNames.join(", ")}) = {(if needJsFuncCall: "\n    " & procCallStmt.replace("\n", "\n  ") else: procCallStmt)}
   when defined(cpp):
-    return {(if tupleMemberTypes.len == 2: "makePair" else: "makeTuple")}({valNames.zip(tupleMemberTypes).map(x => "$#" % [x[0].convertType(x[1].replaceType, ConvertDirection.toC, flagEnums.contains(x[1]))]).join(", ")})
+    return {(if tupleMemberTypes.len == 2: "makePair" else: "makeTuple")}({valNames.zip(tupleMemberTypes).map(x => (if x[1] == "cstring": "cast[ConstCString]($#)" else: "$#") % [x[0].convertType(x[1].replaceType, ConvertDirection.toC, flagEnums.contains(x[1]))]).join(", ")})
   elif defined(js):
     return @[{valNames.zip(tupleMemberTypes).map(x => "$#.toJs" % [x[0].convertType(x[1].replaceType, ConvertDirection.toC, flagEnums.contains(x[1]))]).join(", ")}]
   else:

@@ -59,7 +59,8 @@ func handleAnonymousCppTuples(
   var cppTuples: seq[string]
   for tupleTypeName in tupleNames:
     let tupleSignature = anonymousTupleSigTbl[tupleTypeName]
-    let memberTypes = tupleSignature.split(",")
+    var memberTypes = tupleSignature.split(",")
+    memberTypes.applyIt(if it == "cstring": "ConstCString" else: it)
     let tupleType =
       if memberTypes.len == 2:
         "CppPair"
