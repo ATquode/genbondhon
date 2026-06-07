@@ -84,5 +84,13 @@ int main() {
     quaternion.val4 = 1.0;
     Float4Tuple inverseQuat = inverseQuaternion(quaternion);
     printf("%lf, %lf, %lf, %lf\n", inverseQuat.val1, inverseQuat.val2, inverseQuat.val3, inverseQuat.val4);
+    Int4StringTuple orderedRects;
+    orderedRects.val1 = 1;
+    orderedRects.val2 = 2;
+    orderedRects.val3 = 3;
+    orderedRects.val4 = 4;
+    orderedRects.val5 = "order";
+    Int4StringTuple swappedRects = swapBoundingBoxes(orderedRects);
+    printf("%d, %d, %d, %d, %s\n", swappedRects.val1, swappedRects.val2, swappedRects.val3, swappedRects.val4, swappedRects.val5);
     return 0;
 }

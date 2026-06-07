@@ -57,6 +57,8 @@ class MainViewModel : ViewModel() {
         Log.d("nomuna", "${newPosition3D.first}, ${newPosition3D.second}, ${newPosition3D.third}")
         val quaternion = nomuna.inverseQuaternion(Nomuna.Generic4Tuple(1.0, -2.0, 2.0, 1.0))
         Log.d("nomuna", "${quaternion.first}, ${quaternion.second}, ${quaternion.third}, ${quaternion.item4}")
+        val swappedRects = nomuna.swapBoundingBoxes(Nomuna.Generic5Tuple(1, 2, 3, 4, "order"))
+        Log.d("nomuna", "${swappedRects.first}, ${swappedRects.second}, ${swappedRects.third}, ${swappedRects.item4}, ${swappedRects.item5}")
     }
 
     val retCardUiState =
