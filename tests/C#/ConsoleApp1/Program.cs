@@ -67,3 +67,5 @@ var newPosition3d = Nomuna.Translate3D((1, 2, 3), -2);
 Console.WriteLine($"{newPosition3d.Item1}, {newPosition3d.Item2}, {newPosition3d.Item3}");
 var quaternion = Nomuna.InverseQuaternion((1, -2, 2, 1));
 Console.WriteLine($"{quaternion.Item1}, {quaternion.Item2}, {quaternion.Item3}, {quaternion.Item4}");
+var swappedRects = Nomuna.SwapBoundingBoxes((1, 2, 3, 4, "order"));
+Console.WriteLine($"{swappedRects.Item1}, {swappedRects.Item2}, {swappedRects.Item3}, {swappedRects.Item4}, {swappedRects.Item5}");

@@ -66,6 +66,24 @@ func convertProcParamTypeForCppCompilation(
   else:
     result = paramType
 
+func handleAnonymousTuplesVccStr(
+    strTypeIndices: seq[int], valNames: seq[string]
+): string =
+  if strTypeIndices.len == 1:
+    result =
+      &"""
+    let nimstr = {valNames[strTypeIndices[0]]}
+    let cstr = CoTaskMemAlloc(nimstr.len + 1)
+    {{.emit: ["strcpy(", cstr, ", ", nimstr.cstring, ");"].}}"""
+  else:
+    for index in strTypeIndices:
+      result.add(
+        &"""
+    let nimstr{index+1} = {valNames[index]}
+    let cstr{index+1} = CoTaskMemAlloc(nimstr{index+1}.len + 1)
+    {{.emit: ["strcpy(", cstr{index+1}, ", ", nimstr{index+1}.cstring, ");"].}}"""
+      )
+
 proc translateProc(node: PNode): string =
   let procName = node.itemName
   let paramNode = procParamNode(node)
@@ -158,20 +176,45 @@ proc translateProc(node: PNode): string =
       procCallNormal
   var valNames: seq[string]
   var tupleMemberTypes: seq[string]
+  var strTypeIndices: seq[int]
   if anonymousTuplesNameToSig.contains(retType):
     tupleMemberTypes = anonymousTuplesNameToSig[retType].split(",")
     valNames = generateValNames(tupleMemberTypes.len)
+    strTypeIndices = (0 ..< tupleMemberTypes.len)
+      .mapIt(if tupleMemberTypes[it] == "cstring": it else: -1)
+      .filterIt(it != -1)
   var retBody =
     if retType == "":
       procCallStmt
     elif anonymousTuplesNameToSig.contains(retType):
+      # &"a" & (if shouldUseVCCStr and strTypeIndices.len > 0: &"b"
+      # else: &"c") & &"d"
       &"""let ({valNames.join(", ")}) = {(if needJsFuncCall: "\n    " & procCallStmt.replace("\n", "\n  ") else: procCallStmt)}
   when defined(cpp):
     return {(if tupleMemberTypes.len == 2: "makePair" else: "makeTuple")}({valNames.zip(tupleMemberTypes).map(x => (if x[1] == "cstring": "cast[ConstCString]($#)" else: "$#") % [x[0].convertType(x[1].replaceType, ConvertDirection.toC, flagEnums.contains(x[1]))]).join(", ")})
   elif defined(js):
-    return @[{valNames.zip(tupleMemberTypes).map(x => "$#.toJs" % [x[0].convertType(x[1].replaceType, ConvertDirection.toC, flagEnums.contains(x[1]))]).join(", ")}]
+    return @[{valNames.zip(tupleMemberTypes).map(x => "$#.toJs" % [x[0].convertType(x[1].replaceType, ConvertDirection.toC, flagEnums.contains(x[1]))]).join(", ")}]""" &
+      (
+        if shouldUseVCCStr and strTypeIndices.len > 0:
+          &"""
+
+  elif defined(vcc):
+{handleAnonymousTuplesVccStr(strTypeIndices, valNames)}
+    return {retType}(
+      {(0..<valNames.len).toSeq.zip(tupleMemberTypes).map(x =>
+        valNames[x[0]] & ": " &
+        (if strTypeIndices.contains(x[0]):
+          (if strTypeIndices.len == 1: "cstr" else: "cstr" & $strTypeIndices[x[0]])
+        else: valNames[x[0]].convertType(x[1].replaceType, ConvertDirection.toC, flagEnums.contains(x[1]))
+        )
+      ).join(", ")}
+    )"""
+        else: ""
+      ) &
+        &"""
+
   else:
-    return {retType}({valNames.zip(tupleMemberTypes).map(x => "$#: $#" % [x[0], x[0].convertType(x[1].replaceType, ConvertDirection.toC, flagEnums.contains(x[1]))]).join(", ")})"""
+    return {origRetType}({valNames.zip(tupleMemberTypes).map(x => "$#: $#" % [x[0], x[0].convertType(x[1].replaceType, ConvertDirection.toC, flagEnums.contains(x[1]))]).join(", ")})"""
     else:
       if needJsFuncCall:
         &"""when defined(js):
