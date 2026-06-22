@@ -83,7 +83,9 @@ method translateAnonymousTuple(self: CSharpLangGen, node: PNode): (string, strin
         [StructLayout(LayoutKind.Sequential)]
         private struct {tupleName}
         {{
-            {memberTypes.zip(valNames).map(x => "public $# $#;" % [x[0].replaceType, x[1]]).join("\n            ")}
+            {memberTypes.zip(valNames).map(x =>
+              (if x[0] == "cstring": "[MarshalAs(UnmanagedType.LPUTF8Str)]\n            " else: "") &
+              "public $# $#;" % [x[0].replaceType, x[1]]).join("\n            ")}
         }}"""
   result = (tupleName, tupleDef)
 
