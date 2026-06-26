@@ -112,6 +112,7 @@ func translateProc(
   let paramNode = procParamNode(node)
   var retType = ""
   var trParamList, callableParamList: seq[string]
+  var stringMemberTuples: seq[(string, int)] # (paramName, memberIndex)
   if paramNode.isSome:
     let formalParamNode = paramNode.get()
     for i in 1 ..< formalParamNode.safeLen:
@@ -130,8 +131,16 @@ func translateProc(
         let paramNameCopy = paramName
         if tupleNameSigTbl.contains(paramType):
           let memberTypes = tupleNameSigTbl[paramType].split(",")
+          stringMemberTuples = (0 ..< memberTypes.len).toSeq
+            .zip(memberTypes)
+            .filterIt(it[1] == "cstring")
+            .map(x => (paramNameCopy, x[0]))
           callableParam =
-            &"""{paramType}({(1..memberTypes.len).toSeq.zip(memberTypes).map(x => "val$#: $#" % [$x[0], (paramNameCopy & "." & $(x[0]-1)).convertType(x[1].replaceType, ConvertDirection.toC, self.cModuleName, self.typeCategory(x[1]))]).join(", ")})"""
+            &"""{paramType}({(1..memberTypes.len).toSeq.zip(memberTypes).map(x =>
+              "val$#: $#" % [$x[0], (
+                if x[1] == "cstring": paramNameCopy & $(x[0]-1) & "CStr" else: paramNameCopy & "." & $(x[0]-1)
+              ).convertType(x[1].replaceType, ConvertDirection.toC, self.cModuleName, self.typeCategory(x[1]))]
+            ).join(", ")})"""
         else:
           callableParam = paramName.convertType(
             origParamType.replaceType,
@@ -189,6 +198,13 @@ func translateProc(
     retBody =
       &"""let cTuple = {procCallStmt}
     return ({memberNames.zip(memberTypesCompat).map(x => "cTuple.$#".format(x[0]).convertType(x[1], ConvertDirection.fromC, self.cModuleName)).join(", ")})"""
+  for (paramName, index) in stringMemberTuples:
+    retBody =
+      &"""{paramName}.{index}.withCString {{ {paramName}{index}CStr in
+        {retBody.split("\n").join("\n    ")}
+    }}"""
+  if stringMemberTuples.len > 0 and retType != "":
+    retBody = &"return {retBody}"
   let trResult =
     &"""
 func {funcName}({trParamList.join(", ")}){retTypePart} {{
