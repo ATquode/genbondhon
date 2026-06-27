@@ -138,7 +138,15 @@ proc translateProc(node: PNode): string =
           callableParamListJs = callableParamList
         let callableParamJs = (0 ..< tupleMemberTypes.len).toSeq
           .zip(tupleMemberTypes)
-          .map(x => "$#[$#].to($#)" % [paramNameCopy, $x[0], x[1].replaceType])
+          .map(
+            x =>
+              convertType(
+                "$#[$#].to($#)" % [paramNameCopy, $x[0], x[1]],
+                x[1],
+                ConvertDirection.fromC,
+                flagEnums.contains(x[1]),
+              )
+          )
           .join(", ")
         callableParamListJs.add("($#)".format(callableParamJs))
       else:
