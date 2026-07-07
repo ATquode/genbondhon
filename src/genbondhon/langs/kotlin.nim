@@ -321,7 +321,8 @@ proc generateJNIWrapperContent(
     {{"Double", "D"}},
     {{"Boolean", "Z"}},
     {{"Long", "J"}},
-    {{"Float", "F"}}
+    {{"Float", "F"}},
+    {{"Character", "C"}}
 }};"""
     else:
       ""
@@ -336,6 +337,7 @@ template<> struct JniToCpp<jboolean> {{ using type = bool; }};
 template<> struct JniToCpp<jlong>    {{ using type = long long; }};
 template<> struct JniToCpp<jfloat>   {{ using type = float; }};
 template<> struct JniToCpp<jstring>  {{ using type = std::string; }};
+template<> struct JniToCpp<jchar>    {{ using type = char; }};
 
 template<typename JniT>
 using to_cpp_t = typename JniToCpp<JniT>::type;
@@ -352,6 +354,8 @@ std::string getDataType() {{
         return "Long";
     }} else if constexpr (std::is_same_v<T, jfloat>) {{
         return "Float";
+    }} else if constexpr (std::is_same_v<T, jchar>) {{
+        return "Character";
     }} else {{
         return "Unsupported type";
     }}
