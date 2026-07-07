@@ -88,6 +88,7 @@ func translateProcToJNI(
   var callableParamList: seq[string]
   var jstringTbl: Table[string, string]
   var jenumTbl: Table[string, (string, string)]
+  var tupleWithStringList: seq[string]
   if paramNode.isSome:
     let formalParamNode = paramNode.get()
     for i in 1 ..< formalParamNode.safeLen:
@@ -116,6 +117,8 @@ func translateProcToJNI(
           callableParamList.add(jenumTbl[paramName][0])
         elif tupleNameSigTbl.contains(origParamType):
           let memberTypes = tupleNameSigTbl[origParamType].split(",")
+          if memberTypes.contains("cstring"):
+            tupleWithStringList.add(tupleNameSigTbl[origParamType])
           let createTupleFunc =
             case memberTypes.len
             of 2: "createCppPairPrimitive"
@@ -188,69 +191,56 @@ func translateProcToJNI(
       &"""
 {getEnums.join("\n    ")}
     {retBody}"""
-  if tupleNameSigTbl.contains(retType):
-    var procCallLine =
-      if retBody.contains("auto data ="):
-        retBody.split("\n")[0 ..^ 2].join("\n")
-      else:
-        &"auto data = {procCallStmt}"
-    let memberTypes = tupleNameSigTbl[retType].split(",")
-    if memberTypes.contains("cstring") and memberTypes.len > 2:
-      var callableTuples = 0
-      procCallLine = procCallLine
-        .split("\n")
-        .mapIt(
-          block:
-            if it.contains("auto data ="):
-              let spaceCount = it.find("auto data =")
-              let tupleCalls =
-                callableParamList.filterIt(it.contains("createCppTuplePrimitive"))
-              callableTuples = tupleCalls.len
-              if tupleCalls.len == 1:
-                let tupleCall = tupleCalls[0]
-                &"""{" ".repeat(spaceCount)}auto cpp_data = {tupleCall};"""
-              else:
-                (0 ..< tupleCalls.len).toSeq
-                .zip(tupleCalls)
-                .mapIt(&"""{" ".repeat(spaceCount)}auto cpp_data{it[0]} = {it[1]};""")
-                .join("\n")
-            else:
-              it
-        )
+  if tupleWithStringList.len > 0:
+    let parts = retBody.split(procCallStmt)
+    let startLastLinePart = parts[0].split("\n")[^1]
+    let trimmed = startLastLinePart.strip(trailing = false)
+    let spaceCount = startLastLinePart.len - trimmed.len
+    let tupleCalls = callableParamList.filterIt(it.contains("createCppTuplePrimitive"))
+    var cppLines = ""
+    if tupleCalls.len == 1:
+      let tupleCall = tupleCalls[0]
+      cppLines = &"""{" ".repeat(spaceCount)}auto cpp_data = {tupleCall};"""
+    else:
+      cppLines = (0 ..< tupleCalls.len).toSeq
+        .zip(tupleCalls)
+        .mapIt(&"""{" ".repeat(spaceCount)}auto cpp_data{it[0]} = {it[1]};""")
         .join("\n")
-      var tupleCount = 0
-      let updCallParamList = callableParamList
-        .mapIt(
-          block:
-            if it.contains("createCppTuplePrimitive"):
-              let cppData =
-                if callableTuples > 1:
-                  &"cpp_data{tupleCount}"
-                else:
-                  "cpp_data"
-              tupleCount += 1
-              "std::tuple(\n" & " ".repeat(12) &
-                (0 ..< memberTypes.len).toSeq
-                .zip(memberTypes)
-                .mapIt(
-                  block:
-                    if it[1] == "cstring":
-                      "std::get<$#>($#).c_str()" % [$it[0], cppData]
-                    else:
-                      "std::get<$#>($#)" % [$it[0], cppData]
-                )
-                .join(",\n" & " ".repeat(12)) & "\n" & " ".repeat(8) & ")"
-            else:
-              it
-        )
-        .join(",")
-      procCallLine.add(
-        &"""
-
-    auto data = {funcName}(
+    var tupleCount = 0
+    let updCallParamList = callableParamList
+      .mapIt(
+        block:
+          if it.contains("createCppTuplePrimitive"):
+            let cppData =
+              if tupleCalls.len > 1:
+                &"cpp_data{tupleCount}"
+              else:
+                "cpp_data"
+            let memberTypes = tupleWithStringList[tupleCount].split(",")
+            tupleCount += 1
+            "std::tuple(\n" & " ".repeat(spaceCount + 12) &
+              (0 ..< memberTypes.len).toSeq
+              .zip(memberTypes)
+              .mapIt(
+                block:
+                  if it[1] == "cstring":
+                    "std::get<$#>($#).c_str()" % [$it[0], cppData]
+                  else:
+                    "std::get<$#>($#)" % [$it[0], cppData]
+              )
+              .join(",\n" & " ".repeat(spaceCount + 12)) & "\n" & " ".repeat(8) & ")"
+          else:
+            it
+      )
+      .join(",")
+    let procCallPart =
+      &"""{cppLines}
+    {funcName}(
         {updCallParamList}
     )"""
-      )
+    retBody = parts[0] & procCallPart & parts[1]
+  if tupleNameSigTbl.contains(retType):
+    let memberTypes = tupleNameSigTbl[retType].split(",")
     let memberLen = memberTypes.len
     let createTupleFunc =
       case memberLen
@@ -264,8 +254,21 @@ func translateProcToJNI(
     let q1 = "\""
     if memberLen > 3:
       retTupleParams = &"""{retTupleParams}, "Generic{memberLen}Tuple{q1}"""
+
+    retBody = retBody
+      .split("\n")
+      .mapIt(
+        block:
+          if it.contains(funcName) and not it.contains("auto data ="):
+            let trimmedStart = it.strip(trailing = false)
+            let spaceCount = it.len - trimmedStart.len
+            &"""{" ".repeat(spaceCount)}auto data = {trimmedStart.replace("return ", "")}"""
+          else:
+            it.replace("return ", "")
+      )
+      .join("\n")
     retBody =
-      &"""{procCallLine};
+      &"""{retBody}
     return {createTupleFunc}({retTupleParams});"""
 
   result =
