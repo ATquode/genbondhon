@@ -395,6 +395,8 @@ to_cpp_t<T> unboxPrimitive(JNIEnv *env, jobject obj) {{
     methodName[0] = static_cast<char>(std::tolower(static_cast<unsigned char>(dataType[0])));
     if (methodName == "integer") {{
         methodName = "int";
+    }} else if (methodName == "character") {{
+        methodName = "char";
     }}
     methodName += "Value";
     std::string typeSign = typeSignMap[dataType];
@@ -409,6 +411,7 @@ to_cpp_t<T> unboxPrimitive(JNIEnv *env, jobject obj) {{
     else if constexpr (std::is_same_v<T, jdouble>) return env->CallDoubleMethod(obj, valueMethod);
     else if constexpr (std::is_same_v<T, jboolean>) return env->CallBooleanMethod(obj, valueMethod);
     else if constexpr (std::is_same_v<T, jlong>) return env->CallLongMethod(obj, valueMethod);
+    else if constexpr (std::is_same_v<T, jchar>) return env->CallCharMethod(obj, valueMethod);
 }}
 
 template <typename T1, typename T2>
