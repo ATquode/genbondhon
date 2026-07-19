@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: CC0-1.0
 
 [versions]
-agp = "8.13.2"
+agp = "9.3.0"
 kotlin = "2.2.21"
 coreKtx = "1.17.0"
 junit = "4.13.2"
