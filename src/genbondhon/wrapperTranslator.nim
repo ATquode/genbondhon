@@ -9,6 +9,12 @@ import convertutil, currentconfig, store, util
 func replaceType(nimType: string): string =
   nimAndCompatTypeTbl.getOrDefault(nimType, nimType)
 
+func toCLikeType(compatType: string): string =
+  if compatType == "cstring":
+    "string"
+  else:
+    nimCompatToCTypeTbl.getOrDefault(compatType, compatType)
+
 proc convertType(
     code: string,
     origType: string,
@@ -36,9 +42,9 @@ proc getRegAnonymousTupleType(node: PNode): string =
       isHomogenous = false
       break
   if isHomogenous:
-    result = &"{firstType.replaceType.capitalizeAscii}{memberTypes.len}Tuple"
+    result = &"{firstType.toCLikeType.capitalizeAscii}{memberTypes.len}Tuple"
   else:
-    result = memberTypes[0].replaceType.capitalizeAscii
+    result = memberTypes[0].toCLikeType.capitalizeAscii
     var count = 1
     for i in 1 ..< memberTypes.len:
       if memberTypes[i - 1] == memberTypes[i]:
@@ -50,7 +56,7 @@ proc getRegAnonymousTupleType(node: PNode): string =
           result = result & $count
       else:
         count = 1
-        result = result & memberTypes[i].replaceType.capitalizeAscii
+        result = result & memberTypes[i].toCLikeType.capitalizeAscii
     result = result & "Tuple"
   anonymousTuplesSigToName[signature] = result
   anonymousTuplesNameToSig[result] = signature

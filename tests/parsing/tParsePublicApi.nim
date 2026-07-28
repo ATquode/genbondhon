@@ -32,7 +32,7 @@ check bindingApis.len == publicApiCount + 5 - unwrappableAST.len
   # public APIs + NimMain() + anonymous tuples (4) - Unwrappable APIs
 
 var expectedWrapperProcs =
-  @["Float4Tuple", "Int2Tuple", "Int3Tuple", "Int4StringTuple", "NimMain"]
+  @["Int2Tuple", "Double4Tuple", "Int3Tuple", "Int4StringTuple", "NimMain"]
 expectedWrapperProcs.add(
   expectedPublicNames.toOpenArray(5, expectedPublicNames.len - 1)
     # Drop Unwrappable APIs from `expectedPublicNames` - Direction, GameState etc.
