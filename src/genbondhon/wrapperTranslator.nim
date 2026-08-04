@@ -230,22 +230,30 @@ proc translateProc(node: PNode): string =
   else:
     return {origRetType}({valNames.zip(tupleMemberTypes).map(x => "$#: $#" % [x[0], x[0].convertType(x[1].replaceType, ConvertDirection.toC, flagEnums.contains(x[1]))]).join(", ")})"""
     else:
+      let normalRet =
+        &"return {procCallNormal.convertType(origRetType, ConvertDirection.toC, flagEnums.contains(origRetType))}"
       if needJsFuncCall:
         &"""when defined(js):
     return {procCallJs}
   else:
-    return {procCallNormal.convertType(origRetType, ConvertDirection.toC, flagEnums.contains(origRetType))}"""
+    {normalRet}"""
       else:
-        &"return {procCallNormal.convertType(origRetType, ConvertDirection.toC, flagEnums.contains(origRetType))}"
+        &"{normalRet}"
   if shouldUseVCCStr and retType == "string":
     retBody =
       &"""when defined(vcc):
     let nimstr = {procCallNormal}
     let cstr = CoTaskMemAlloc(nimstr.len + 1)
     {{.emit: ["strcpy(", cstr, ", ", nimstr.cstring, ");"].}}
-    return cstr
+    return cstr""" &
+      (
+        if needJsFuncCall: "\n" & retBody.replace("when", "elif")
+        else:
+        &"""
+
   else:
     {retBody}"""
+      )
   if hasFlagEnum:
     var flagLines: seq[string]
     for flag in flagNameListJs:
@@ -256,7 +264,7 @@ proc translateProc(node: PNode): string =
         &"""
     let {flag} = {paramName}.int.fastLog2.{paramType}"""
       flagLines.add(flagConvLine)
-    var retLineJs = &"""{moduleName}.{procName}({callableParamListJs.join(", ")})"""
+    var retLineJs = procCallJs.convertType(origRetType, ConvertDirection.toC)
     if retType != "":
       retLineJs =
         if flagEnums.contains(origRetType):
@@ -272,8 +280,14 @@ proc translateProc(node: PNode): string =
     {retLineJs}"""
     retBody =
       &"""when defined(js):
-{jsBody}
-  {retBody}"""
+{jsBody}""" & (
+        if retBody.contains("when"): "\n  " & retBody.replace("when", "elif")
+        else:
+        &"""
+
+  else:
+    {retBody}"""
+      )
   result =
     &"""
 proc {procName}*({trParamList.join(", ")}){retTypePart} {{.ffiexport.}} =

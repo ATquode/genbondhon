@@ -209,11 +209,13 @@ proc generateWrapperFileContent(
 ): string =
   let modulePath = relativeModulePath()
 
-  let stdImportFlagEnumsCommon = if flagEnums.len > 0: "import std/sequtils" else: ""
+  let stdImportFlagEnumsCCpp = if flagEnums.len > 0: "import std/sequtils" else: ""
   let stdImportCppTuple =
-    if useCppPairTuple: "import std/[macros, sequtils, strformat, strutils]" else: ""
-  let stdImportCommon =
-    if stdImportCppTuple != "": stdImportCppTuple else: stdImportFlagEnumsCommon
+    if useCppPairTuple:
+      &"""when defined(cpp):
+  import std/[macros, strformat, strutils]"""
+    else:
+      ""
 
   let flagEnumsJsImport = if flagEnums.len > 0: "bitops" else: ""
   let tupleJsImport = if anonymousTuplesNameToSig.len > 0: "jsffi" else: ""
@@ -223,11 +225,14 @@ proc generateWrapperFileContent(
       &"""[{stdImportJsSeq.join(", ")}]"""
     else:
       stdImportJsSeq[0]
+  let stdNonJsImport = stdImportFlagEnumsCCpp
   let stdImportForJs =
     &"""when defined(js):
-  import std/{stdImportForJsPart}"""
+  import std/{stdImportForJsPart}
+else:
+  {stdNonJsImport}"""
 
-  let importSection = [stdImportCommon, stdImportForJs, &"import {modulePath}"]
+  let importSection = [stdImportCppTuple, stdImportForJs, &"import {modulePath}"]
     .filterIt(it != "")
     .join("\n")
 
