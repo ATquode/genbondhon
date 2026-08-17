@@ -5,6 +5,7 @@
 *.iml
 .gradle
 .kotlin
+.tools
 /local.properties
 /.idea/caches
 /.idea/deviceManager.xml

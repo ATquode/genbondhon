@@ -46,19 +46,25 @@ class MainViewModel : ViewModel() {
         Log.d("nomuna", "Least priviledged permission: $permission")
         val reqRes = nomuna.requestAccess(Nomuna.FilePermission.WRITE, "/")
         Log.d("nomuna", "Request access result: $reqRes")
-        val a = nomuna.addIntNum2(11,14)
+        val a = nomuna.addIntNum2(11, 14)
         Log.d("nomuna", "$a")
-        val (b, c) = nomuna.divMod(10, 3)
+        val divno1 = 10
+        val divno2 = 3
+        val (b, c) = nomuna.divMod(divno1, divno2)
         Log.d("nomuna", "$b, $c")
         val position = Pair(1, 2)
-        val position3D = nomuna.extendTo3D(position, 3);
+        val position3D = nomuna.extendTo3D(position, 3)
         Log.d("nomuna", "${position3D.first}, ${position3D.second}, ${position3D.third}")
         val newPosition3D = nomuna.translate3D(Triple(1, 2, 3), -2)
         Log.d("nomuna", "${newPosition3D.first}, ${newPosition3D.second}, ${newPosition3D.third}")
         val quaternion = nomuna.inverseQuaternion(Nomuna.Generic4Tuple(1.0, -2.0, 2.0, 1.0))
         Log.d("nomuna", "${quaternion.first}, ${quaternion.second}, ${quaternion.third}, ${quaternion.item4}")
         val swappedRects = nomuna.swapBoundingBoxes(Nomuna.Generic5Tuple(1, 2, 3, 4, "order"))
-        Log.d("nomuna", "${swappedRects.first}, ${swappedRects.second}, ${swappedRects.third}, ${swappedRects.item4}, ${swappedRects.item5}")
+        Log.d(
+            "nomuna",
+            "${swappedRects.first}, ${swappedRects.second}, ${swappedRects.third}, " +
+                "${swappedRects.item4}, ${swappedRects.item5}",
+        )
     }
 
     val retCardUiState =

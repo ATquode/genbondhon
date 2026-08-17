@@ -16,14 +16,17 @@ const detektBin = if defined(linux): "detekt-cli" else: "detekt"
 
 # format commands
 const nphFormatCmd = "nph ."
-const ktlintFormatCmd = "ktlint --format"
-const detektFormatCmd = detektBin & " --config detekt-config.yml --auto-correct"
+const ktlintFormatCmd = "ktlint -R .tools/ktlint-compose-0.6.4-all.jar --format"
+const detektFormatCmd =
+  detektBin &
+  " -p .tools/detekt-compose-0.6.4-all.jar -c detekt-config.yml --auto-correct"
 
 # lint commands
 const reuseLintCmd = "reuse lint"
 const nphLintCmd = "nph --check ."
-const ktlintLintCmd = "ktlint"
-const detektLintCmd = detektBin & " --config detekt-config.yml"
+const ktlintLintCmd = "ktlint -R .tools/ktlint-compose-0.6.4-all.jar"
+const detektLintCmd =
+  detektBin & " -p .tools/detekt-compose-0.6.4-all.jar -c detekt-config.yml"
 
 proc runCmd(cmdName: string, cmdType: string, cmdStr: string): bool =
   styledEcho fgYellow, "Running $# $#" % [cmdName, cmdType]

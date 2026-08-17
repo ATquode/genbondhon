@@ -72,9 +72,10 @@ fun MainContent(
     addCardUiState: AddCardUiState,
     inputCardUiState: InputCardUiState,
     inputVars: InputContainer,
+    modifier: Modifier = Modifier,
 ) {
     MyApplication1Theme {
-        Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+        Scaffold(modifier = modifier.fillMaxSize()) { innerPadding ->
             Column(
                 modifier =
                     Modifier
@@ -111,8 +112,8 @@ fun MainContent(
 
 @Composable
 fun ConstantReturnListCard(
-    modifier: Modifier = Modifier,
     uiState: ReturnCardUiState,
+    modifier: Modifier = Modifier,
 ) {
     CardView(modifier) {
         Text(text = "Constant Returns", style = MaterialTheme.typography.titleLarge)
@@ -127,9 +128,9 @@ fun ConstantReturnListCard(
 
 @Composable
 fun AddListCard(
-    modifier: Modifier,
     uiState: AddCardUiState,
     inputVars: InputContainer,
+    modifier: Modifier = Modifier,
 ) {
     CardView(modifier) {
         Text(text = "Add", style = MaterialTheme.typography.titleLarge)
@@ -162,9 +163,9 @@ fun AddListCard(
 
 @Composable
 fun InputListCard(
-    modifier: Modifier,
     uiState: InputCardUiState,
     inputVars: InputContainer,
+    modifier: Modifier = Modifier,
 ) {
     CardView(modifier) {
         Text(text = "Input", style = MaterialTheme.typography.titleLarge)
@@ -192,7 +193,7 @@ fun InputListCard(
 
 @Composable
 fun CardView(
-    modifier: Modifier,
+    modifier: Modifier = Modifier,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     Card(
@@ -214,10 +215,12 @@ fun AddRow(
     updateNum1: (String) -> Unit,
     addNum2: String,
     updateNum2: (String) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     Row(
         horizontalArrangement = Arrangement.spacedBy(10.dp),
         verticalAlignment = Alignment.CenterVertically,
+        modifier = modifier,
     ) {
         Text(text = labelStr)
         OutlinedTextField(
@@ -249,10 +252,12 @@ fun SayHelloRow(
     outputStr: String,
     inputStr: String,
     updateInputStr: (String) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     Row(
         horizontalArrangement = Arrangement.spacedBy(10.dp),
         verticalAlignment = Alignment.CenterVertically,
+        modifier = modifier,
     ) {
         Text(text = "String:")
         OutlinedTextField(
@@ -270,10 +275,13 @@ fun SayHelloRow(
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
-fun DirectionDropDownMenuBox(updateSelection: (String) -> Unit) {
+fun DirectionDropDownMenuBox(
+    updateSelection: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
     var isExpanded by remember { mutableStateOf(false) }
     var selectedValue by remember { mutableStateOf(directionPickerOptions[0]) }
-    ExposedDropdownMenuBox(expanded = isExpanded, onExpandedChange = {
+    ExposedDropdownMenuBox(expanded = isExpanded, modifier = modifier, onExpandedChange = {
         isExpanded = !isExpanded
     }) {
         OutlinedTextField(
@@ -312,7 +320,7 @@ fun DirectionDropDownMenuBox(updateSelection: (String) -> Unit) {
     uiMode = Configuration.UI_MODE_NIGHT_YES,
 )
 @Composable
-fun GreetingPreview() {
+private fun GreetingPreview() {
     MainContent(
         ReturnCardUiState(2, false, 2.0, 'A', "str", "fe"),
         AddCardUiState(),
