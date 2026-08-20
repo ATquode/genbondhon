@@ -21,7 +21,7 @@ final class App1Tests: XCTestCase {
         // Put teardown code here. This method is called after the invocation of each test method in the class.
     }
 
-    func testExample() throws {
+    func testExample() {
         // This is an example of a functional test case.
         // Use XCTAssert and related functions to verify your tests produce the correct results.
         // Any test you write for XCTest can be annotated as throws and async.
@@ -30,7 +30,7 @@ final class App1Tests: XCTestCase {
         // complete. Check the results with assertions afterwards.
     }
 
-    func testPerformanceExample() throws {
+    func testPerformanceExample() {
         // This is an example of a performance test case.
         measure {
             // Put the code you want to measure the time of here.

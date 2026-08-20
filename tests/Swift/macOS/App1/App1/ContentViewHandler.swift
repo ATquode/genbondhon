@@ -73,9 +73,9 @@ class ContentViewHandler: ObservableObject {
         print("Least priviledged permission value: 0x\(String(format: "%02x", permission.rawValue))")
         let reqRes = requestAccess(requestedPermission: FilePermission.write, targetPath: "/")
         print("Request access result: \(reqRes)")
-        let a = addIntNum2(a: 11, b: 14)
-        print(a)
-        let (b, c) = divMod(a: 10, b: 3)
-        print("\(b), \(c)")
+        let sum = addIntNum2(a: 11, b: 14)
+        print(sum)
+        let (divRes, modVal) = divMod(a: 10, b: 3)
+        print("\(divRes), \(modVal)")
     }
 }
