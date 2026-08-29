@@ -89,7 +89,6 @@ StatefulApp.StatefulWindow {
 
     Kirigami.PagePool {
         id: appPagePool
-
     }
 
     Kirigami.NavigationTabBar {

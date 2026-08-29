@@ -170,7 +170,6 @@ Kirigami.ScrollablePage {
 
                     CommonTextField {
                         id: strTextField
-
                     }
 
                     QQC2.Label {
@@ -208,7 +207,6 @@ Kirigami.ScrollablePage {
 
     DirectionModel {
         id: directionModel
-
     }
 
     Binding {

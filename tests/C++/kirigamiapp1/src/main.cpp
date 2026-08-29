@@ -18,7 +18,7 @@
 
 #include "version-kirigamiapp1.h"
 #include <KAboutData>
-#include <KLocalizedContext>
+#include <KLocalizedQmlContext>
 #include <KLocalizedString>
 
 #include "kirigamiapp1config.h"
@@ -81,7 +81,7 @@ int main(int argc, char *argv[])
 
     qmlRegisterSingletonInstance("org.kde.kirigamiapp1.private", 1, 0, "Config", config);
 
-    engine.rootContext()->setContextObject(new KLocalizedContext(&engine));
+    KLocalization::setupLocalizedContext(&engine);
     engine.loadFromModule("org.kde.kirigamiapp1", u"Main"_s);
 
     if (engine.rootObjects().isEmpty()) {
