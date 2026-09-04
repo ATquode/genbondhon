@@ -23,7 +23,8 @@ const clangformatFormatCmd = "clang-format -i "
 const clangtidyFixCmd = "clang-tidy --fix -p "
 const qmlformatFormatCmd =
   "/usr/lib/qt6/bin/qmlformat -i --normalize --objects-spacing --functions-spacing "
-const qmllintFixCmd = "/usr/lib/qt6/bin/qmllint --compiler warning --fix "
+const qmllintFixCmd =
+  "/usr/lib/qt6/bin/qmllint --compiler warning --fix -I /usr/lib/qt6/qml/ -I build/bin/ "
 const cmakeformatFormatCmd = "cmake-format -i "
 
 # lint commands
@@ -32,7 +33,8 @@ const nphLintCmd = "nph --check ."
 const clangformatLintCmd = "clang-format --dry-run -Werror "
 const clangtidyLintCmd = "clang-tidy -p "
 const clazyLintCmd = "clazy-standalone -p "
-const qmllintLintCmd = "/usr/lib/qt6/bin/qmllint --compiler warning "
+const qmllintLintCmd =
+  "/usr/lib/qt6/bin/qmllint --compiler warning -I /usr/lib/qt6/qml/ -I build/bin/ "
 const cmakeformatLintCmd = "cmake-format --check "
 const cmakelintLintCmd = "cmake-lint "
 

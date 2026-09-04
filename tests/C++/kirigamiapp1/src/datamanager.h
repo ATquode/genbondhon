@@ -17,12 +17,12 @@ class DataManager : public QObject
     QML_ELEMENT
     QML_SINGLETON
 
-    Q_PROPERTY(int intRetVal READ getIntRetVal CONSTANT)
-    Q_PROPERTY(bool boolRetVal READ getBoolRetVal CONSTANT)
-    Q_PROPERTY(double doubleRetVal READ getDoubleRetVal CONSTANT)
-    Q_PROPERTY(QString charRetVal READ getCharRetVal CONSTANT)
-    Q_PROPERTY(QString strRetVal READ getStrRetVal CONSTANT)
-    Q_PROPERTY(QString unicodeStrRetVal READ getUnicodeStrRetVal CONSTANT)
+    Q_PROPERTY(int intRetVal READ getIntRetVal CONSTANT FINAL)
+    Q_PROPERTY(bool boolRetVal READ getBoolRetVal CONSTANT FINAL)
+    Q_PROPERTY(double doubleRetVal READ getDoubleRetVal CONSTANT FINAL)
+    Q_PROPERTY(QString charRetVal READ getCharRetVal CONSTANT FINAL)
+    Q_PROPERTY(QString strRetVal READ getStrRetVal CONSTANT FINAL)
+    Q_PROPERTY(QString unicodeStrRetVal READ getUnicodeStrRetVal CONSTANT FINAL)
 
     Q_PROPERTY(int addInt1 MEMBER intNum1 NOTIFY addInt1Changed FINAL)
     Q_PROPERTY(int addInt2 MEMBER intNum2 NOTIFY addInt2Changed FINAL)

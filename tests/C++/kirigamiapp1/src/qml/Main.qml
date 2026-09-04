@@ -4,6 +4,7 @@ import QtQuick
 
 import org.kde.kirigami as Kirigami
 import org.kde.kirigamiaddons.statefulapp as StatefulApp
+import org.kde.ki18n
 
 import org.kde.kirigamiapp1
 import org.kde.kirigamiapp1.settings as Settings
@@ -18,21 +19,36 @@ StatefulApp.StatefulWindow {
 
             page: "LibTesting.qml"
             pagePool: appPagePool
-            text: i18n("Lib Testing")
+            text: KI18n.i18n("Lib Testing")
         },
         Kirigami.PagePoolAction {
             id: counterAction
 
+            initialProperties: {
+                return {
+                    incrementAction: incrementCounterAction,
+                    aboutAction: aboutAction
+                };
+            }
             page: "Incrementer.qml"
             pagePool: appPagePool
-            text: i18n("Counter")
+            text: KI18n.i18n("Counter")
+
+            onTriggered: {
+                let page = root.pageStack.currentItem as Incrementer;
+                page.counter = Qt.binding(root.getCounter);
+            }
         }
     ]
+
+    function getCounter(): int {
+        return root.counter;
+    }
 
     footer: navTabBar
     minimumHeight: Kirigami.Units.gridUnit * 20
     minimumWidth: Kirigami.Units.gridUnit * 20
-    title: i18nc("@title:window", "KirigamiApp1")
+    title: KI18n.i18nc("@title:window", "KirigamiApp1")
     windowName: "KirigamiApp1"
 
     application: KirigamiApp1Application {

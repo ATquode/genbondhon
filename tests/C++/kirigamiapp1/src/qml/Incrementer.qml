@@ -6,12 +6,17 @@ import QtQuick
 import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
 import org.kde.kirigamiaddons.formcard as FormCard
+import org.kde.ki18n
 
 FormCard.FormCardPage {
     id: incrementerPage
 
-    actions: [incrementCounterAction]
-    title: i18nc("@title", "KirigamiApp1")
+    required property Kirigami.Action aboutAction
+    property int counter: 0
+    required property Kirigami.Action incrementAction
+
+    actions: [incrementAction]
+    title: KI18n.i18nc("@title", "KirigamiApp1")
 
     Kirigami.Icon {
         Layout.alignment: Qt.AlignHCenter
@@ -25,21 +30,21 @@ FormCard.FormCardPage {
         Layout.fillWidth: true
         Layout.topMargin: Kirigami.Units.largeSpacing
         horizontalAlignment: Qt.AlignHCenter
-        text: i18nc("@title", "Welcome to KirigamiApp1") + '\n' + i18nc("@info:status", "Counter: %1", root.counter)
+        text: KI18n.i18nc("@title", "Welcome to KirigamiApp1") + '\n' + KI18n.i18nc("@info:status", "Counter: %1", incrementerPage.counter)
     }
 
     FormCard.FormCard {
         Layout.topMargin: Kirigami.Units.largeSpacing * 4
 
         FormCard.FormButtonDelegate {
-            action: incrementCounterAction
+            action: incrementerPage.incrementAction
         }
 
         FormCard.FormDelegateSeparator {
         }
 
         FormCard.FormButtonDelegate {
-            action: aboutAction
+            action: incrementerPage.aboutAction
         }
     }
 }
