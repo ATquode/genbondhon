@@ -204,37 +204,52 @@ else:
   else:
     {anonymousTupleTbl.values.toSeq.join("\n    ")}"""
 
+func wrapImportStdLibs(libs: seq[string]): string =
+  if libs.len == 0:
+    return ""
+  if libs.len > 1:
+    return &"""import std/[{libs.join(", ")}]"""
+  else:
+    return &"""import std/{libs[0]}"""
+
 proc generateWrapperFileContent(
     wrappedApis: string, unwrappableAST: seq[PNode], typeDefs, apiNames: seq[string]
 ): string =
   let modulePath = relativeModulePath()
+  var stdLibCpp, stdLibJs, stdLibNonJs: seq[string]
 
-  let stdImportFlagEnumsCCpp = if flagEnums.len > 0: "import std/sequtils" else: ""
-  let stdImportCppTuple =
+  if flagEnums.len > 0:
+    stdLibJs.add("bitops")
+    stdLibNonJs.add("sequtils")
+  if anonymousTuplesNameToSig.len > 0:
+    stdLibJs.add("jsffi")
     if useCppPairTuple:
+      stdLibCpp.add(["macros", "strformat", "strutils"])
+
+  let stdImportCpp =
+    if stdLibCpp.len > 0:
       &"""when defined(cpp):
-  import std/[macros, strformat, strutils]"""
+  {stdLibCpp.wrapImportStdLibs}"""
     else:
       ""
 
-  let flagEnumsJsImport = if flagEnums.len > 0: "bitops" else: ""
-  let tupleJsImport = if anonymousTuplesNameToSig.len > 0: "jsffi" else: ""
-  let stdImportJsSeq = [flagEnumsJsImport, tupleJsImport].filterIt(it != "")
-  let stdImportForJsPart =
-    if stdImportJsSeq.len > 1:
-      &"""[{stdImportJsSeq.join(", ")}]"""
-    else:
-      stdImportJsSeq[0]
-  let stdNonJsImport = stdImportFlagEnumsCCpp
-  let stdImportForJs =
-    &"""when defined(js):
-  import std/{stdImportForJsPart}
+  let stdImportJs =
+    if stdLibJs.len > 0 and stdLibNonJs.len > 0:
+      &"""when defined(js):
+  {stdLibJs.wrapImportStdLibs}
 else:
-  {stdNonJsImport}"""
+  {stdLibNonJs.wrapImportStdLibs}"""
+    elif stdLibJs.len > 0:
+      &"""when defined(js):
+  {stdLibJs.wrapImportStdLibs}"""
+    elif stdLibNonJs.len > 0:
+      &"""when not defined(js):
+  {stdLibNonJs.wrapImportStdLibs}"""
+    else:
+      ""
 
-  let importSection = [stdImportCppTuple, stdImportForJs, &"import {modulePath}"]
-    .filterIt(it != "")
-    .join("\n")
+  let importSection =
+    [stdImportCpp, stdImportJs, &"import {modulePath}"].filterIt(it != "").join("\n")
 
   let q3 = "\"\"\""
 
