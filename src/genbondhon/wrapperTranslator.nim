@@ -166,6 +166,11 @@ proc translateProc(node: PNode): string =
       formalParamNode[0].getRegAnonymousTupleType()
     else:
       formalParamNode[0].ident.s
+  if origRetType == "string" or (
+    anonymousTuplesNameToSig.contains(origRetType) and
+    anonymousTuplesNameToSig[origRetType].contains("cstring")
+  ):
+    containsStringRet = true
   var retType = origRetType
   if flagEnums.contains(origRetType):
     hasFlagEnum = true
@@ -313,6 +318,7 @@ proc preprocessTypes(node: PNode) =
   case node.subType
   of nkEnumTy:
     namedTypes[node.itemName] = NamedTypeCategory.enumType
+    containsEnum = true
   of nkBracketExpr:
     let containerType = node[2][0].ident.s
     let memberType = node[2][1].ident.s

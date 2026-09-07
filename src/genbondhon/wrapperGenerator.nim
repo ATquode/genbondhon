@@ -53,13 +53,17 @@ func handleAnonymousTuples(
     tupleTbl[key] = tupleDef
   result = (jsTupleTbl, tupleTbl)
 
-func handleAnonymousCppTuples(
+proc handleAnonymousCppTuples(
     tupleNames: seq[string], anonymousTupleSigTbl: Table[string, string]
 ): string =
   var cppTuples: seq[string]
   for tupleTypeName in tupleNames:
     let tupleSignature = anonymousTupleSigTbl[tupleTypeName]
     var memberTypes = tupleSignature.split(",")
+    if memberTypes.len == 2:
+      containsPair = true
+    if memberTypes.len > 2:
+      containsTuple = true
     memberTypes.applyIt(if it == "cstring": "ConstCString" else: it)
     let tupleType =
       if memberTypes.len == 2:
@@ -101,7 +105,7 @@ proc getCppDefs(
 ): string =
   var cppTypes, altTypes: seq[string]
 
-  if useConstCStrType:
+  if containsStringRet and useConstCStrType:
     let constCStrTypeCpp =
       &"""type ConstCString {{.importc: "const char*".}} = object
 
@@ -117,7 +121,7 @@ proc getCppDefs(
     cppTypes.add(constCStrTypeCpp)
     altTypes.add(constCStrTypeAlt)
 
-  if useCppEnumWrappers:
+  if containsEnum and useCppEnumWrappers:
     let converterTemplate =
       &"""template genConverter(name: untyped, fromTyp, toTyp: typedesc) =
     converter `name`(
@@ -132,7 +136,7 @@ proc getCppDefs(
     cppTypes.add(cppEnumWrappers)
     altTypes.add(altEnumWrappers)
 
-  if useCppPairTuple:
+  if anonymousTupleTbl.len > 0 and useCppPairTuple:
     let q3 = "\"\"\""
     let cppPairType =
       &"""type CppPair[T1, T2] {{.importcpp: "std::pair", header: "<utility>".}} = object
@@ -147,9 +151,10 @@ proc getCppDefs(
 
   proc makePair[T1, T2](
     a: T1, b: T2
-  ): CppPair[T1, T2] {{.importcpp: "std::make_pair(@)", header: "<utility>".}}
+  ): CppPair[T1, T2] {{.importcpp: "std::make_pair(@)", header: "<utility>".}}"""
 
-  macro genTupleGetters(T: typedesc): untyped =
+    let cppTupleType =
+      &"""macro genTupleGetters(T: typedesc): untyped =
     let typeSym = T.getTypeInst()[1]
     let typeImpl = typeSym.getImpl()
     let typeName = typeImpl[0][0]
@@ -189,20 +194,32 @@ proc getCppDefs(
     let cppTuples =
       handleAnonymousCppTuples(anonymousTupleTbl.keys.toSeq, anonymousTuplesNameToSig)
 
-    cppTypes.add(cppPairType)
-    cppTypes.add(cppGenericTuples)
-    cppTypes.add(cppTuples)
+    if containsPair:
+      cppTypes.add(cppPairType)
+    if containsTuple:
+      cppTypes.add(cppTupleType)
+    cppTypes.add([cppGenericTuples, cppTuples].filterIt(it != ""))
 
-  result =
-    &"""when defined(cpp):
-  {cppTypes.join("\n\n  ")}
+  if cppTypes.len > 0:
+    let cppPart =
+      &"""when defined(cpp):
+  {cppTypes.join("\n\n  ")}"""
+    result.add(cppPart)
 
-else:
-  {altTypes.join("\n  ")}
+  if altTypes.len > 0:
+    let altPart =
+      &"""else:
+  {altTypes.join("\n  ")}"""
+    result.add("\n\n" & altPart)
+
+  if anonymousTupleTblJs.len > 0:
+    let anonTupleJsPart =
+      &"""
   when defined(js):
     {anonymousTupleTblJs.values.toSeq.join("\n    ")}
   else:
     {anonymousTupleTbl.values.toSeq.join("\n    ")}"""
+    result.add("\n" & anonTupleJsPart)
 
 func wrapImportStdLibs(libs: seq[string]): string =
   if libs.len == 0:
@@ -273,7 +290,7 @@ else:
   {{.pragma: ffiexport, raises: [], exportc, cdecl, dynlib.}}"""
 
   let vccCondImport =
-    if shouldUseVCCStr:
+    if containsStringRet and shouldUseVCCStr:
       &"""when defined(vcc):
   proc CoTaskMemAlloc(cb: int): cstring {{.cdecl, dynlib: "ole32.dll", importc.}}"""
     else:
@@ -301,25 +318,30 @@ else:
   {apiNames.join(",\n  ")}
 }}"""
 
+  let typeDefPart =
+    if typeDefs.len > 0:
+      &"""{"\n" & typeDefs.join("\n\n")}"""
+    else:
+      ""
+  let exportPart =
+    if apiNames.len > 0:
+      &"""export {exportedApiNames};"""
+    else:
+      ""
+  let jsPart = [typeDefPart, exportPart].filterIt(it != "").join("\n\n")
   let endingParts =
-    &"""when defined(js):
+    if jsPart != "":
+      &"""when defined(js):
   {{.
     emit: {q3}
-
-{typeDefs.join("\n\n")}
-
-export {exportedApiNames};
+{jsPart}
 {q3}
   .}}"""
+    else:
+      ""
 
   result =
-    &"""
-{startingParts}
-
-{wrappedApis}
-
-{endingParts}
-"""
+    [startingParts, wrappedApis, endingParts].filterIt(it != "").join("\n\n") & "\n"
 
 func translateEnum(jsLangGen: BaseLangGen, node: PNode): (BaseLangGen, string) =
   let enumName = node.itemName
