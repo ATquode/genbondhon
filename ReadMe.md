@@ -23,6 +23,7 @@ Binding for following languages & operating systems are currently tested.
 - nim `proc`s and `func`s with the following primitives as arguments & return type:
   - int, bool, float, float32, char, string (including Unicode)
 - nim enumerations, including flag enums/bit fields (single value supported, sets aren't supported yet)
+- nim anonymous tuples (named tuples aren't supported yet)
 
 ### Usage
 
@@ -54,6 +55,17 @@ _hello.nim_
     func sayHello*(name: string): string =
       "Héllø " & name
 
+    func opposite*(direction: Direction): (Direction, string) =
+      case direction
+      of north:
+        (south, "south")
+      of east:
+        (west, "west")
+      of south:
+        (north, "north")
+      of west:
+        (east, "east")
+
 
 And you run genbondhon on `hello.nim`,
 
@@ -75,9 +87,16 @@ _hello.h_
         WEST
     } Direction;
 
+    typedef struct {
+        Direction val1;
+        const char* val2;
+    } DirectionStringTuple;
+
     void NimMain();
 
     const char* sayHello(const char* name);
+
+    DirectionStringTuple opposite(Direction direction);
 
     #endif /* HELLO_H */
 
@@ -87,18 +106,20 @@ _hello.hpp_
     #ifndef HELLO_HPP
     #define HELLO_HPP
 
-    extern "C" {
-        enum class Direction {
-            North,
-            East,
-            South,
-            West
-        };
+    #include <utility>
 
-        void NimMain();
+    enum class Direction {
+        North,
+        East,
+        South,
+        West
+    };
 
-        const char* sayHello(const char* name);
-    }
+    extern "C" void NimMain();
+
+    const char* sayHello(const char* name);
+
+    std::pair<Direction, const char*> opposite(Direction direction);
 
     #endif /* HELLO_HPP */
 
@@ -119,12 +140,29 @@ _hello.cs_
                 West
             }
 
+            [StructLayout(LayoutKind.Sequential)]
+            private struct DirectionStringTuple
+            {
+                public Direction val1;
+                [MarshalAs(UnmanagedType.LPUTF8Str)]
+                public string val2;
+            }
+
             [DllImport("hello.dll", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode, EntryPoint = "NimMain")]
             public static extern void NimMain();
 
             [return: MarshalAs(UnmanagedType.LPUTF8Str)]
             [DllImport("hello.dll", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode, EntryPoint = "sayHello")]
             public static extern string SayHello([MarshalAs(UnmanagedType.LPUTF8Str)] string name);
+
+            public static (Direction, string) Opposite(Direction direction)
+            {
+                var data = OppositeVal((byte)direction);
+                return (data.val1, data.val2);
+            }
+
+            [DllImport("hello.dll", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode, EntryPoint = "opposite")]
+            private static extern DirectionStringTuple OppositeVal(byte direction);
         }
     }
 
@@ -153,6 +191,11 @@ _hello.swift_
         return String(cString: data)
     }
 
+    func opposite(direction: Direction) -> (Direction, String) {
+        let cTuple = CHello.opposite(CHello.Direction(direction.rawValue))
+        return (cTuple.val1, String(cString: cTuple.val2))
+    }
+
 
 _Hello.kt_
 
@@ -170,6 +213,12 @@ _Hello.kt_
 
         external fun sayHello(name: String): String
 
+        fun opposite(direction: Direction): Pair<Direction, String> {
+            return oppositeVal(direction.ordinal)
+        }
+
+        private external fun oppositeVal(direction: Int): Pair<Direction, String>
+
         companion object {
             init {
                 System.loadLibrary("helloJNI")
@@ -186,8 +235,10 @@ _hello.d.ts_
       South,
       West,
     }
-
+    
     export function sayHello(name: string): string;
+    
+    export function opposite(direction: Direction): [Direction, string];
 
 
 ### Development
