@@ -186,6 +186,110 @@ func swapBoundingBoxes*(
   # Extracts, rearranges, and returns the data fields
   result = (rects[2], rects[3], rects[0], rects[1], rects[4] & " (swapped)")
 
+func calculateAverage*(scores: array[5, float]): float =
+  var sum = 0.0
+  for score in scores:
+    sum += score
+
+  return sum / scores.len.float
+
+#[
+
+{
+  "kind": "nkProcDef",
+  "info": ["nomuna.nim", 189, 0],
+  "sons": [
+    {
+      "kind": "nkPostfix",
+      "info": ["nomuna.nim", 189, 21],
+      "sons": [
+        {
+          "kind": "nkIdent",
+          "info": ["nomuna.nim", 189, 21],
+          "ident": "*",
+          "typ": 
+        },
+        {
+          "kind": "nkIdent",
+          "info": ["nomuna.nim", 189, 5],
+          "ident": "calculateAverage",
+          "typ": 
+        }
+      ],
+      "typ": 
+    },
+    {
+      "kind": "nkEmpty",
+      "info": ["???", 0, -1],
+      "typ": 
+    },
+    {
+      "kind": "nkEmpty",
+      "info": ["???", 0, -1],
+      "typ": 
+    },
+    {
+      "kind": "nkFormalParams",
+      "info": ["nomuna.nim", 189, 22],
+      "sons": [
+        {
+          "kind": "nkIdent",
+          "info": ["nomuna.nim", 189, 51],
+          "ident": "float64",
+          "typ": 
+        },
+        {
+          "kind": "nkIdentDefs",
+          "info": ["nomuna.nim", 189, 23],
+          "sons": [
+            {
+              "kind": "nkIdent",
+              "info": ["nomuna.nim", 189, 23],
+              "ident": "scores",
+              "typ": 
+            },
+            {
+              "kind": "nkBracketExpr",
+              "info": ["nomuna.nim", 189, 36],
+              "sons": [
+                {
+                  "kind": "nkIdent",
+                  "info": ["nomuna.nim", 189, 31],
+                  "ident": "array",
+                  "typ": 
+                },
+                {
+                  "kind": "nkIntLit",
+                  "info": ["nomuna.nim", 189, 37],
+                  "intVal": 5,
+                  "typ": 
+                },
+                {
+                  "kind": "nkIdent",
+                  "info": ["nomuna.nim", 189, 40],
+                  "ident": "float64",
+                  "typ": 
+                }
+              ],
+              "typ": 
+            },
+            {
+              "kind": "nkEmpty",
+              "info": ["nomuna.nim", 189, 48],
+              "typ": 
+            }
+          ],
+          "typ": 
+        }
+      ],
+      "typ": 
+    }
+  ],
+  "typ": 
+}
+
+]#
+
 #[ binding_api.nim
 
 type IntArray* {.importc, header: "helper_types.h".} = object
@@ -228,101 +332,6 @@ typedef struct
 #endif /* HELPER_TYPES_H */
 ]#
 
-#[
-{
-  "kind": "nkProcDef",
-  "info": ["nomuna.nim", 157, 0],
-  "sons": [
-    {
-      "kind": "nkPostfix",
-      "info": ["nomuna.nim", 157, 11],
-      "sons": [
-        {
-          "kind": "nkIdent",
-          "info": ["nomuna.nim", 157, 11],
-          "ident": "*",
-          "typ": 
-        },
-        {
-          "kind": "nkIdent",
-          "info": ["nomuna.nim", 157, 5],
-          "ident": "divMod",
-          "typ": 
-        }
-      ],
-      "typ": 
-    },
-    {
-      "kind": "nkEmpty",
-      "info": ["???", 0, -1],
-      "typ": 
-    },
-    {
-      "kind": "nkEmpty",
-      "info": ["???", 0, -1],
-      "typ": 
-    },
-    {
-      "kind": "nkFormalParams",
-      "info": ["nomuna.nim", 157, 12],
-      "sons": [
-        {
-          "kind": "nkTupleConstr",
-          "info": ["nomuna.nim", 157, 25],
-          "sons": [
-            {
-              "kind": "nkIdent",
-              "info": ["nomuna.nim", 157, 26],
-              "ident": "int",
-              "typ": 
-            },
-            {
-              "kind": "nkIdent",
-              "info": ["nomuna.nim", 157, 31],
-              "ident": "int",
-              "typ": 
-            }
-          ],
-          "typ": 
-        },
-        {
-          "kind": "nkIdentDefs",
-          "info": ["nomuna.nim", 157, 13],
-          "sons": [
-            {
-              "kind": "nkIdent",
-              "info": ["nomuna.nim", 157, 13],
-              "ident": "a",
-              "typ": 
-            },
-            {
-              "kind": "nkIdent",
-              "info": ["nomuna.nim", 157, 16],
-              "ident": "b",
-              "typ": 
-            },
-            {
-              "kind": "nkIdent",
-              "info": ["nomuna.nim", 157, 19],
-              "ident": "int",
-              "typ": 
-            },
-            {
-              "kind": "nkEmpty",
-              "info": ["nomuna.nim", 157, 22],
-              "typ": 
-            }
-          ],
-          "typ": 
-        }
-      ],
-      "typ": 
-    }
-  ],
-  "typ": 
-}
-]#
-
 # func getPermission*(username: string): FilePermissions =
 #   if username == "admin":
 #     result = {FilePermission.read, FilePermission.write, FilePermission.execute}
@@ -330,12 +339,3 @@ typedef struct
 #     result = {FilePermission.read, FilePermission.execute}
 #   else:
 #     result = {FilePermission.execute}
-
-# func requestPermission*(user: string, permission: FilePermission): bool =
-#   case permission
-#   of FilePermission.read:
-#     return user == "user" or user == "admin"
-#   of FilePermission.write:
-#     return user == "admin"
-#   of FilePermission.execute:
-#     return true

@@ -30,6 +30,7 @@ Status code: 401
 a
 a
 admin has permission value: 0x02
+avg: 3.000000
 direction raw value: 2
 extra: No Op.
 failure

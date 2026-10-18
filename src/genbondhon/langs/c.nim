@@ -81,7 +81,16 @@ func translateProc(
         else:
           paramType
       for paramName in paramNames:
-        let trParam = &"{origParamType.replaceType} {paramName}"
+        let trParam =
+          if origParamType.contains("|"):
+            let containerTypeInfo = origParamType.split("|")
+            case containerTypeInfo[0]
+            of "array":
+              &"{containerTypeInfo[1].replaceType} {paramName}[{containerTypeInfo[2]}]"
+            else:
+              &"{origParamType.replaceType} {paramName}"
+          else:
+            &"{origParamType.replaceType} {paramName}"
         trParamList.add(trParam)
     if formalParamNode[0].kind != nkEmpty:
       retType = formalParamNode[0].ident.s
