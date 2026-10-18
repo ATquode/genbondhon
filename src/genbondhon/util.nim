@@ -47,10 +47,26 @@ func paramNames*(node: PNode): seq[string] =
 func paramName*(node: PNode): string =
   node[0].ident.s
 
+func containerParamType(node: PNode): string =
+  ## get container type details from `nkBracketExpr`
+  ## Note: node needs to be nkBracketExpr node type
+  let containerType = node[0].ident.s
+  var memberType: string
+  var size: string
+  case containerType
+  of "array":
+    size = $node[1].intVal
+    memberType = node[2].ident.s
+  result = "$#|$#|$#" % [containerType, memberType, size]
+
 func paramType*(node: PNode): string =
   ## get paramType from `procParamNode`
   ## Note: node needs to be formal param node type
-  node[node.len - 2].ident.s
+  let formalParamTypeNode = node[node.len - 2]
+  if formalParamTypeNode.kind == nkBracketExpr:
+    result = formalParamTypeNode.containerParamType
+  else:
+    result = formalParamTypeNode.ident.s
 
 func returnTypeContainsType(retTypeNode: PNode, reqType: string): bool =
   if retTypeNode.kind != nkEmpty and retTypeNode.ident.s == reqType: true else: false
