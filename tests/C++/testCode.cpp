@@ -83,5 +83,8 @@ int main() {
     cout << std::get<0>(inverseQuat) << ", " << std::get<1>(inverseQuat) << ", " << std::get<2>(inverseQuat) << ", " << std::get<3>(inverseQuat) << endl;
     std::tuple<int, int, int, int, const char*> swappedRects = swapBoundingBoxes({1, 2, 3, 4, "order"});
     cout << std::get<0>(swappedRects) << ", " << std::get<1>(swappedRects) << ", " << std::get<2>(swappedRects) << ", " << std::get<3>(swappedRects) << ", " << std::get<4>(swappedRects) << endl;
+    double q[5] = {1.0, 2.0, 3.0, 4.0, 5.0};
+    double r = calculateAverage(q);
+    cout << "avg: " << r << endl;
     return 0;
 }
