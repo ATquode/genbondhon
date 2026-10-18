@@ -110,6 +110,12 @@ proc translateProc(node: PNode): string =
       else:
         formalParamNode[i].paramType
     var trParamType = paramType.replaceType
+    if paramType.contains("|"):
+      let containerTypeInfo = paramType.split("|")
+      case containerTypeInfo[0]
+      of "array":
+        trParamType =
+          &"array[{containerTypeInfo[2]}, {containerTypeInfo[1].replaceType}]"
     trParamType = convertProcParamTypeForCppCompilation(trParamType, namedTypes)
     if flagEnums.contains(paramType):
       hasFlagEnum = true
@@ -130,6 +136,16 @@ proc translateProc(node: PNode): string =
       let callableParam =
         if anonymousTuplesNameToSig.contains(paramType):
           &"""({valNames.zip(tupleMemberTypes).map(x => convertType(paramNameCopy & "." & x[0], x[1], ConvertDirection.fromC, flagEnums.contains(x[1]))).join(", ")})"""
+        elif paramType.contains("|"):
+          # container type
+          let containerTypeInfo = paramType.split("|")
+          let containerTypeNim =
+            if containerTypeInfo.len == 3:
+              "$#[$#, $#]" %
+                [containerTypeInfo[0], containerTypeInfo[2], containerTypeInfo[1]]
+            else:
+              "$#[$#]" % [containerTypeInfo[0], containerTypeInfo[1]]
+          &"""cast[{containerTypeNim}]({paramName})"""
         else:
           &"{paramName.convertType(paramType.replaceType, ConvertDirection.fromC, flagEnums.contains(paramType))}"
       if paramIsFlagEnum:
