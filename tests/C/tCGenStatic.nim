@@ -38,7 +38,8 @@ Request access result: 0
 1, 2, 3
 1, 2, 1
 1.000000, 2.000000, -2.000000, -1.000000
-3, 4, 1, 2, order (swapped)'''
+3, 4, 1, 2, order (swapped)
+avg: 3.000000'''
 """
 #!fmt: on
 

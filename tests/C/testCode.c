@@ -92,5 +92,8 @@ int main() {
     orderedRects.val5 = "order";
     Int4StringTuple swappedRects = swapBoundingBoxes(orderedRects);
     printf("%d, %d, %d, %d, %s\n", swappedRects.val1, swappedRects.val2, swappedRects.val3, swappedRects.val4, swappedRects.val5);
+    double m[5] = {1.0, 2.0, 3.0, 4.0, 5.0};
+    double n = calculateAverage(m);
+    printf("avg: %lf\n", n);
     return 0;
 }
