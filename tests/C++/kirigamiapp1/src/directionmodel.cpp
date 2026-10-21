@@ -9,6 +9,8 @@
 DirectionModel::DirectionModel(QObject *parent)
     : QAbstractListModel{parent}
 {
+    direction = 0;
+
     this->connect(this, &DirectionModel::directionChanged, this, &DirectionModel::onDirectionChanged);
 
     constexpr auto directionList = magic_enum::enum_values<Direction>();
