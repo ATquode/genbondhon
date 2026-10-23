@@ -69,3 +69,6 @@ var quaternion = Nomuna.InverseQuaternion((1, -2, 2, 1));
 Console.WriteLine($"{quaternion.Item1}, {quaternion.Item2}, {quaternion.Item3}, {quaternion.Item4}");
 var swappedRects = Nomuna.SwapBoundingBoxes((1, 2, 3, 4, "order"));
 Console.WriteLine($"{swappedRects.Item1}, {swappedRects.Item2}, {swappedRects.Item3}, {swappedRects.Item4}, {swappedRects.Item5}");
+double[] n = {1.0, 2.0, 3.0, 4.0, 5.0};
+var o = Nomuna.CalculateAverage(n);
+Console.WriteLine($"avg: {o}");

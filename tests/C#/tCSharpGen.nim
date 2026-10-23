@@ -38,7 +38,8 @@ Request access result: False
 1, 2, 3
 1, 2, 1
 1, 2, -2, -1
-3, 4, 1, 2, order (swapped)'''
+3, 4, 1, 2, order (swapped)
+avg: 3'''
   disabled: unix
 """
 #!fmt: on
