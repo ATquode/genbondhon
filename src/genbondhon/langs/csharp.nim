@@ -128,7 +128,17 @@ func translateProc(
         else:
           paramType.convertTypeToStdType(tupleNameSigTbl)
       for paramName in paramNames:
-        var trParam = &"{origParamType.replaceType} {paramName}"
+        var trParam =
+          if origParamType.contains("|"):
+            let containerTypeInfo = origParamType.split("|")
+            case containerTypeInfo[0]
+            of "array":
+              &"[MarshalAs(UnmanagedType.LPArray, SizeConst={containerTypeInfo[2]})] {containerTypeInfo[1].replaceType}[] {paramName}"
+              # TODO: String: void New2([MarshalAs(UnmanagedType.LPArray, ArraySubType=UnmanagedType.LPWStr, SizeConst=10)] String[] ar);
+            else:
+              &"{origParamType.replaceType} {paramName}"
+          else:
+            &"{origParamType.replaceType} {paramName}"
         var callableParam = paramName
         if self.typeCategory(origParamType) == NamedTypeCategory.enumType:
           shouldWrap = true
