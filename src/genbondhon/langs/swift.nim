@@ -13,6 +13,8 @@ type SwiftLangGen = ref object of BaseLangGen
   wrapperFileName: Path
   headerFileName: string
   moduleMapName: Path
+  # [funcname, paramList], to add const in C Header
+  addConstList: OrderedTable[string, seq[string]]
 
 proc newSwiftLangGen*(bindingDir: Path): SwiftLangGen =
   ## `SwiftLangGen` constructor
@@ -99,7 +101,7 @@ func convertTypeToStdType(
   else:
     result = paramType
 
-func translateProc(
+proc translateProc(
     self: SwiftLangGen,
     node: PNode,
     flagLookupTbl: Table[string, Table[string, string]],
@@ -113,6 +115,7 @@ func translateProc(
   var retType = ""
   var trParamList, callableParamList: seq[string]
   var stringMemberTuples: seq[(string, int)] # (paramName, memberIndex)
+  var arrayList: seq[string]
   if paramNode.isSome:
     let formalParamNode = paramNode.get()
     for i in 1 ..< formalParamNode.safeLen:
@@ -125,7 +128,14 @@ func translateProc(
         else:
           paramType.convertTypeToStdType(tupleNameSigTbl)
       for paramName in paramNames:
-        let trParam = &"{paramName}: {origParamType.replaceType}"
+        var trParam = &"{paramName}: {origParamType.replaceType}"
+        if origParamType.contains("|"):
+          let containerTypeInfo = origParamType.split("|")
+          case containerTypeInfo[0]
+          of "array":
+            arrayList.add(paramName)
+            trParam =
+              &"{paramName}: [{containerTypeInfo[2]} of {containerTypeInfo[1].replaceType}]"
         trParamList.add(trParam)
         var callableParam = paramName
         let paramNameCopy = paramName
@@ -141,6 +151,8 @@ func translateProc(
                 if x[1] == "cstring": paramNameCopy & $(x[0]-1) & "CStr" else: paramNameCopy & "." & $(x[0]-1)
               ).convertType(x[1].replaceType, ConvertDirection.toC, self.cModuleName, self.typeCategory(x[1]))]
             ).join(", ")})"""
+        elif arrayList.contains(paramName):
+          callableParam = paramName & "Array"
         else:
           callableParam = paramName.convertType(
             origParamType.replaceType,
@@ -205,6 +217,16 @@ func translateProc(
     }}"""
   if stringMemberTuples.len > 0 and retType != "":
     retBody = &"return {retBody}"
+  if arrayList.len > 0:
+    self.addConstList[funcName] = arrayList
+    var arrayConvLines: seq[string]
+    for arrayName in arrayList:
+      let convLine =
+        &"let {arrayName}Array = (0..<{arrayName}.count).map {{ {arrayName}[$0] }}"
+      arrayConvLines.add(convLine)
+    retBody =
+      &"""{arrayConvLines.join("\n    ")}
+    {retBody}"""
   let trResult =
     &"""
 func {funcName}({trParamList.join(", ")}){retTypePart} {{
@@ -212,7 +234,7 @@ func {funcName}({trParamList.join(", ")}){retTypePart} {{
 }}"""
   result = (funcName, trResult)
 
-func translateApi(
+proc translateApi(
     self: SwiftLangGen,
     api: PNode,
     flagTbl: Table[string, Table[string, string]],
@@ -275,6 +297,32 @@ proc generateSwiftWrapper(self: SwiftLangGen, bindingAST: seq[PNode]) =
     echo content
   let wrapperFilePath = self.swiftCModuleDir / self.wrapperFileName
   wrapperFilePath.string.writeFile(content)
+
+proc modifyCHeader(self: SwiftLangGen) =
+  let headerFilePath = self.swiftCModuleDir / self.headerFileName.Path
+  var headerContent = readFile($headerFilePath)
+  var curIndex = 0
+  for funcName, paramList in self.addConstList:
+    curIndex = headerContent.find(funcName, curIndex)
+    curIndex = headerContent.find("(", curIndex)
+    let funcEndIndex = headerContent.find(")", curIndex)
+    let paramPart = headerContent.substr(curIndex + 1, funcEndIndex - 1)
+    let params = paramPart.split(",")
+    var modifiedParams = params
+    var paramConstIndex = 0
+    for index, paramSign in params:
+      if paramSign.contains(paramList[paramConstIndex]):
+        modifiedParams[index] = "const " & paramSign
+        paramConstIndex.inc
+        if paramConstIndex == paramList.len:
+          break
+    if paramConstIndex != paramList.len:
+      echo "Error: cannot find params: $# and later in $#" %
+        [paramList[paramConstIndex], funcName]
+    let modifiedParamPart = modifiedParams.join(",")
+    headerContent = headerContent.replace(paramPart, modifiedParamPart)
+    curIndex = curIndex + modifiedParamPart.len + 1
+  writeFile($headerFilePath, headerContent)
 
 method getReadMeContent(self: SwiftLangGen): string =
   let common = procCall self.BaseLangGen.getReadMeContent()
@@ -396,4 +444,5 @@ method generateBinding*(self: SwiftLangGen, bindingAST: seq[PNode]) =
   self.copyCHeader()
   self.generateModuleMap()
   self.generateSwiftWrapper(bindingAST)
+  self.modifyCHeader()
   self.generateReadMe()

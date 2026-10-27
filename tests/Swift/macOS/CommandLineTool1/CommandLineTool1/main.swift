@@ -73,3 +73,6 @@ let quaternion = inverseQuaternion(q: (1, -2, 2, 1))
 print("\(quaternion.0), \(quaternion.1), \(quaternion.2), \(quaternion.3)")
 let swappedRects = swapBoundingBoxes(rects: (1, 2, 3, 4, "order"))
 print("\(swappedRects.0), \(swappedRects.1), \(swappedRects.2), \(swappedRects.3), \(swappedRects.4)")
+let n: [5 of Double] = [1.0, 2.0, 3.0, 4.0, 5.0]
+let o = calculateAverage(scores: n)
+print("avg: \(o)")

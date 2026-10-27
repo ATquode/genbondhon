@@ -38,7 +38,8 @@ Request access result: false
 1, 2, 3
 1, 2, 1
 1.0, 2.0, -2.0, -1.0
-3, 4, 1, 2, order (swapped)'''
+3, 4, 1, 2, order (swapped)
+avg: 3.0'''
   disabled: windows
   disabled: linux
 """
